@@ -38,7 +38,7 @@ def index_set(n,d):
         I = np.vstack((I,II))
     return I[:,::-1]
 
-def linreg(X,f):
+def lingrad(X,f):
     M,m = X.shape
     A = np.hstack((np.ones((M,1)), X))
     u = np.linalg.lstsq(A,f)[0]
@@ -63,10 +63,12 @@ def quadreg(Xsq,indices,f):
     return b,A
     
 def get_eigenpairs(b,A,gamma):
+    m = b.shape[0]
     lam,W = np.linalg.eig(np.outer(b,b.T) + np.dot(A,np.dot(np.diagflat(gamma),A)))
     ind = np.argsort(lam)[::-1]
     lam = lam[ind]
     W = W[:,ind]
+    W = W*np.tile(np.sign(W[0,:]),(m,1))
     return lam,W
     
 def local_linear_gradients(X,f,XX):
@@ -112,35 +114,41 @@ def quadratic_model_check(X,f,gamma,k,n_boot=1000):
             sub_dist[j,i] = np.linalg.norm(np.dot(W[:,:j+1].T,W0[:,j+1:]),ord=2)
 
     lam_bootrange = np.zeros((k,2))
-    sub_bootrange = np.zeros((k_sub,2))
+    sub_bootrange = np.zeros((k_sub,3))
     for i in range(k):
         lam_sort = np.sort(lam_boot[i,:])
         lam_bootrange[i,0] = lam_sort[np.floor(0.025*n_boot)]
         lam_bootrange[i,1] = lam_sort[np.ceil(0.925*n_boot)]
-    for i in range(k-1):
+    for i in range(k_sub):
         sub_sort = np.sort(sub_dist[i,:])
-        sub_bootrange[i,0] = sub_sort[np.floor(0.025*n_boot)]
-        sub_bootrange[i,1] = sub_sort[np.ceil(0.925*n_boot)]
+        sub_bootrange[i,0] = sub_sort[np.floor(0.025*n_boot)]        
+        sub_bootrange[i,1] = np.mean(sub_sort)
+        sub_bootrange[i,2] = sub_sort[np.ceil(0.925*n_boot)]
     return lam[:k],W,lam_bootrange,sub_bootrange
     
     
 def linear_model_check(X,f,n_boot=1000):
     M,m = X.shape
-    w = linreg(X,f)
+    w = lingrad(X,f)
     
     # bootstrap
     ind = np.random.randint(M,size=(M,n_boot))
     w_boot = np.zeros((m,n_boot))
     for i in range(n_boot): 
-        w_boot[:,i] = linreg(X[ind[:,i],:],f[ind[:,i]])
+        w_boot[:,i] = lingrad(X[ind[:,i],:],f[ind[:,i]])
     return w,w_boot
 
 def get_active_subspace(G,k,n_boot=1000):
+    
+    # set integers
     M,m = G.shape
+    k_sub = np.minimum(k,m-1)
+    
+    # compute active subspace
     U,sig,W = np.linalg.svd(G,full_matrices=False)
     lam = (1.0/M)*(sig[:k]**2)
     W = W.T
-    k_sub = np.minimum(k,m-1)
+    W = W*np.tile(np.sign(W[0,:]),(m,1))
     
     # bootstrap
     lam_boot = np.zeros((k,n_boot))
@@ -149,20 +157,22 @@ def get_active_subspace(G,k,n_boot=1000):
     for i in range(n_boot):
         U0,sig0,W0 = np.linalg.svd(G[ind[:,i],:],full_matrices=False)
         W0 = W0.T
+        W0 = W0*np.tile(np.sign(W0[0,:]),(m,1))
         lam_boot[:,i] = (1.0/M)*(sig0[:k]**2)
         for j in range(k_sub):
             sub_dist[j,i] = np.linalg.norm(np.dot(W[:,:j+1].T,W0[:,j+1:]),ord=2)
 
     lam_bootrange = np.zeros((k,2))
-    sub_bootrange = np.zeros((k_sub,2))
+    sub_bootrange = np.zeros((k_sub,3))
     for i in range(k):
         lam_sort = np.sort(lam_boot[i,:])
         lam_bootrange[i,0] = lam_sort[np.floor(0.025*n_boot)]
         lam_bootrange[i,1] = lam_sort[np.ceil(0.925*n_boot)]
-    for i in range(k-1):
+    for i in range(k_sub):
         sub_sort = np.sort(sub_dist[i,:])
         sub_bootrange[i,0] = sub_sort[np.floor(0.025*n_boot)]
-        sub_bootrange[i,1] = sub_sort[np.ceil(0.925*n_boot)]
+        sub_bootrange[i,1] = np.mean(sub_sort)
+        sub_bootrange[i,2] = sub_sort[np.ceil(0.925*n_boot)]
     return lam,W,lam_bootrange,sub_bootrange
 
 def quadtest(X):
@@ -264,7 +274,71 @@ def sufficient_summary_plot(y,f,w,w_boot=None,in_labels=None,out_label=None):
     
     plt.show()
     
-def plot_active_subspace():
+def plot_active_subspace(lam,W,lam_bootrange=None,sub_bootrange=None,in_labels=None,out_label=None):
+    
+    # make figs directory
+    if not os.path.isdir('figs'):
+        os.mkdir('figs')
+    
+    # set plot fonts
+    myfont = {'family' : 'lucinda',
+            'weight' : 'normal',
+            'size'   : 14}
+    plt.rc('font', **myfont)
+    
+    # number of variables
+    k = lam.shape[0]
+    m = W.shape[0]
+    
+    # set labels for plots
+    if in_labels is None:
+        in_labels = [str(i) for i in range(1,m+1)]
+    if out_label is None:
+        out_label = 'Output'
+    
+    plt.figure()
+    plt.semilogy(range(1,k+1),lam,'ko-')
+    if lam_bootrange is not None:
+        plt.fill_between(range(1,k+1),lam_bootrange[:,0],lam_bootrange[:,1],
+            facecolor='0.7', interpolate=True)
+    plt.xlabel('Index')
+    plt.ylabel('Eigenvalues')
+    plt.title(out_label)
+    plt.grid(True)
+    figname = 'figs/evals_' + out_label + '.eps'
+    plt.savefig(figname, dpi=300, bbox_inches='tight', pad_inches=0.0)
+    
+    plt.figure()
+    plt.plot(range(1,m+1),W[:,0],'bo-',markersize=12,label='1')
+    plt.plot(range(1,m+1),W[:,1],'ro-',markersize=12,label='2')
+    plt.plot(range(1,m+1),W[:,2],'go-',markersize=12,label='3')
+    plt.xlabel('Variable')
+    plt.ylabel('Eigenvectors')
+    plt.grid(True)
+    plt.xticks(range(1,m+1),in_labels,rotation='vertical')
+    plt.margins(0.2)
+    plt.subplots_adjust(bottom=0.15)
+    plt.axis([1,m,-1,1])
+    plt.legend(loc='best')
+    figname = 'figs/evecs_' + out_label + '.eps'
+    plt.savefig(figname, dpi=300, bbox_inches='tight', pad_inches=0.0)
+    
+    if sub_bootrange is not None:
+        plt.figure()
+        plt.semilogy(range(1,k+1),sub_bootrange[:,1],'ko-',markersize=12)
+        plt.fill_between(range(1,k+1),sub_bootrange[:,0],sub_bootrange[:,2],
+            facecolor='0.7', interpolate=True)
+        plt.xlabel('Subspace dimension')
+        plt.ylabel('Subspace distance')
+        plt.grid(True)
+        plt.xticks(range(1,k+1),in_labels,rotation='vertical')
+        plt.margins(0.2)
+        plt.subplots_adjust(bottom=0.15)
+        figname = 'figs/subspace_' + out_label + '.eps'
+        plt.savefig(figname, dpi=300, bbox_inches='tight', pad_inches=0.0)
+    
+    plt.show()
+    
     return 0
     
     
