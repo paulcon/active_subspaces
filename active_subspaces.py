@@ -13,9 +13,9 @@ def normalize_gaussian(X,mu,C):
     M,m = X.shape
     mu = mu.reshape(1,m,order='F')
     L = np.linalg.cholesky(C)
-    X0 = X - np.tile(mu,M,1)
+    X0 = X - np.tile(mu,(M,1))
     XX = np.linalg.solve(L,X0.T)
-    return XX.copy()
+    return XX.T.copy()
 
 def full_index_set(n,d):
     if d == 1:
@@ -202,23 +202,15 @@ def sufficient_summary_plot(y,f,w,w_boot=None,in_labels=None,out_label=None):
     
     # check sizes of y and w
     m = w.shape[0]
-    ny = y.shape[1]
-    nw = w.shape[1]
-    if ny == nw:
-        n = ny
-    else:
-        print 'Error: size of y and w do not match.'
-    
+    n = len(w.shape)    
     if n == 1:
         y1 = y
         w1 = w
-    elif n == 2:
+    else:
         y1 = y[:,0]
         y2 = y[:,1]
         w1 = w[:,0]
         w2 = w[:,1]
-    else:
-        print 'Error: n must be 1 or 2'
     
     # set labels for plots
     if in_labels is None:
@@ -233,9 +225,10 @@ def sufficient_summary_plot(y,f,w,w_boot=None,in_labels=None,out_label=None):
     plt.xlabel('Variable')
     plt.ylabel('Weights')
     plt.grid(True)
-    plt.xticks(range(1,m+1),in_labels,rotation='vertical')
-    plt.margins(0.2)
-    plt.subplots_adjust(bottom=0.15)
+    if m<=10:
+        plt.xticks(range(1,m+1),in_labels,rotation='vertical')
+        plt.margins(0.2)
+        plt.subplots_adjust(bottom=0.15)
     plt.axis([1,m,-1,1])
     figname = 'figs/ssp1_weights_' + out_label + '.eps'
     plt.savefig(figname, dpi=300, bbox_inches='tight', pad_inches=0.0)
@@ -256,9 +249,10 @@ def sufficient_summary_plot(y,f,w,w_boot=None,in_labels=None,out_label=None):
         plt.xlabel('Variable')
         plt.ylabel('Weights')
         plt.grid(True)
-        plt.xticks(range(1,m+1),in_labels,rotation='vertical')
-        plt.margins(0.2)
-        plt.subplots_adjust(bottom=0.15)
+        if m<=10:
+            plt.xticks(range(1,m+1),in_labels,rotation='vertical')
+            plt.margins(0.2)
+            plt.subplots_adjust(bottom=0.15)
         plt.axis([1,m,-1,1])
         plt.legend(loc='best')
         figname = 'figs/ssp2_weights_' + out_label + '.eps'
@@ -315,31 +309,31 @@ def plot_active_subspace(lam,W,lam_bootrange=None,sub_bootrange=None,in_labels=N
     plt.xlabel('Variable')
     plt.ylabel('Eigenvectors')
     plt.grid(True)
-    plt.xticks(range(1,m+1),in_labels,rotation='vertical')
-    plt.margins(0.2)
-    plt.subplots_adjust(bottom=0.15)
+    if m<=10:
+        plt.xticks(range(1,m+1),in_labels,rotation='vertical')
+        plt.margins(0.2)
+        plt.subplots_adjust(bottom=0.15)
     plt.axis([1,m,-1,1])
     plt.legend(loc='best')
     figname = 'figs/evecs_' + out_label + '.eps'
     plt.savefig(figname, dpi=300, bbox_inches='tight', pad_inches=0.0)
     
     if sub_bootrange is not None:
+        kk = sub_bootrange.shape[0]
         plt.figure()
-        plt.semilogy(range(1,k+1),sub_bootrange[:,1],'ko-',markersize=12)
-        plt.fill_between(range(1,k+1),sub_bootrange[:,0],sub_bootrange[:,2],
+        plt.semilogy(range(1,kk+1),sub_bootrange[:,1],'ko-',markersize=12)
+        plt.fill_between(range(1,kk+1),sub_bootrange[:,0],sub_bootrange[:,2],
             facecolor='0.7', interpolate=True)
         plt.xlabel('Subspace dimension')
         plt.ylabel('Subspace distance')
         plt.grid(True)
-        plt.xticks(range(1,k+1),in_labels,rotation='vertical')
-        plt.margins(0.2)
-        plt.subplots_adjust(bottom=0.15)
+        plt.xticks(range(1,k+1))
+        plt.axis([1,kk,0.001,1])
         figname = 'figs/subspace_' + out_label + '.eps'
         plt.savefig(figname, dpi=300, bbox_inches='tight', pad_inches=0.0)
     
     plt.show()
     
-    return 0
     
     
 
