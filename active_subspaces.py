@@ -78,7 +78,8 @@ def local_linear_gradients(X,f,XX):
     nloc = np.minimum(2*m,M)
     for i in range(MM):
         x = XX[i,:]
-        ind = np.argsort(np.sqrt(np.sum((X - np.tile(x,(M,1)))**2,axis=1)))
+        A = np.sum((X - np.tile(x,(M,1)))**2,axis=1)
+        ind = np.argsort(A)
         A = np.hstack((np.ones((nloc,1)), X[ind[:nloc],:]))
         u = np.linalg.lstsq(A,f[ind[:nloc]])[0]
         G[i,:] = u[1:].copy()
@@ -259,7 +260,7 @@ def sufficient_summary_plot(y,f,w,w_boot=None,in_labels=None,out_label=None):
         plt.savefig(figname, dpi=300, bbox_inches='tight', pad_inches=0.0)
         
         plt.figure()
-        plt.scatter(y1,y2,c=f,s=150.0,edgecolors='none')
+        plt.scatter(y1,y2,c=f,s=150.0,vmin=np.min(f),vmax=np.max(f))
         plt.xlabel('Active variable 1')
         plt.ylabel('Active variable 2')
         plt.title(out_label)
