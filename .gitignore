@@ -1,0 +1,9 @@
+# this weird thing for mac file systems
+.DS_Store
+
+# compiled python codes
+*.pyc
+
+# figs directory
+figs/
+
