@@ -13,21 +13,27 @@ def quad_fun(x):
     df = np.dot(A,x)
     return f,df
 
-def sample_function(X,fun):
+def sample_function(X,fun,dflag=False):
     M,m = X.shape
     F = np.zeros((M,1))
-    dF = np.zeros((M,m))
-    for i in range(M):
-        x = X[i,:]
-        f,df = fun(x.T)
-        F[i] = f
-        dF[i,:] = df.T
-    return F,dF
-
+    if dflag:
+        dF = np.zeros((M,m))
+        for i in range(M):
+            x = X[i,:]
+            f,df = fun(x.T)
+            F[i] = f
+            dF[i,:] = df.T
+        return F,dF
+    else:
+        for i in range(M):
+            x = X[i,:]
+            F[i] = fun(x.T)
+        return F
+        
 def test_interface(fun):
     M,m = 30,3
     X = np.random.uniform(-1.0,1.0,(M,m))
-    F,dF = sample_function(X,fun)
+    F,dF = sample_function(X,fun,dflag=True)
     
     # get active subspace with gradients from local linear grads
     lam,W,lam_br,sub_br = ac.get_active_subspace(dF,2)
@@ -38,6 +44,8 @@ def test_interface(fun):
     
     # make sufficient summary plots
     ac.plot_active_subspace(lam,W,lam_br=lam_br,sub_br=sub_br)
+    
+    return 0
 
 def test_load_data():
 
@@ -72,8 +80,14 @@ def test_load_data():
     
     # make sufficient summary plots
     ac.plot_active_subspace(lam,W,lam_br=lam_br,sub_br=sub_br)
+    
+    return 0
 
 
 if __name__ == "__main__":
-    #test_load_data()
-    test_interface(quad_fun)
+    
+    if not test_load_data():
+        print 'Success!'
+    
+    if not test_interface(quad_fun):
+        print 'Success!'
