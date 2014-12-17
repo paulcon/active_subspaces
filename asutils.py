@@ -114,18 +114,18 @@ def quadratic_model_check(X,f,gamma,k,n_boot=1000):
         for j in range(m-1):
             sub_dist[j,i] = np.linalg.norm(np.dot(W[:,:j+1].T,W0[:,j+1:]),ord=2)
 
-    lam_bootrange = np.zeros((k,2))
-    sub_bootrange = np.zeros((k_sub,3))
+    lam_br = np.zeros((k,2))
+    sub_br = np.zeros((k_sub,3))
     for i in range(k):
         lam_sort = np.sort(lam_boot[i,:])
-        lam_bootrange[i,0] = lam_sort[np.floor(0.025*n_boot)]
-        lam_bootrange[i,1] = lam_sort[np.ceil(0.925*n_boot)]
+        lam_br[i,0] = lam_sort[np.floor(0.025*n_boot)]
+        lam_br[i,1] = lam_sort[np.ceil(0.925*n_boot)]
     for i in range(k_sub):
         sub_sort = np.sort(sub_dist[i,:])
-        sub_bootrange[i,0] = sub_sort[np.floor(0.025*n_boot)]        
-        sub_bootrange[i,1] = np.mean(sub_sort)
-        sub_bootrange[i,2] = sub_sort[np.ceil(0.925*n_boot)]
-    return lam[:k],W,lam_bootrange,sub_bootrange
+        sub_br[i,0] = sub_sort[np.floor(0.025*n_boot)]        
+        sub_br[i,1] = np.mean(sub_sort)
+        sub_br[i,2] = sub_sort[np.ceil(0.925*n_boot)]
+    return lam[:k],W,lam_br,sub_br
     
     
 def linear_model_check(X,f,n_boot=1000):
@@ -163,18 +163,18 @@ def get_active_subspace(G,k,n_boot=1000):
         for j in range(k_sub):
             sub_dist[j,i] = np.linalg.norm(np.dot(W[:,:j+1].T,W0[:,j+1:]),ord=2)
 
-    lam_bootrange = np.zeros((k,2))
-    sub_bootrange = np.zeros((k_sub,3))
+    lam_br = np.zeros((k,2))
+    sub_br = np.zeros((k_sub,3))
     for i in range(k):
         lam_sort = np.sort(lam_boot[i,:])
-        lam_bootrange[i,0] = lam_sort[np.floor(0.025*n_boot)]
-        lam_bootrange[i,1] = lam_sort[np.ceil(0.925*n_boot)]
+        lam_br[i,0] = lam_sort[np.floor(0.025*n_boot)]
+        lam_br[i,1] = lam_sort[np.ceil(0.925*n_boot)]
     for i in range(k_sub):
         sub_sort = np.sort(sub_dist[i,:])
-        sub_bootrange[i,0] = sub_sort[np.floor(0.025*n_boot)]
-        sub_bootrange[i,1] = np.mean(sub_sort)
-        sub_bootrange[i,2] = sub_sort[np.ceil(0.925*n_boot)]
-    return lam,W,lam_bootrange,sub_bootrange
+        sub_br[i,0] = sub_sort[np.floor(0.025*n_boot)]
+        sub_br[i,1] = np.mean(sub_sort)
+        sub_br[i,2] = sub_sort[np.ceil(0.925*n_boot)]
+    return lam,W,lam_br,sub_br
 
 def quadtest(X):
     M,m = X.shape
@@ -269,7 +269,7 @@ def sufficient_summary_plot(y,f,w,w_boot=None,in_labels=None,out_label=None):
     
     plt.show()
     
-def plot_active_subspace(lam,W,lam_bootrange=None,sub_bootrange=None,in_labels=None,out_label=None):
+def plot_active_subspace(lam,W,lam_br=None,sub_br=None,in_labels=None,out_label=None):
     
     # make figs directory
     if not os.path.isdir('figs'):
@@ -293,8 +293,8 @@ def plot_active_subspace(lam,W,lam_bootrange=None,sub_bootrange=None,in_labels=N
     
     plt.figure()
     plt.semilogy(range(1,k+1),lam,'ko-')
-    if lam_bootrange is not None:
-        plt.fill_between(range(1,k+1),lam_bootrange[:,0],lam_bootrange[:,1],
+    if lam_br is not None:
+        plt.fill_between(range(1,k+1),lam_br[:,0],lam_br[:,1],
             facecolor='0.7', interpolate=True)
     plt.xlabel('Index')
     plt.ylabel('Eigenvalues')
@@ -319,11 +319,11 @@ def plot_active_subspace(lam,W,lam_bootrange=None,sub_bootrange=None,in_labels=N
     figname = 'figs/evecs_' + out_label + '.eps'
     plt.savefig(figname, dpi=300, bbox_inches='tight', pad_inches=0.0)
     
-    if sub_bootrange is not None:
-        kk = sub_bootrange.shape[0]
+    if sub_br is not None:
+        kk = sub_br.shape[0]
         plt.figure()
-        plt.semilogy(range(1,kk+1),sub_bootrange[:,1],'ko-',markersize=12)
-        plt.fill_between(range(1,kk+1),sub_bootrange[:,0],sub_bootrange[:,2],
+        plt.semilogy(range(1,kk+1),sub_br[:,1],'ko-',markersize=12)
+        plt.fill_between(range(1,kk+1),sub_br[:,0],sub_br[:,2],
             facecolor='0.7', interpolate=True)
         plt.xlabel('Subspace dimension')
         plt.ylabel('Subspace distance')
