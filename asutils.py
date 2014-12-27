@@ -1,6 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
-import os
 
 def normalize_uniform(X,xl,xu):
     M,m = X.shape
@@ -71,20 +69,6 @@ def get_eigenpairs(b,A,gamma):
     W = W*np.tile(np.sign(W[0,:]),(m,1))
     return lam,W
     
-def local_linear_gradients(X,f,XX):
-    M,m = X.shape
-    MM = XX.shape[0]
-    G = np.zeros((MM,m))
-    nloc = np.minimum(2*m,M)
-    for i in range(MM):
-        x = XX[i,:]
-        A = np.sum((X - np.tile(x,(M,1)))**2,axis=1)
-        ind = np.argsort(A)
-        A = np.hstack((np.ones((nloc,1)), X[ind[:nloc],:]))
-        u = np.linalg.lstsq(A,f[ind[:nloc]])[0]
-        G[i,:] = u[1:].copy()
-    return G
-    
 def quadratic_model_check(X,f,gamma,k,n_boot=1000):
     M,m = X.shape
     gamma = gamma.reshape((1,m))
@@ -139,43 +123,6 @@ def linear_model_check(X,f,n_boot=1000):
         w_boot[:,i] = lingrad(X[ind[:,i],:],f[ind[:,i]])
     return w,w_boot
 
-def get_active_subspace(G,k,n_boot=1000):
-    
-    # set integers
-    M,m = G.shape
-    k_sub = np.minimum(k,m-1)
-    
-    # compute active subspace
-    U,sig,W = np.linalg.svd(G,full_matrices=False)
-    lam = (1.0/M)*(sig[:k]**2)
-    W = W.T
-    W = W*np.tile(np.sign(W[0,:]),(m,1))
-    
-    # bootstrap
-    lam_boot = np.zeros((k,n_boot))
-    sub_dist = np.zeros((k_sub,n_boot))
-    ind = np.random.randint(M,size=(M,n_boot))
-    for i in range(n_boot):
-        U0,sig0,W0 = np.linalg.svd(G[ind[:,i],:],full_matrices=False)
-        W0 = W0.T
-        W0 = W0*np.tile(np.sign(W0[0,:]),(m,1))
-        lam_boot[:,i] = (1.0/M)*(sig0[:k]**2)
-        for j in range(k_sub):
-            sub_dist[j,i] = np.linalg.norm(np.dot(W[:,:j+1].T,W0[:,j+1:]),ord=2)
-
-    lam_br = np.zeros((k,2))
-    sub_br = np.zeros((k_sub,3))
-    for i in range(k):
-        lam_sort = np.sort(lam_boot[i,:])
-        lam_br[i,0] = lam_sort[np.floor(0.025*n_boot)]
-        lam_br[i,1] = lam_sort[np.ceil(0.925*n_boot)]
-    for i in range(k_sub):
-        sub_sort = np.sort(sub_dist[i,:])
-        sub_br[i,0] = sub_sort[np.floor(0.025*n_boot)]
-        sub_br[i,1] = np.mean(sub_sort)
-        sub_br[i,2] = sub_sort[np.ceil(0.925*n_boot)]
-    return lam,W,lam_br,sub_br
-
 def quadtest(X):
     M,m = X.shape
     B = np.random.normal(size=(m,m))
@@ -189,151 +136,6 @@ def quadtest(X):
         
     return f,e,Q,A
 
-def sufficient_summary_plot(y,f,w,w_boot=None,in_labels=None,out_label=None):
-    
-    # make figs directory
-    if not os.path.isdir('figs'):
-        os.mkdir('figs')
-    
-    # set plot fonts
-    myfont = {'family' : 'lucinda',
-            'weight' : 'normal',
-            'size'   : 14}
-    plt.rc('font', **myfont)
-    
-    # check sizes of y and w
-    m = w.shape[0]
-    n = len(w.shape)    
-    if n == 1:
-        y1 = y
-        w1 = w
-    else:
-        y1 = y[:,0]
-        y2 = y[:,1]
-        w1 = w[:,0]
-        w2 = w[:,1]
-    
-    # set labels for plots
-    if in_labels is None:
-        in_labels = [str(i) for i in range(1,m+1)]
-    if out_label is None:
-        out_label = 'Output'
-    
-    plt.figure()
-    if w_boot is not None:
-        plt.plot(range(1,m+1),w_boot,color='0.7')
-    plt.plot(range(1,m+1),w1,'ko-',markersize=12)
-    plt.xlabel('Variable')
-    plt.ylabel('Weights')
-    plt.grid(True)
-    if m<=10:
-        plt.xticks(range(1,m+1),in_labels,rotation='vertical')
-        plt.margins(0.2)
-        plt.subplots_adjust(bottom=0.15)
-    plt.axis([1,m,-1,1])
-    figname = 'figs/ssp1_weights_' + out_label + '.eps'
-    plt.savefig(figname, dpi=300, bbox_inches='tight', pad_inches=0.0)
-    
-    plt.figure()
-    plt.plot(y1,f,'bo',markersize=12)
-    plt.xlabel('Active variable')
-    plt.ylabel(out_label)
-    plt.grid(True)
-    figname = 'figs/ssp1_' + out_label + '.eps'
-    plt.savefig(figname, dpi=300, bbox_inches='tight', pad_inches=0.0)
-        
-    if n==2:
-        
-        plt.figure()
-        plt.plot(range(1,m+1),w1,'bo-',markersize=12,label='1')
-        plt.plot(range(1,m+1),w2,'ro-',markersize=12,label='2')
-        plt.xlabel('Variable')
-        plt.ylabel('Weights')
-        plt.grid(True)
-        if m<=10:
-            plt.xticks(range(1,m+1),in_labels,rotation='vertical')
-            plt.margins(0.2)
-            plt.subplots_adjust(bottom=0.15)
-        plt.axis([1,m,-1,1])
-        plt.legend(loc='best')
-        figname = 'figs/ssp2_weights_' + out_label + '.eps'
-        plt.savefig(figname, dpi=300, bbox_inches='tight', pad_inches=0.0)
-        
-        plt.figure()
-        plt.scatter(y1,y2,c=f,s=150.0,vmin=np.min(f),vmax=np.max(f))
-        plt.xlabel('Active variable 1')
-        plt.ylabel('Active variable 2')
-        plt.title(out_label)
-        figname = 'figs/ssp2_' + out_label + '.eps'
-        plt.savefig(figname, dpi=300, bbox_inches='tight', pad_inches=0.0)
-    
-    plt.show()
-    
-def plot_active_subspace(lam,W,lam_br=None,sub_br=None,in_labels=None,out_label=None):
-    
-    # make figs directory
-    if not os.path.isdir('figs'):
-        os.mkdir('figs')
-    
-    # set plot fonts
-    myfont = {'family' : 'lucinda',
-            'weight' : 'normal',
-            'size'   : 14}
-    plt.rc('font', **myfont)
-    
-    # number of variables
-    k = lam.shape[0]
-    m = W.shape[0]
-    
-    # set labels for plots
-    if in_labels is None:
-        in_labels = [str(i) for i in range(1,m+1)]
-    if out_label is None:
-        out_label = 'Output'
-    
-    plt.figure()
-    plt.semilogy(range(1,k+1),lam,'ko-')
-    if lam_br is not None:
-        plt.fill_between(range(1,k+1),lam_br[:,0],lam_br[:,1],
-            facecolor='0.7', interpolate=True)
-    plt.xlabel('Index')
-    plt.ylabel('Eigenvalues')
-    plt.title(out_label)
-    plt.grid(True)
-    figname = 'figs/evals_' + out_label + '.eps'
-    plt.savefig(figname, dpi=300, bbox_inches='tight', pad_inches=0.0)
-    
-    plt.figure()
-    plt.plot(range(1,m+1),W[:,0],'bo-',markersize=12,label='1')
-    plt.plot(range(1,m+1),W[:,1],'ro-',markersize=12,label='2')
-    plt.plot(range(1,m+1),W[:,2],'go-',markersize=12,label='3')
-    plt.xlabel('Variable')
-    plt.ylabel('Eigenvectors')
-    plt.grid(True)
-    if m<=10:
-        plt.xticks(range(1,m+1),in_labels,rotation='vertical')
-        plt.margins(0.2)
-        plt.subplots_adjust(bottom=0.15)
-    plt.axis([1,m,-1,1])
-    plt.legend(loc='best')
-    figname = 'figs/evecs_' + out_label + '.eps'
-    plt.savefig(figname, dpi=300, bbox_inches='tight', pad_inches=0.0)
-    
-    if sub_br is not None:
-        kk = sub_br.shape[0]
-        plt.figure()
-        plt.semilogy(range(1,kk+1),sub_br[:,1],'ko-',markersize=12)
-        plt.fill_between(range(1,kk+1),sub_br[:,0],sub_br[:,2],
-            facecolor='0.7', interpolate=True)
-        plt.xlabel('Subspace dimension')
-        plt.ylabel('Subspace distance')
-        plt.grid(True)
-        plt.xticks(range(1,k+1))
-        plt.axis([1,kk,0.001,1])
-        figname = 'figs/subspace_' + out_label + '.eps'
-        plt.savefig(figname, dpi=300, bbox_inches='tight', pad_inches=0.0)
-    
-    plt.show()
     
     
     

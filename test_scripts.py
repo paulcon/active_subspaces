@@ -13,37 +13,30 @@ def quad_fun(x):
     df = np.dot(A,x)
     return f,df
 
-def sample_function(X,fun,dflag=False):
-    M,m = X.shape
-    F = np.zeros((M,1))
-    if dflag:
-        dF = np.zeros((M,m))
-        for i in range(M):
-            x = X[i,:]
-            f,df = fun(x.T)
-            F[i] = f
-            dF[i,:] = df.T
-        return F,dF
-    else:
-        for i in range(M):
-            x = X[i,:]
-            F[i] = fun(x.T)
-        return F
+def quad_fun_nograd(x):
+    A = np.array([[ 0.2406659045776698, -0.3159904335007421, -0.1746908591702878],
+       [-0.3159904335007421,  0.5532215729009683,  0.3777995408101305],
+       [-0.1746908591702878,  0.3777995408101305,  0.3161125225213613]])
+    f = 0.5*np.dot(x.T,np.dot(A,x))
+    return f
         
 def test_interface(fun):
-    M,m = 30,3
+    MM,M,m = 30,300,3
     X = np.random.uniform(-1.0,1.0,(M,m))
-    F,dF = sample_function(X,fun,dflag=True)
+    F = ac.sample_function(X,fun,dflag=False)
     
-    # get active subspace with gradients from local linear grads
-    lam,W,lam_br,sub_br = ac.get_active_subspace(dF,2)
+    XX = np.random.uniform(-1.0,1.0,(MM,m))
+    ddF = ac.local_linear_gradients(X,F,XX)
+    
+    e,W,e_br,sub_br = ac.compute_active_subspace(ddF,2)
+    
+    ac.plot_eigenvalues(e,e_br=e_br)
+    ac.plot_subspace_errors(sub_br)
+    ac.plot_eigenvectors(W[:,:1])
     
     # make 1d sufficient summary plots
     y = np.dot(X,W[:,0])
-    ac.sufficient_summary_plot(y,F,W[:,0])
-    
-    # make sufficient summary plots
-    ac.plot_active_subspace(lam,W,lam_br=lam_br,sub_br=sub_br)
+    ac.sufficient_summary_plot(y,F)
     
     return 0
 
@@ -53,7 +46,7 @@ def test_load_data():
     df = pn.DataFrame.from_csv('HyShotII.txt')
     data = df.values
     X = data[:,0:7]
-    F = data[:,7:9]
+    F = data[:,7]
     M = F.shape[0]
     m = X.shape[1]
     
@@ -86,8 +79,8 @@ def test_load_data():
 
 if __name__ == "__main__":
     
-    if not test_load_data():
-        print 'Success!'
+    #if not test_load_data():
+    #    print 'Success!'
     
-    if not test_interface(quad_fun):
+    if not test_interface(quad_fun_nograd):
         print 'Success!'
