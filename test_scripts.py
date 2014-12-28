@@ -5,6 +5,19 @@ import pandas as pn
 import active_subspaces as ac
 import matplotlib.pyplot as plt
 
+def quadtest(X):
+    M,m = X.shape
+    B = np.random.normal(size=(m,m))
+    Q = np.linalg.qr(B)[0]
+    e = np.array([10**(-i) for i in range(1,m+1)])
+    A = np.dot(Q,np.dot(np.diagflat(e),Q.T))
+    f = np.zeros((M,1))
+    for i in range(M):
+        z = X[i,:]
+        f[i] = 0.5*np.dot(z,np.dot(A,z.T))
+        
+    return f,e,Q,A
+
 def quad_fun(x):
     A = np.array([[ 0.2406659045776698, -0.3159904335007421, -0.1746908591702878],
        [-0.3159904335007421,  0.5532215729009683,  0.3777995408101305],
@@ -121,6 +134,15 @@ def test_load_data():
     
     return 0
 
+def test_quick_check():
+    # load data
+    df = pn.DataFrame.from_csv('quad_nograd.txt')
+    data = df.values
+    X = data[:,0:3]
+    F = data[:,3]
+    w = ac.quick_check(X,F)
+    return 0
+
 def write_quad_csv():
     X = np.random.uniform(-1.0,1.0,(100,3))
     D = np.zeros((100,4))
@@ -150,15 +172,17 @@ def write_quad_csv():
 
 if __name__ == "__main__":
     
-    if not test_load_data():
-        print 'Success!'
+    #if not test_load_data():
+    #    print 'Success!'
     
-    if not test_interface(quad_fun):
-        print 'Success!'
+    #if not test_interface(quad_fun):
+    #    print 'Success!'
     
-    if not test_interface_nograd(quad_fun_nograd):
-        print 'Success!'
+    #if not test_interface_nograd(quad_fun_nograd):
+    #    print 'Success!'
     
+    if not test_quick_check():
+        print 'Success!'
     
 
     

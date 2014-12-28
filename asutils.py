@@ -1,4 +1,6 @@
 import numpy as np
+from analyze_active_subspace import \
+    sufficient_summary_plot,plot_eigenvectors
 
 def normalize_uniform(X,xl,xu):
     M,m = X.shape
@@ -41,6 +43,25 @@ def lingrad(X,f):
     A = np.hstack((np.ones((M,1)), X))
     u = np.linalg.lstsq(A,f)[0]
     w = u[1:]/np.linalg.norm(u[1:])
+    return w
+
+def quick_check(X,f,n_boot=1000,in_labels=None,out_label=None):
+    M,m = X.shape
+    w = lingrad(X,f)
+    
+    # bootstrap
+    ind = np.random.randint(M,size=(M,n_boot))
+    w_boot = np.zeros((m,n_boot))
+    for i in range(n_boot): 
+        w_boot[:,i] = lingrad(X[ind[:,i],:],f[ind[:,i]])
+    
+    # make sufficient summary plot
+    y = np.dot(X,w)
+    sufficient_summary_plot(y,f,out_label=out_label)
+    
+    # plot weights
+    plot_eigenvectors(w,W_boot=w_boot,in_labels=in_labels,out_label=out_label)
+    
     return w
     
 def quadreg(Xsq,indices,f):
@@ -110,31 +131,7 @@ def quadratic_model_check(X,f,gamma,k,n_boot=1000):
         sub_br[i,1] = np.mean(sub_sort)
         sub_br[i,2] = sub_sort[np.ceil(0.925*n_boot)]
     return lam[:k],W,lam_br,sub_br
-    
-    
-def linear_model_check(X,f,n_boot=1000):
-    M,m = X.shape
-    w = lingrad(X,f)
-    
-    # bootstrap
-    ind = np.random.randint(M,size=(M,n_boot))
-    w_boot = np.zeros((m,n_boot))
-    for i in range(n_boot): 
-        w_boot[:,i] = lingrad(X[ind[:,i],:],f[ind[:,i]])
-    return w,w_boot
 
-def quadtest(X):
-    M,m = X.shape
-    B = np.random.normal(size=(m,m))
-    Q = np.linalg.qr(B)[0]
-    e = np.array([10**(-i) for i in range(1,m+1)])
-    A = np.dot(Q,np.dot(np.diagflat(e),Q.T))
-    f = np.zeros((M,1))
-    for i in range(M):
-        z = X[i,:]
-        f[i] = 0.5*np.dot(z,np.dot(A,z.T))
-        
-    return f,e,Q,A
 
     
     

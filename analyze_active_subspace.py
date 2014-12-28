@@ -74,7 +74,7 @@ def plot_eigenvectors(W,W_boot=None,in_labels=None,out_label=None):
         plt.figure()
         if W_boot is not None:
             plt.plot(range(1,m+1),W_boot,color='0.7')
-        plt.plot(range(1,m+1),W[:,0],'ko-',markersize=12)
+        plt.plot(range(1,m+1),W,'ko-',markersize=12)
         plt.xlabel('Variable')
         plt.ylabel('Weights')
         plt.grid(True)
