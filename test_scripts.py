@@ -169,6 +169,17 @@ def write_quad_csv():
     df = pn.DataFrame(data=D,columns=labels)
     df.to_csv('quad.txt')
 
+def test_gauss_design(fun):
+    M,m = 300,3
+    X = np.random.uniform(-1.0,1.0,(M,m))
+    F,dF = ac.sample_function(X,fun,dflag=True)
+    
+    e,W,e_br,sub_br = ac.compute_active_subspace(dF,2)
+    
+    X,y = ac.response_surface_design(W,2,[3,3],5)
+    
+    return 0
+    
 
 if __name__ == "__main__":
     
@@ -181,7 +192,10 @@ if __name__ == "__main__":
     #if not test_interface_nograd(quad_fun_nograd):
     #    print 'Success!'
     
-    if not test_quick_check():
+    #if not test_quick_check():
+    #    print 'Success!'
+    
+    if not test_gauss_design(quad_fun):
         print 'Success!'
     
 

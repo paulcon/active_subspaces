@@ -41,14 +41,13 @@ def gh1d(N):
     return x,w
     
 def gauss_hermite(N):
-    if isinstance(N,int):
-        return gh1d(N)
+    if len(N)==1:
+        return gh1d(N[0])
     else:
-        n = len(N)
         x = np.array([[1.0]])
         w = np.array([[1.0]])
-        for i in range(n):
-            xi,wi = gh1d(N[i])
+        for n in N:
+            xi,wi = gh1d(n)
             
             xL = np.kron(x.copy(),np.ones(xi.shape))
             xU = np.kron(np.ones((x.shape[0],1)),xi)
