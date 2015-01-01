@@ -5,8 +5,6 @@ from CGAL.CGAL_Kernel import Point_2
 from CGAL.CGAL_Mesh_2 import Mesh_2_Constrained_Delaunay_triangulation_2
 from CGAL.CGAL_Mesh_2 import Delaunay_mesh_size_criteria_2
 from CGAL import CGAL_Mesh_2
-import pdb
-import matplotlib.pyplot as plt
 
 def nzv(m,n,M=None):
     # number of zonotope vertices
