@@ -1,10 +1,12 @@
 import numpy as np
 from scipy.spatial import ConvexHull,distance_matrix
 from scipy.optimize import minimize
-from CGAL.CGAL_Kernel import Point_2
-from CGAL.CGAL_Mesh_2 import Mesh_2_Constrained_Delaunay_triangulation_2
-from CGAL.CGAL_Mesh_2 import Delaunay_mesh_size_criteria_2
-from CGAL import CGAL_Mesh_2
+
+# Meshing turned out to be too limiting
+#from CGAL.CGAL_Kernel import Point_2
+#from CGAL.CGAL_Mesh_2 import Mesh_2_Constrained_Delaunay_triangulation_2
+#from CGAL.CGAL_Mesh_2 import Delaunay_mesh_size_criteria_2
+#from CGAL import CGAL_Mesh_2
 
 def nzv(m,n,M=None):
     # number of zonotope vertices
@@ -60,26 +62,27 @@ def maximin_design(yzv,N):
     Y = np.vstack((yzv,res.x.reshape(y0.shape)))
     return Y
     
-def mesh_zonotope_2(W1):
-    # check that W1.shape[1] == 2
-    ymsh = Mesh_2_Constrained_Delaunay_triangulation_2()
-    
-    Yz = zonotope_vertices(W1)
-    Yhull = ConvexHull(Yz)
-    for s in Yhull.simplices:
-        p0 = ymsh.insert(Point_2(Yz[s[0],0],Yz[s[0],1]))
-        p1 = ymsh.insert(Point_2(Yz[s[1],0],Yz[s[1],1]))
-        ymsh.insert_constraint(p0,p1)
-        
-    print "Number of vertices: ", ymsh.number_of_vertices()
-    print "Meshing the triangulation..."
-    CGAL_Mesh_2.refine_Delaunay_mesh_2(ymsh,Delaunay_mesh_size_criteria_2(0.125, 1.0))    
-    print "Number of vertices: ", ymsh.number_of_vertices()
-    
-    Yl = []
-    for p in ymsh.points():
-        Yl.append(np.array([p.x(),p.y()]))
-    return np.array(Yl)
+# Meshing was too limiting. Settled for maximin design
+#def mesh_zonotope_2(W1):
+#    # check that W1.shape[1] == 2
+#    ymsh = Mesh_2_Constrained_Delaunay_triangulation_2()
+#    
+#    Yz = zonotope_vertices(W1)
+#    Yhull = ConvexHull(Yz)
+#    for s in Yhull.simplices:
+#        p0 = ymsh.insert(Point_2(Yz[s[0],0],Yz[s[0],1]))
+#        p1 = ymsh.insert(Point_2(Yz[s[1],0],Yz[s[1],1]))
+#        ymsh.insert_constraint(p0,p1)
+#        
+#    print "Number of vertices: ", ymsh.number_of_vertices()
+#    print "Meshing the triangulation..."
+#    CGAL_Mesh_2.refine_Delaunay_mesh_2(ymsh,Delaunay_mesh_size_criteria_2(0.125, 1.0))    
+#    print "Number of vertices: ", ymsh.number_of_vertices()
+#    
+#    Yl = []
+#    for p in ymsh.points():
+#        Yl.append(np.array([p.x(),p.y()]))
+#    return np.array(Yl)
     
 if __name__ == '__main__':
     m,n = 20,4
