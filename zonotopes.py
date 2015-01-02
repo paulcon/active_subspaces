@@ -44,9 +44,10 @@ def zonotope_vertices(W1):
 def maximin_design_obj(y,yzv=None):
     Ny,n = yzv.shape
     N = y.size/n
-    Y = np.vstack((y.reshape((N,n)),yzv))
-    Dy = distance_matrix(Y,Y) + 1e4*np.eye(N+Ny)
-    return -np.amin(Dy.flatten())
+    Y = y.reshape((N,n))
+    D0 = distance_matrix(Y,Y) + 1e4*np.eye(N)
+    D1 = distance_matrix(Y,yzv)
+    return -np.amin(np.hstack((D0.flatten(),D1.flatten())))
 
 def maximin_design(yzv,N):
     n = yzv.shape[1]
@@ -56,11 +57,11 @@ def maximin_design(yzv,N):
     cons = ({'type':'ineq',
                 'fun' : lambda x: np.dot(A,x)-b,
                 'jac' : lambda x: A})
-    y0 = 0.1*np.random.normal(size=(N,n))
+    y0 = np.random.normal(size=(N,n))
     res = minimize(maximin_design_obj,y0,args=(yzv,),constraints=cons,
                     method='SLSQP',options={'disp':True,'maxiter':1e9,'ftol':1e-12})
     Y = np.vstack((yzv,res.x.reshape(y0.shape)))
-    return Y
+    return Y,res
     
 # Meshing was too limiting. Settled for maximin design
 #def mesh_zonotope_2(W1):
