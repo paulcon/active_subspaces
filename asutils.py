@@ -63,7 +63,28 @@ def quick_check(X,f,n_boot=1000,in_labels=None,out_label=None):
     plot_eigenvectors(w,W_boot=w_boot,in_labels=in_labels,out_label=out_label)
     
     return w
+
+def sample_z(N,y,W1,W2):
+    mz = W2.shape[1]
+    z0 = np.zeros((mz,1))
+    s = np.dot(W1,y).reshape((W1.shape[0],1))
     
+    # burn in
+    for i in range(N):
+        zc = z0 + 0.66*np.random.normal(size=z0.shape)
+        if all(np.dot(W2,zc) <= 1-s) and all(np.dot(W2,zc) >= -1-s):
+            z0 = zc
+    
+    # sample
+    Z = np.zeros((mz,N))
+    for i in range(N):
+        zc = z0 + 0.66*np.random.normal(size=z0.shape)
+        if all(np.dot(W2,zc) <= 1-s) and all(np.dot(W2,zc) >= -1-s):
+            z0 = zc
+        Z[:,i] = z0.reshape((z0.shape[0],))
+        
+    return Z
+
 def quadreg(Xsq,indices,f):
     M,m = indices.shape
     u = np.linalg.lstsq(Xsq,f)[0]

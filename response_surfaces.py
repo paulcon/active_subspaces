@@ -1,27 +1,7 @@
 import numpy as np
 import zonotopes as zn
+import asutils as au
 from gaussian_quadrature import gauss_hermite
-
-def sample_z(N,y,W1,W2):
-    mz = W2.shape[1]
-    z0 = np.zeros((mz,1))
-    s = np.dot(W1,y).reshape((W1.shape[0],1))
-    
-    # burn in
-    for i in range(N):
-        zc = z0 + 0.66*np.random.normal(size=z0.shape)
-        if all(np.dot(W2,zc) <= 1-s) and all(np.dot(W2,zc) >= -1-s):
-            z0 = zc
-    
-    # sample
-    Z = np.zeros((mz,N))
-    for i in range(N):
-        zc = z0 + 0.66*np.random.normal(size=z0.shape)
-        if all(np.dot(W2,zc) <= 1-s) and all(np.dot(W2,zc) >= -1-s):
-            z0 = zc
-        Z[:,i] = z0.reshape((z0.shape[0],))
-        
-    return Z
 
 def response_surface_design(W,n,N,NMC,bflag=0):
     # check len(N) == n
@@ -36,23 +16,22 @@ def response_surface_design(W,n,N,NMC,bflag=0):
                 yl,yu = y0,-y0
             else:
                 yl,yu = -y0,y0
-            y = np.linspace(yl,yu,N[0]).reshape((N[0],1))
+            Yp = np.linspace(yl,yu,N[0]).reshape((N[0],1))
         else:
             yzv = zn.zonotope_vertices(W1)
-            y = zn.maximin_design(yzv,N[0])
-        
-        Ny = y.shape[0]
+            Yp = zn.maximin_design(yzv,N[0])
         
         # sample the z's 
-        Zl = []
-        for yp in y:
-            Zl.append(sample_z(NMC,yp,W1,W2))
-        Z = np.array(Zl).reshape((Ny,m-n,NMC))
+        Ny = Yp.shape[0]
+        Zlist = []
+        for yp in Yp:
+            Zlist.append(au.sample_z(NMC,yp,W1,W2))
+        Z = np.array(Zlist).reshape((Ny,m-n,NMC))
         
     else:
         # Gaussian case
-        y = gauss_hermite(N)[0]
-        Ny = y.shape[0]
+        Yp = gauss_hermite(N)[0]
+        Ny = Yp.shape[0]
         
         # sample z's
         Z = np.random.normal(size=(Ny,m-n,NMC))
@@ -60,9 +39,12 @@ def response_surface_design(W,n,N,NMC,bflag=0):
     # rotate back to x
     Y = np.tile(y.reshape((Ny,n,1)),(1,1,NMC))
     YZ = np.concatenate((Y,Z),axis=1).transpose((1,0,2)).reshape((m,NMC*Ny)).transpose((1,0))
-    X = np.dot(YZ,W.T)
-        
-    return X,y
+    Xp = np.dot(YZ,W.T)
+    
+    # weights to get function values of x to function values of y
+    Wp = (1.0/NMC)*np.kron(np.eye(Ny),np.ones(NMC))
+    
+    return Xp,Wp,Yp
         
 if __name__ == '__main__':
     X,y = response_surface_design(np.eye(3),2,[3],3,bflag=1)
