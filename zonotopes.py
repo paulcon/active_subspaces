@@ -59,9 +59,9 @@ def maximin_design(yzv,N):
                 'jac' : lambda x: A})
     y0 = np.random.normal(size=(N,n))
     res = minimize(maximin_design_obj,y0,args=(yzv,),constraints=cons,
-                    method='SLSQP',options={'disp':True,'maxiter':1e9,'ftol':1e-12})
+                    method='SLSQP',options={'disp':False,'maxiter':1e9,'ftol':1e-12})
     Y = np.vstack((yzv,res.x.reshape(y0.shape)))
-    return Y,res
+    return Y
     
 # Meshing was too limiting. Settled for maximin design
 #def mesh_zonotope_2(W1):

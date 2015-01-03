@@ -49,11 +49,6 @@ def response_surface_design(W,n,N,NMC,bflag=0):
             Zl.append(sample_z(NMC,yp,W1,W2))
         Z = np.array(Zl).reshape((Ny,m-n,NMC))
         
-        # rotate back to x
-        Y = np.tile(y.reshape((Ny,n,1)),(1,1,NMC))
-        YZ = np.concatenate((Y,Z),axis=1).transpose((1,0,2)).reshape((m,NMC*Ny)).transpose((1,0))
-        X = np.dot(YZ,W.T)
-        
     else:
         # Gaussian case
         y = gauss_hermite(N)[0]
@@ -62,10 +57,10 @@ def response_surface_design(W,n,N,NMC,bflag=0):
         # sample z's
         Z = np.random.normal(size=(Ny,m-n,NMC))
         
-        # rotate back to x
-        Y = np.tile(y.reshape((Ny,n,1)),(1,1,NMC))
-        YZ = np.concatenate((Y,Z),axis=1).transpose((1,0,2)).reshape((m,NMC*Ny)).transpose((1,0))
-        X = np.dot(YZ,W.T)
+    # rotate back to x
+    Y = np.tile(y.reshape((Ny,n,1)),(1,1,NMC))
+    YZ = np.concatenate((Y,Z),axis=1).transpose((1,0,2)).reshape((m,NMC*Ny)).transpose((1,0))
+    X = np.dot(YZ,W.T)
         
     return X,y
         
