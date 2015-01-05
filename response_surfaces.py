@@ -1,9 +1,11 @@
 import numpy as np
 import zonotopes as zn
-import asutils as au
+from asutils import VariableMap
 from gaussian_quadrature import gauss_hermite
+import pdb
 
 def response_surface_design(W,n,N,NMC,bflag=0):
+    
     # check len(N) == n
     m = W.shape[0]
     W1,W2 = W[:,:n],W[:,n:]
@@ -14,39 +16,47 @@ def response_surface_design(W,n,N,NMC,bflag=0):
             y0 = np.dot(W1.T,np.sign(W1))[0]
             if y0 < -y0:
                 yl,yu = y0,-y0
+                xl = np.sign(W1).reshape((1,m))
+                xu = -np.sign(W1).reshape((1,m))
             else:
                 yl,yu = -y0,y0
-            Yp = np.linspace(yl,yu,N[0]).reshape((N[0],1))
+                xl = -np.sign(W1).reshape((1,m))
+                xu = np.sign(W1).reshape((1,m))
+            y = np.linspace(yl,yu,N[0]).reshape((N[0],1))
+            
+            Yzv = np.array([yl,yu])
+            Xzv = np.vstack((xl,xu))
+            Y = y[1:-1]
+            
         else:
-            yzv = zn.zonotope_vertices(W1)
-            Yp = zn.maximin_design(yzv,N[0])
-        
-        # sample the z's 
-        Ny = Yp.shape[0]
-        Zlist = []
-        for yp in Yp:
-            Zlist.append(au.sample_z(NMC,yp,W1,W2))
-        Z = np.array(Zlist).reshape((Ny,m-n,NMC))
+            Yzv,Xzv = zn.zonotope_vertices(W1)
+            Y = zn.maximin_design(Yzv,N[0])
         
     else:
         # Gaussian case
-        Yp = gauss_hermite(N)[0]
-        Ny = Yp.shape[0]
-        
-        # sample z's
-        Z = np.random.normal(size=(Ny,m-n,NMC))
-        
-    # rotate back to x
-    Y = np.tile(y.reshape((Ny,n,1)),(1,1,NMC))
-    YZ = np.concatenate((Y,Z),axis=1).transpose((1,0,2)).reshape((m,NMC*Ny)).transpose((1,0))
-    Xp = np.dot(YZ,W.T)
+        if len(N) != n:
+            raise Exception('N should be a list of integers of length n.')
+        Y = gauss_hermite(N)[0]
     
-    # weights to get function values of x to function values of y
-    Wp = (1.0/NMC)*np.kron(np.eye(Ny),np.ones(NMC))
+    vm = VariableMap(W,n,bflag)
+    X,ind = vm.inverse(Y,NMC)
+    if bflag:
+        X = np.vstack((X,Xzv))
+        ind = np.hstack((ind,np.arange(Y.shape[0],Y.shape[0]+Yzv.shape[0])))
+        Y = np.vstack((Y,Yzv))
     
-    return Xp,Wp,Yp
+    return X,ind,Y
         
 if __name__ == '__main__':
-    X,y = response_surface_design(np.eye(3),2,[3],3,bflag=1)
+    m,n = 7,3
+    N,NMC = [20],3
+    bflag = 1
+    W = np.linalg.qr(np.random.normal(size=(m,m)))[0]
+    X,ind,Y = response_surface_design(W,n,N,NMC,bflag)
     print X
-    print y
+    print Y
+    print ind
+    if bflag:
+        print np.linalg.norm(np.kron(Y[:N[0],:],np.ones((NMC,1))) - np.dot(X[:(N[0]*NMC),:],W[:,:n]))
+    else:
+        print np.linalg.norm(np.kron(Y,np.ones((NMC,1))) - np.dot(X,W[:,:n]))

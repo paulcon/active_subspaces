@@ -1,5 +1,5 @@
 import numpy as np
-from asutils import index_set
+import asutils as au
 from scipy.optimize import fminbound
 import matplotlib.pyplot as plt
 
@@ -13,7 +13,7 @@ class PolynomialRegression():
         except:
             raise Exception('X should be a numpy array of size (M,m), where M is the number of points and m is the dimension.')
          
-        B = polynomial_bases(X,self.N)
+        B = polynomial_bases(X,self.N)[0]
         Q,R = np.linalg.qr(B)
         p_weights = np.linalg.solve(R,np.dot(Q.T,f))
         
@@ -28,7 +28,7 @@ class PolynomialRegression():
         except:
             raise Exception('Xstar should be a numpy array of size (M,m), where M is the number of points and m is the dimension.')
         
-        Bstar = polynomial_bases(Xstar,self.N)
+        Bstar = polynomial_bases(Xstar,self.N)[0]
         fstar = np.dot(Bstar,self.p_weights)
         
         if compgrad:
@@ -77,7 +77,7 @@ class GaussianProcess():
         f_weights = np.linalg.solve(K,f)
         
         # coefficients of polynomial basis
-        B = polynomial_bases(X,self.N)
+        B = polynomial_bases(X,self.N)[0]
         A = np.dot(B.T,np.linalg.solve(K,B))
         p_weights = np.linalg.solve(A,np.dot(B.T,f_weights))
         
@@ -99,7 +99,7 @@ class GaussianProcess():
         
         # update with polys
         Pstar = np.linalg.solve(self.K,Kstar)
-        Bstar = polynomial_bases(Xstar,self.N)
+        Bstar = polynomial_bases(Xstar,self.N)[0]
         Rstar = Bstar - np.dot(Pstar.T,self.B)
         fstar += np.dot(Rstar,self.p_weights)
         
@@ -141,7 +141,7 @@ def negative_log_likelihood(g,X,f,e,N,v):
     L = np.linalg.cholesky(K)
     
     # polynomial basis
-    B = polynomial_bases(X,N)
+    B = polynomial_bases(X,N)[0]
     A = np.dot(B.T,np.linalg.solve(K,B))
     AL = np.linalg.cholesky(A)
     
@@ -180,17 +180,17 @@ def grad_exponential_squared_covariance(X1,X2,sigma,ell):
 
 def polynomial_bases(X,N):
     M,m = X.shape
-    I = index_set(N,m)
+    I = au.index_set(N,m)
     n = I.shape[0]
     B = np.zeros((M,n))
     for i in range(n):
         ind = I[i,:]
         B[:,i] = np.prod(np.power(X,ind),axis=1)
-    return B
+    return B,I
     
 def grad_polynomial_bases(X,N):
     M,m = X.shape
-    I = index_set(N,m)
+    I = au.index_set(N,m)
     n = I.shape[0]
     B = np.zeros((M,n,m))
     for k in range(m):

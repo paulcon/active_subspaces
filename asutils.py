@@ -1,6 +1,94 @@
 import numpy as np
+import gurobi_wrapper as gw
+import regression as rg
 from analyze_active_subspace import \
     sufficient_summary_plot,plot_eigenvectors
+import pdb
+
+class VariableMap():
+    def __init__(self,W,n,bflag):
+        W1,W2 = W[:,:n],W[:,n:]
+        self.W1,self.W2 = W1,W2
+        self.bflag = bflag
+        
+    def forward(self,X):
+        return np.dot(X,self.W1),np.dot(X,self.W2)
+        
+    def inverse(self,Y,NMC):
+        m,n = self.W1.shape
+        W = np.hstack((self.W1,self.W2))
+        
+        if self.bflag:
+            # sample the z's 
+            NY = Y.shape[0]
+            Zlist = []
+            for y in Y:
+                Zlist.append(sample_z(NMC,y,self.W1,self.W2))
+            Z = np.array(Zlist).reshape((NY,m-n,NMC))
+
+        else:
+            # sample z's
+            NY = Y.shape[0]
+            Z = np.random.normal(size=(NY,m-n,NMC))
+            
+        # rotate back to x
+        YY = np.tile(Y.reshape((NY,n,1)),(1,1,NMC))
+        YZ = np.concatenate((YY,Z),axis=1).transpose((1,0,2)).reshape((m,NMC*NY)).transpose((1,0))
+        X = np.dot(YZ,W.T)
+        ind = np.kron(np.arange(NY),np.ones(NMC))
+        return X,ind
+
+class OptVariableMap():
+    def __init__(self,W,n,X,f,bflag):
+        W1,W2 = W[:,:n],W[:,n:]
+        self.W1,self.W2 = W1,W2
+        self.X,self.f = X,f
+        self.bflag = bflag
+        
+        m = n+2
+        Wp = W[:,:m]
+        Yp = np.dot(X,Wp)
+        Yp2,I = rg.polynomial_bases(Yp,2)
+        M = I.shape[0]
+        up = np.linalg.lstsq(Yp2,f)[0]
+        bp = up[1:m+1]
+        Ap = np.zeros((m,m))
+        for i in range(m+1,M):
+            ind = I[i,:]
+            loc = np.nonzero(ind!=0)[0]
+            if loc.size==1:
+                Ap[loc,loc] = 2.0*up[i]
+            elif loc.size==2:
+                Ap[loc[0],loc[1]] = up[i]
+                Ap[loc[1],loc[0]] = up[i]
+            else:
+                raise Exception('Error!')
+        
+        #pdb.set_trace()
+        b = np.dot(Wp,bp)
+        A = np.dot(Wp,np.dot(Ap,Wp.T))
+        
+        self.bz = np.dot(b.T,W2)
+        self.Ayz = np.dot(W1.T,np.dot(A,W2))
+        self.Az = np.dot(W2.T,np.dot(A,W2)) + 0.1*np.eye(W1.shape[0]-n)
+        
+    def forward(self,X):
+        return np.dot(X,self.W1),np.dot(X,self.W2)
+        
+    def inverse(self,Y):
+        A = self.Az
+        Xlist = []
+        for y in Y:
+            b = self.bz + np.dot(y,self.Ayz)
+            if self.bflag:
+                lb = -1.0 - np.dot(self.W1,y)
+                ub = 1.0 - np.dot(self.W1,y)
+                z = gw.quadratic_program_bnd(b,A,lb,ub)
+            else:
+                z = np.linalg.solve(A,b)
+            x = np.dot(self.W1,y) + np.dot(self.W2,z)
+            Xlist.append(x)
+        return np.array(Xlist)
 
 def normalize_uniform(X,xl,xu):
     M,m = X.shape
@@ -65,21 +153,28 @@ def quick_check(X,f,n_boot=1000,in_labels=None,out_label=None):
     return w
 
 def sample_z(N,y,W1,W2):
-    mz = W2.shape[1]
-    z0 = np.zeros((mz,1))
-    s = np.dot(W1,y).reshape((W1.shape[0],1))
+    m,n = W1.shape
+    s = np.dot(W1,y).reshape((m,1))
+    if np.all(np.zeros((m,1)) <= 1-s) and np.all(np.zeros((m,1)) >= -1-s):
+        z0 = np.zeros((m-n,1))
+    else:
+        lb = -np.ones(m)
+        ub = np.ones(m)
+        c = np.zeros(m)
+        x0 = gw.linear_program_eq(c,W1.T,y,lb,ub)
+        z0 = np.dot(W2.T,x0).reshape((m-n,1))
     
     # burn in
     for i in range(N):
         zc = z0 + 0.66*np.random.normal(size=z0.shape)
-        if all(np.dot(W2,zc) <= 1-s) and all(np.dot(W2,zc) >= -1-s):
+        if np.all(np.dot(W2,zc) <= 1-s) and np.all(np.dot(W2,zc) >= -1-s):
             z0 = zc
     
     # sample
-    Z = np.zeros((mz,N))
+    Z = np.zeros((m-n,N))
     for i in range(N):
         zc = z0 + 0.66*np.random.normal(size=z0.shape)
-        if all(np.dot(W2,zc) <= 1-s) and all(np.dot(W2,zc) >= -1-s):
+        if np.all(np.dot(W2,zc) <= 1-s) and np.all(np.dot(W2,zc) >= -1-s):
             z0 = zc
         Z[:,i] = z0.reshape((z0.shape[0],))
         
@@ -104,12 +199,12 @@ def quadreg(Xsq,indices,f):
     
 def get_eigenpairs(b,A,gamma):
     m = b.shape[0]
-    lam,W = np.linalg.eig(np.outer(b,b.T) + np.dot(A,np.dot(np.diagflat(gamma),A)))
-    ind = np.argsort(lam)[::-1]
-    lam = lam[ind]
+    e,W = np.linalg.eig(np.outer(b,b.T) + np.dot(A,np.dot(np.diagflat(gamma),A)))
+    ind = np.argsort(e)[::-1]
+    e = e[ind]
     W = W[:,ind]
     W = W*np.tile(np.sign(W[0,:]),(m,1))
-    return lam,W
+    return e,W
     
 def quadratic_model_check(X,f,gamma,k,n_boot=1000):
     M,m = X.shape
@@ -127,31 +222,31 @@ def quadratic_model_check(X,f,gamma,k,n_boot=1000):
     b,A = quadreg(Xsq,indices,f)
     
     # compute eigenpairs
-    lam,W = get_eigenpairs(b,A,gamma)
+    e,W = get_eigenpairs(b,A,gamma)
     
     # bootstrap
     sub_dist = np.zeros((m-1,n_boot))
-    lam_boot = np.zeros((m,n_boot))
+    e_boot = np.zeros((m,n_boot))
     ind = np.random.randint(M,size=(M,n_boot))
     for i in range(n_boot):
         b0,A0 = quadreg(Xsq[ind[:,i],:],indices,f[ind[:,i]])
-        lam0,W0 = get_eigenpairs(b0,A0,gamma)
-        lam_boot[:,i] = lam0
+        e0,W0 = get_eigenpairs(b0,A0,gamma)
+        e_boot[:,i] = e0
         for j in range(m-1):
             sub_dist[j,i] = np.linalg.norm(np.dot(W[:,:j+1].T,W0[:,j+1:]),ord=2)
 
-    lam_br = np.zeros((k,2))
+    e_br = np.zeros((k,2))
     sub_br = np.zeros((k_sub,3))
     for i in range(k):
-        lam_sort = np.sort(lam_boot[i,:])
-        lam_br[i,0] = lam_sort[np.floor(0.025*n_boot)]
-        lam_br[i,1] = lam_sort[np.ceil(0.925*n_boot)]
+        lam_sort = np.sort(e_boot[i,:])
+        e_br[i,0] = lam_sort[np.floor(0.025*n_boot)]
+        e_br[i,1] = lam_sort[np.ceil(0.925*n_boot)]
     for i in range(k_sub):
         sub_sort = np.sort(sub_dist[i,:])
         sub_br[i,0] = sub_sort[np.floor(0.025*n_boot)]        
         sub_br[i,1] = np.mean(sub_sort)
         sub_br[i,2] = sub_sort[np.ceil(0.925*n_boot)]
-    return lam[:k],W,lam_br,sub_br
+    return e[:k],W,e_br,sub_br
 
 
     

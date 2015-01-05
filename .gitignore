@@ -7,3 +7,9 @@
 # figs directory
 figs/
 
+# test data
+*.npz
+
+# logs
+gurobi.log
+
