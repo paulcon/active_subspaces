@@ -3,6 +3,9 @@
 import numpy as np
 import pandas as pn
 import active_subspaces as ac
+import zonotopes as zn
+import scipy.spatial as sp
+import gaussian_quadrature as gq
 from active_subspaces import VariableMap,OptVariableMap
 import matplotlib.pyplot as plt
 
@@ -211,7 +214,39 @@ def test_variable_map():
         X = np.random.normal(size=(M,m))
         Y,Z = ovm.forward(X)
         X0 = ovm.inverse(Y)
+
+def test_zonotopes():
+    m,n = 10,2
+    W1 = np.linalg.qr(np.random.normal(size=(m,n)))[0]
+    yzv = zn.zonotope_vertices(W1)
+    N = 20
+    Y,res = zn.maximin_design(yzv,N)
+    
+    plt.close('all')
+    plt.figure()
+    plt.plot(Y[:,0],Y[:,1],'k.')
+    plt.axes().set_aspect('equal')
+    
+    V = sp.Voronoi(Y)
+    sp.voronoi_plot_2d(V)
+    plt.axes().set_aspect('equal')
         
+    T = sp.Delaunay(Y)
+    C = []
+    for t in T.simplices:
+        C.append(np.mean(T.points[t],axis=0))
+    centroids = np.array(C)
+    sp.delaunay_plot_2d(T)
+    plt.plot(centroids[:,0],centroids[:,1],'ro')
+    plt.axes().set_aspect('equal')
+        
+    plt.show()
+    
+def test_gq():
+    x,w = gq.gauss_hermite([4,3,2])
+    print x
+    print w  
+                        
 if __name__ == "__main__":
     
     #if not test_load_data():
