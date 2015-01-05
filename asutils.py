@@ -1,6 +1,9 @@
 import numpy as np
 import gurobi_wrapper as gw
 import regression as rg
+import zonotopes as zn
+import gaussian_quadrature as gq
+from scipy.spatial import Delaunay
 from analyze_active_subspace import \
     sufficient_summary_plot,plot_eigenvectors
 import pdb
@@ -133,6 +136,41 @@ def lingrad(X,f):
     w = u[1:]/np.linalg.norm(u[1:])
     return w
 
+def compute_active_subspace(dF,k,n_boot=1000):
+    
+    # set integers
+    M,m = dF.shape
+    k_sub = np.minimum(k,m-1)
+    
+    # compute active subspace
+    U,sig,W = np.linalg.svd(dF,full_matrices=False)
+    e = (1.0/M)*(sig[:k]**2)
+    W = W.T
+    W = W*np.tile(np.sign(W[0,:]),(m,1))
+    
+    # bootstrap
+    e_boot = np.zeros((k,n_boot))
+    sub_dist = np.zeros((k_sub,n_boot))
+    ind = np.random.randint(M,size=(M,n_boot))
+    for i in range(n_boot):
+        U0,sig0,W0 = np.linalg.svd(dF[ind[:,i],:],full_matrices=False)
+        W0 = W0.T
+        W0 = W0*np.tile(np.sign(W0[0,:]),(m,1))
+        e_boot[:,i] = (1.0/M)*(sig0[:k]**2)
+        for j in range(k_sub):
+            sub_dist[j,i] = np.linalg.norm(np.dot(W[:,:j+1].T,W0[:,j+1:]),ord=2)
+    
+    e_br = np.zeros((k,2))
+    sub_br = np.zeros((k_sub,3))
+    for i in range(k):
+        e_br[i,0] = np.amin(e_boot[i,:])
+        e_br[i,1] = np.amax(e_boot[i,:])
+    for i in range(k_sub):
+        sub_br[i,0] = np.amin(sub_dist[i,:])
+        sub_br[i,1] = np.mean(sub_dist[i,:])
+        sub_br[i,2] = np.amax(sub_dist[i,:])
+    return e,W,e_br,sub_br
+
 def quick_check(X,f,n_boot=1000,in_labels=None,out_label=None):
     M,m = X.shape
     w = lingrad(X,f)
@@ -179,6 +217,100 @@ def sample_z(N,y,W1,W2):
         Z[:,i] = z0.reshape((z0.shape[0],))
         
     return Z
+
+def response_surface_design(W,n,N,NMC,bflag=0):
+    
+    # check len(N) == n
+    m = W.shape[0]
+    W1,W2 = W[:,:n],W[:,n:]
+    
+    if bflag:
+        # uniform case
+        if n==1:
+            y0 = np.dot(W1.T,np.sign(W1))[0]
+            if y0 < -y0:
+                yl,yu = y0,-y0
+                xl = np.sign(W1).reshape((1,m))
+                xu = -np.sign(W1).reshape((1,m))
+            else:
+                yl,yu = -y0,y0
+                xl = -np.sign(W1).reshape((1,m))
+                xu = np.sign(W1).reshape((1,m))
+            y = np.linspace(yl,yu,N[0]).reshape((N[0],1))
+            
+            Yzv = np.array([yl,yu])
+            Xzv = np.vstack((xl,xu))
+            Y = y[1:-1]
+            
+        else:
+            Yzv,Xzv = zn.zonotope_vertices(W1)
+            Y = zn.maximin_design(Yzv,N[0])
+        
+    else:
+        # Gaussian case
+        if len(N) != n:
+            raise Exception('N should be a list of integers of length n.')
+        Y = gq.gauss_hermite(N)[0]
+    
+    vm = VariableMap(W,n,bflag)
+    X,ind = vm.inverse(Y,NMC)
+    if bflag:
+        X = np.vstack((X,Xzv))
+        ind = np.hstack((ind,np.arange(Y.shape[0],Y.shape[0]+Yzv.shape[0])))
+        Y = np.vstack((Y,Yzv))
+    
+    return X,ind,Y
+
+def integration_rule(W,n,N,NMC,bflag=0):
+    m = W.shape[0]
+    W1,W2 = W[:,:n],W[:,n:]
+    NX = 10000
+    
+    if bflag:
+        # uniform case
+        if n==1:
+            y0 = np.dot(W1.T,np.sign(W1))[0]
+            if y0 < -y0:
+                yl,yu = y0,-y0
+            else:
+                yl,yu = -y0,y0
+            y = np.linspace(yl,yu,N[0]).reshape((N[0],1))
+            Y = 0.5*(y[1:]+y[:-1])
+            
+            Ysamp = np.dot(np.random.uniform(-1.0,1.0,size=(NX,m)),W1)
+            Wy = np.histogram(Ysamp.reshape((NX,)),bins=y.reshape((N[0],)), \
+                range=(np.amin(y),np.amax(y)))[0]/float(NX)
+            
+        else:
+            # get points
+            yzv = zn.zonotope_vertices(W1)[0]
+            y = np.vstack((yzv,zn.maximin_design(yzv,N[0])))
+            T = Delaunay(y)
+            c = []
+            for t in T.simplices:
+                c.append(np.mean(T.points[t],axis=0))
+            Y = np.array(c)
+            
+            # approximate weights
+            Ysamp = np.dot(np.random.uniform(-1.0,1.0,size=(NX,m)),W1)
+            I = T.find_simplex(Ysamp)
+            Wy = np.zeros((T.nsimplex,1))
+            for i in range(T.nsimplex):
+                Wy[i] = np.sum(I==i)/float(NX)
+            
+    else:
+        # Gaussian case
+        if len(N) != n:
+            raise Exception('N should be a list of integers of length n.')
+        Y,Wy = gq.gauss_hermite(N)
+        
+    vm = VariableMap(W,n,bflag)
+    X = vm.inverse(Y,NMC)
+    
+    # weights for integration in x space
+    Wx = np.kron(Wy,(1.0/NMC)*np.ones((NMC,1)))
+    
+    return X,Wx,Y,Wy
 
 def quadreg(Xsq,indices,f):
     M,m = indices.shape

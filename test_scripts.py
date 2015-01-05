@@ -3,6 +3,7 @@
 import numpy as np
 import pandas as pn
 import active_subspaces as ac
+from active_subspaces import VariableMap,OptVariableMap
 import matplotlib.pyplot as plt
 
 def quadtest(X):
@@ -179,8 +180,38 @@ def test_gauss_design(fun):
     X,y = ac.response_surface_design(W,2,[3,3],5)
     
     return 0
-    
 
+def test_fun(X):
+    return np.sum(-np.cos(np.pi*X)+X,axis=1)
+
+def test_variable_map():
+    m,n = 5,2
+    M,NMC = 20,3
+    W = np.linalg.qr(np.random.normal(size=(m,m)))[0]
+    bflag = 0
+    
+    vm = VariableMap(W,n,bflag)
+    if bflag:
+        X = np.random.uniform(-1.0,1.0,size=(M,m))
+        Y,Z = vm.forward(X)
+        X0,ind = vm.inverse(Y,NMC)
+    else:
+        X = np.random.normal(size=(M,m))
+        Y,Z = vm.forward(X)
+        X0,ind = vm.inverse(Y,NMC)
+    
+    X = np.random.uniform(-1.0,1.0,size=(M,m))
+    f = test_fun(X)
+    ovm = OptVariableMap(W,n,X,f,bflag)
+    if bflag:
+        X = np.random.uniform(-1.0,1.0,size=(M,m))
+        Y,Z = ovm.forward(X)
+        X0 = ovm.inverse(Y)
+    else:
+        X = np.random.normal(size=(M,m))
+        Y,Z = ovm.forward(X)
+        X0 = ovm.inverse(Y)
+        
 if __name__ == "__main__":
     
     #if not test_load_data():
