@@ -1,6 +1,6 @@
 import numpy as np
-import asutils as au
 from scipy.optimize import fminbound
+from scipy.misc import comb
 import matplotlib.pyplot as plt
 
 class PolynomialRegression():
@@ -13,7 +13,7 @@ class PolynomialRegression():
         except:
             raise Exception('X should be a numpy array of size (M,m), where M is the number of points and m is the dimension.')
          
-        B = polynomial_bases(X,self.N)[0]
+        B,indices = polynomial_bases(X,self.N)
         Q,R = np.linalg.qr(B)
         p_weights = np.linalg.solve(R,np.dot(Q.T,f))
         
@@ -21,6 +21,21 @@ class PolynomialRegression():
         self.X,self.f = X,f
         self.p_weights = p_weights
         self.Q,self.R = Q,R
+        
+        # organize linear and quadratic coefficients
+        self.b = p_weights[1:m+1].copy()
+        if self.N>1:
+            A = np.zeros((m,m))
+            for i in range(m+1,comb(m+2,2)):
+                ind = indices[i,:]
+                loc = np.nonzero(ind!=0)[0]
+                if loc.size==1:
+                    A[loc,loc] = 2.0*p_weights[i]
+                elif loc.size==2:
+                    A[loc[0],loc[1]] = p_weights[i]
+                    A[loc[1],loc[0]] = p_weights[i]
+                else:
+                    raise Exception('Error creating quadratic coefficients.')
         
     def predict(self,Xstar,compgrad=False,compvar=False):
         try:
@@ -180,7 +195,7 @@ def grad_exponential_squared_covariance(X1,X2,sigma,ell):
 
 def polynomial_bases(X,N):
     M,m = X.shape
-    I = au.index_set(N,m)
+    I = index_set(N,m)
     n = I.shape[0]
     B = np.zeros((M,n))
     for i in range(n):
@@ -190,7 +205,7 @@ def polynomial_bases(X,N):
     
 def grad_polynomial_bases(X,N):
     M,m = X.shape
-    I = au.index_set(N,m)
+    I = index_set(N,m)
     n = I.shape[0]
     B = np.zeros((M,n,m))
     for k in range(m):
@@ -203,6 +218,27 @@ def grad_polynomial_bases(X,N):
                 ind[k] -= 1
                 B[:,i,k] = indk*np.prod(np.power(X,ind),axis=1)
     return B
+
+def full_index_set(n,d):
+    if d == 1:
+        I = np.array([[n]])
+    else:
+        II = full_index_set(n,d-1)
+        m = II.shape[0]
+        I = np.hstack((np.zeros((m,1)),II))
+        for i in range(1,n+1):
+            II = full_index_set(n-i,d-1)
+            m = II.shape[0]
+            T = np.hstack((i*np.ones((m,1)),II))
+            I = np.vstack((I,T))
+    return I
+    
+def index_set(n,d):
+    I = np.zeros((1,d))
+    for i in range(1,n+1):
+        II = full_index_set(i,d)
+        I = np.vstack((I,II))
+    return I[:,::-1]
     
 if __name__ == '__main__':
     '''

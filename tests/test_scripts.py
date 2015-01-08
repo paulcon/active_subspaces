@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pn
 import active_subspaces as ac
 import zonotopes as zn
+import asutils as au
 import scipy.spatial as sp
 import gaussian_quadrature as gq
 from active_subspaces import VariableMap,OptVariableMap
@@ -89,7 +90,7 @@ def test_interface_nograd(fun):
 def test_load_data():
 
     # load data
-    df = pn.DataFrame.from_csv('quad_nograd.txt')
+    df = pn.DataFrame.from_csv('data/quad_nograd.txt')
     data = df.values
     X = data[:,0:3]
     F = data[:,3]
@@ -115,7 +116,7 @@ def test_load_data():
     ac.sufficient_summary_plot(y,F) 
     
     # load data
-    df = pn.DataFrame.from_csv('quad.txt')
+    df = pn.DataFrame.from_csv('data/quad.txt')
     data = df.values
     X = data[:,:3]
     F = data[:,3]
@@ -140,7 +141,7 @@ def test_load_data():
 
 def test_quick_check():
     # load data
-    df = pn.DataFrame.from_csv('quad_nograd.txt')
+    df = pn.DataFrame.from_csv('data/quad_nograd.txt')
     data = df.values
     X = data[:,0:3]
     F = data[:,3]
@@ -158,7 +159,7 @@ def write_quad_csv():
         
     labels = ['p1','p2','p3','output']
     df = pn.DataFrame(data=D,columns=labels)
-    df.to_csv('quad_nograd.txt')
+    df.to_csv('data/quad_nograd.txt')
     
     X = np.random.uniform(-1.0,1.0,(100,3))
     D = np.zeros((100,7))
@@ -171,7 +172,7 @@ def write_quad_csv():
         
     labels = ['p1','p2','p3','output','d1','d2','d3']
     df = pn.DataFrame(data=D,columns=labels)
-    df.to_csv('quad.txt')
+    df.to_csv('data/quad.txt')
 
 def test_gauss_design(fun):
     M,m = 300,3
@@ -180,7 +181,7 @@ def test_gauss_design(fun):
     
     e,W,e_br,sub_br = ac.compute_active_subspace(dF,2)
     
-    X,y = ac.response_surface_design(W,2,[3,3],5)
+    X,ind,y = ac.response_surface_design(W,2,[3,3],5)
     
     return 0
 
@@ -245,7 +246,24 @@ def test_zonotopes():
 def test_gq():
     x,w = gq.gauss_hermite([4,3,2])
     print x
-    print w  
+    print w
+    
+def test_normalizers():
+    lb = np.array([-2.0,2.0])
+    ub = np.array([-1.0,3.0])
+    bn = au.BoundedNormalizer(lb,ub)
+    x = np.random.uniform(-1.0,1.0,size=(10,2))
+    y = bn.unnormalize(x.copy())
+    z = bn.normalize(y)
+    print np.linalg.norm(x-z)
+    
+    C = np.array([[1.0,0.1],[0.1,1.0]])
+    mu = np.array([2.0,5.0])
+    un = au.UnboundedNormalizer(mu,C)
+    x = np.random.normal(size=(10,2))
+    y = un.unnormalize(x.copy())
+    z = un.normalize(y)
+    print np.linalg.norm(x-z)
                         
 if __name__ == "__main__":
     
