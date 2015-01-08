@@ -1,7 +1,7 @@
 Python utilities for working with active subspaces. 
 
 Right now I'm using Enthought's Python Distribution and Canopy for development.
-You'll need numpy and scipy for these to work.
+You'll need numpy and scipy for these tools. 
 
 You also need a linear program and quadratic program solver. I'm using Gurobi;
 you can see the gurobi_wrapper.py that solves the problems I need. To get
