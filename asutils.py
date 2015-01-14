@@ -4,7 +4,7 @@ import regression as rg
 import zonotopes as zn
 import gaussian_quadrature as gq
 from scipy.spatial import Delaunay
-from analyze_active_subspace import \
+from analyze import \
     sufficient_summary_plot,plot_eigenvectors
 import pdb
 
@@ -153,7 +153,7 @@ def local_linear_gradients(X,f,XX,p=None):
         p = np.minimum(2*m,M)
     for i in range(MM):
         x = XX[i,:]
-        A = np.sum((X - np.tile(x,(M,1)))**2,axis=1)
+        A = np.sum((X - x)**2,axis=1)
         ind = np.argsort(A)
         A = np.hstack((np.ones((p,1)), X[ind[:p],:]))
         u = np.linalg.lstsq(A,f[ind[:p]])[0]

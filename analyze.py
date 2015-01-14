@@ -88,7 +88,7 @@ def plot_eigenvectors(W,W_boot=None,in_labels=None,out_label=None):
     else:
         plt.figure()
         for k in range(np.minimum(3,W.shape[1])):
-            plt.plot(range(1,m+1),W[:,k],'bo-',markersize=12,label='%d' % k)
+            plt.plot(range(1,m+1),W[:,k],'o-',markersize=12,label='%d' % k)
         plt.xlabel('Variable')
         plt.ylabel('Eigenvectors')
         plt.grid(True)
@@ -134,6 +134,7 @@ def sufficient_summary_plot(y,f,out_label=None):
         plt.xlabel('Active variable 1')
         plt.ylabel('Active variable 2')
         plt.title(out_label)
+        plt.colorbar()
         figname = 'figs/ssp2_' + out_label + '.eps'
         plt.savefig(figname, dpi=300, bbox_inches='tight', pad_inches=0.0)
     
