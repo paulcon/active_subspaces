@@ -7,10 +7,10 @@ def linear_program_eq(c,A,b,lb,ub):
     model = Model()
 
     # Add variables to model
+    vars = []
     for j in range(n):
-        model.addVar(lb=lb[j],ub=ub[j],vtype=GRB.CONTINUOUS)
+        vars.append(model.addVar(lb=lb[j],ub=ub[j],vtype=GRB.CONTINUOUS))
     model.update()
-    vars = model.getVars()
 
     # Populate linear constraints
     for i in range(m):
@@ -40,10 +40,10 @@ def quadratic_program_bnd(c,Q,lb,ub):
     model = Model()
 
     # Add variables to model
+    vars = []
     for j in range(n):
-        model.addVar(lb=lb[j],ub=ub[j],vtype=GRB.CONTINUOUS)
+        vars.append(model.addVar(lb=lb[j],ub=ub[j],vtype=GRB.CONTINUOUS))
     model.update()
-    vars = model.getVars()
 
     # Populate objective
     obj = QuadExpr()
