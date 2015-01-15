@@ -16,7 +16,9 @@ def plot_setup():
 
 def plot_eigenvalues(e,e_br=None,out_label=None):
     
-    plot_setup()    
+    plot_setup()
+    figtype = '.png'
+    #figtype = '.eps'
     k = e.shape[0]
     if out_label is None:
         out_label = 'Output'
@@ -35,13 +37,15 @@ def plot_eigenvalues(e,e_br=None,out_label=None):
         plt.axis([1,k,np.amin(e),np.amax(e)])
     else:
         plt.axis([1,k,np.amin(e_br[:,0]),np.amax(e_br[:,1])])
-    figname = 'figs/evals_' + out_label + '.eps'
+    figname = 'figs/evals_' + out_label + figtype
     plt.savefig(figname, dpi=300, bbox_inches='tight', pad_inches=0.0)
     plt.show()
     
 def plot_subspace_errors(sub_br,out_label=None):
     
     plot_setup()
+    figtype = '.png'
+    #figtype = '.eps'
     kk = sub_br.shape[0]
     if out_label is None:
         out_label = 'Output'
@@ -55,13 +59,15 @@ def plot_subspace_errors(sub_br,out_label=None):
     plt.grid(True)
     plt.xticks(range(1,kk+1))
     plt.axis([1,kk,np.amin(sub_br[:,0]),1])
-    figname = 'figs/subspace_' + out_label + '.eps'
+    figname = 'figs/subspace_' + out_label + figtype
     plt.savefig(figname, dpi=300, bbox_inches='tight', pad_inches=0.0)
     plt.show()
     
 def plot_eigenvectors(W,W_boot=None,in_labels=None,out_label=None):
     
     plot_setup()
+    figtype = '.png'
+    #figtype = '.eps'
     n = len(W.shape)
     m = W.shape[0]
     # set labels for plots
@@ -75,7 +81,7 @@ def plot_eigenvectors(W,W_boot=None,in_labels=None,out_label=None):
         if W_boot is not None:
             plt.plot(range(1,m+1),W_boot,color='0.7')
         plt.plot(range(1,m+1),W,'ko-',markersize=12)
-        plt.xlabel('Variable')
+        #plt.xlabel('Variable')
         plt.ylabel('Weights')
         plt.grid(True)
         if m<=10:
@@ -83,13 +89,13 @@ def plot_eigenvectors(W,W_boot=None,in_labels=None,out_label=None):
             plt.margins(0.2)
             plt.subplots_adjust(bottom=0.15)
         plt.axis([1,m,-1,1])
-        figname = 'figs/evecs_' + out_label + '.eps'
+        figname = 'figs/evecs_' + out_label + figtype
         plt.savefig(figname, dpi=300, bbox_inches='tight', pad_inches=0.0)
     else:
         plt.figure()
         for k in range(np.minimum(3,W.shape[1])):
             plt.plot(range(1,m+1),W[:,k],'o-',markersize=12,label='%d' % k)
-        plt.xlabel('Variable')
+        #plt.xlabel('Variable')
         plt.ylabel('Eigenvectors')
         plt.grid(True)
         if m<=10:
@@ -98,7 +104,7 @@ def plot_eigenvectors(W,W_boot=None,in_labels=None,out_label=None):
             plt.subplots_adjust(bottom=0.15)
         plt.axis([1,m,-1,1])
         plt.legend(loc='best')
-        figname = 'figs/evecs_' + out_label + '.eps'
+        figname = 'figs/evecs_' + out_label + figtype
         plt.savefig(figname, dpi=300, bbox_inches='tight', pad_inches=0.0)
     
     plt.show()
@@ -106,6 +112,8 @@ def plot_eigenvectors(W,W_boot=None,in_labels=None,out_label=None):
 def sufficient_summary_plot(y,f,out_label=None):
     
     plot_setup()
+    figtype = '.png'
+    #figtype = '.eps'
     
     # check sizes of y
     n = len(y.shape)    
@@ -124,7 +132,7 @@ def sufficient_summary_plot(y,f,out_label=None):
     plt.xlabel('Active variable')
     plt.ylabel(out_label)
     plt.grid(True)
-    figname = 'figs/ssp1_' + out_label + '.eps'
+    figname = 'figs/ssp1_' + out_label + figtype
     plt.savefig(figname, dpi=300, bbox_inches='tight', pad_inches=0.0)
         
     if n==2:
@@ -135,7 +143,7 @@ def sufficient_summary_plot(y,f,out_label=None):
         plt.ylabel('Active variable 2')
         plt.title(out_label)
         plt.colorbar()
-        figname = 'figs/ssp2_' + out_label + '.eps'
+        figname = 'figs/ssp2_' + out_label + figtype
         plt.savefig(figname, dpi=300, bbox_inches='tight', pad_inches=0.0)
     
     plt.show()
