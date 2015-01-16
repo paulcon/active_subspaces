@@ -19,6 +19,7 @@ class Zonotope():
         return maximin_design(self.vertY,N)
         
     def constraints(self):
+        n = self.W1.shape[1]
         A = self.convhull.equations[:,:n]
         b = self.convhull.equations[:,n]
         cons = ({'type':'ineq',
