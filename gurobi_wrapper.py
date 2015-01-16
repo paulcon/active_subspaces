@@ -5,6 +5,7 @@ def linear_program_eq(c,A,b,lb,ub):
     
     m,n = A.shape
     model = Model()
+    model.setParam('OutputFlag', 0)
 
     # Add variables to model
     vars = []
@@ -32,12 +33,14 @@ def linear_program_eq(c,A,b,lb,ub):
     if model.status == GRB.OPTIMAL:
         return model.getAttr('x', vars)
     else:
+        raise Exception('Gurobi did not solve the LP.')
         return None
 
 def quadratic_program_bnd(c,Q,lb,ub):
     
     n = Q.shape[0]
     model = Model()
+    model.setParam('OutputFlag', 0)
 
     # Add variables to model
     vars = []
@@ -62,6 +65,7 @@ def quadratic_program_bnd(c,Q,lb,ub):
     if model.status == GRB.OPTIMAL:
         return model.getAttr('x', vars)
     else:
+        raise Exception('Gurobi did not solve the QP.')
         return None
 
 if __name__ == '__main__':

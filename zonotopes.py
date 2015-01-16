@@ -8,6 +8,24 @@ from scipy.optimize import minimize
 #from CGAL.CGAL_Mesh_2 import Delaunay_mesh_size_criteria_2
 #from CGAL import CGAL_Mesh_2
 
+class Zonotope():
+    def __init__(self,W1):
+        self.W1 = W1
+        Y,X = zonotope_vertices(W1)
+        self.vertY,self.vertX = Y,X
+        self.convhull = ConvexHull(Y)
+        
+    def design(self,N):
+        return maximin_design(self.vertY,N)
+        
+    def constraints(self):
+        A = self.convhull.equations[:,:n]
+        b = self.convhull.equations[:,n]
+        cons = ({'type':'ineq',
+                'fun' : lambda x: np.dot(A,x)-b,
+                'jac' : lambda x: A})
+        return cons
+
 def nzv(m,n,M=None):
     # number of zonotope vertices
     if M is None:

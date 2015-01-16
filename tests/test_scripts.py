@@ -264,7 +264,23 @@ def test_normalizers():
     y = un.unnormalize(x.copy())
     z = un.normalize(y)
     print np.linalg.norm(x-z)
-                        
+
+def test_variable_maps():
+    M,m,n,NMC = 10,4,2,5
+    W = np.linalg.qr(np.random.normal(size=(m,m)))[0]
+    vm = VariableMap(W,n,bflag=1)
+    X = np.random.uniform(-1.0,1.0,size=(M,m))
+    Y = vm.forward(X)[0]
+    XX = vm.inverse(Y,NMC)
+    '''
+    print 'X'
+    print X
+    print 'Y'
+    print Y
+    print 'XX'
+    print XX
+    '''
+
 if __name__ == "__main__":
     
     #if not test_load_data():
@@ -279,7 +295,10 @@ if __name__ == "__main__":
     #if not test_quick_check():
     #    print 'Success!'
     
-    if not test_gauss_design(quad_fun):
+    #if not test_gauss_design(quad_fun):
+    #    print 'Success!'
+    
+    if not test_variable_maps():
         print 'Success!'
     
 

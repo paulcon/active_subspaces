@@ -4,8 +4,7 @@ import regression as rg
 import zonotopes as zn
 import gaussian_quadrature as gq
 from scipy.spatial import Delaunay
-from analyze import \
-    sufficient_summary_plot,plot_eigenvectors
+from analyze import ActiveSubspacePlotter
 import pdb
 
 class VariableMap():
@@ -220,11 +219,12 @@ def quick_check(X,f,n_boot=1000,in_labels=None,out_label=None):
         w_boot[:,i] = lingrad(X[ind[:,i],:],f[ind[:,i]])
     
     # make sufficient summary plot
+    asp = ActiveSubspacePlotter()
     y = np.dot(X,w)
-    sufficient_summary_plot(y,f,out_label=out_label)
+    asp.sufficient_summary(y,f,out_label=out_label)
     
     # plot weights
-    plot_eigenvectors(w,W_boot=w_boot,in_labels=in_labels,out_label=out_label)
+    asp.eigenvectors(w,W_boot=w_boot,in_labels=in_labels,out_label=out_label)
     
     return w
 
@@ -239,17 +239,22 @@ def sample_z(N,y,W1,W2):
         c = np.zeros(m)
         x0 = gw.linear_program_eq(c,W1.T,y,lb,ub)
         z0 = np.dot(W2.T,x0).reshape((m-n,1))
+        
+    # get MCMC step size
+    sig = 0.1*np.maximum( 
+            np.linalg.norm(np.dot(W2,z0)+s-1),
+            np.linalg.norm(np.dot(W2,z0)+s+1))        
     
     # burn in
     for i in range(N):
-        zc = z0 + 0.66*np.random.normal(size=z0.shape)
+        zc = z0 + sig*np.random.normal(size=z0.shape)
         if np.all(np.dot(W2,zc) <= 1-s) and np.all(np.dot(W2,zc) >= -1-s):
             z0 = zc
     
     # sample
     Z = np.zeros((m-n,N))
     for i in range(N):
-        zc = z0 + 0.66*np.random.normal(size=z0.shape)
+        zc = z0 + sig*np.random.normal(size=z0.shape)
         if np.all(np.dot(W2,zc) <= 1-s) and np.all(np.dot(W2,zc) >= -1-s):
             z0 = zc
         Z[:,i] = z0.reshape((z0.shape[0],))
@@ -318,6 +323,7 @@ def integration_rule(W,n,N,NMC,bflag=0):
             Ysamp = np.dot(np.random.uniform(-1.0,1.0,size=(NX,m)),W1)
             Wy = np.histogram(Ysamp.reshape((NX,)),bins=y.reshape((N[0],)), \
                 range=(np.amin(y),np.amax(y)))[0]/float(NX)
+            Wy.reshape((N[0]-1,1))
             
         else:
             # get points
@@ -343,12 +349,18 @@ def integration_rule(W,n,N,NMC,bflag=0):
         Y,Wy = gq.gauss_hermite(N)
         
     vm = VariableMap(W,n,bflag)
-    X = vm.inverse(Y,NMC)
+    X,ind = vm.inverse(Y,NMC)
     
-    # weights for integration in x space
-    Wx = np.kron(Wy,(1.0/NMC)*np.ones((NMC,1)))
+    return X,ind,Y,Wy
     
-    return X,Wx,Y,Wy
+def conditional_expectations(F,ind):
+    n = int(np.amax(ind))+1
+    EF,VF = np.zeros((n,1)),np.zeros((n,1))
+    for i in range(n):
+        f = F[ind==i]
+        EF[i] = np.mean(f)
+        VF[i] = np.var(f)
+    return EF,VF
     
 def quadratic_model_check(X,f,gamma,k):
     M,m = X.shape
