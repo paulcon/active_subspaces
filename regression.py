@@ -26,7 +26,7 @@ class PolynomialRegression():
         self.b = p_weights[1:m+1].copy()
         if self.N>1:
             A = np.zeros((m,m))
-            for i in range(m+1,comb(m+2,2)):
+            for i in range(m+1,indices.shape[0]):
                 ind = indices[i,:]
                 loc = np.nonzero(ind!=0)[0]
                 if loc.size==1:
@@ -63,7 +63,7 @@ class PolynomialRegression():
         return fstar,dfstar,vstar
 
     def __call__(self,Xstar):
-        return self.predict(Xstar)
+        return self.predict(Xstar)[0]
 
 class GaussianProcess():
     def __init__(self,N=2):
@@ -125,7 +125,7 @@ class GaussianProcess():
             for i in range(m):
                 dPstar = np.linalg.solve(self.K,dKstar[:,:,i])
                 dRstar = dBstar[:,:,i] - np.dot(dPstar.T,self.B)
-                dfstar[:,i] = (np.dot(dKstar.T,self.f_weights) \
+                dfstar[:,i] = (np.dot(dKstar[:,:,i].T,self.f_weights) \
                     + np.dot(dRstar,self.p_weights)).reshape((M))
         else:
             dfstar = None
@@ -140,7 +140,7 @@ class GaussianProcess():
         return fstar,dfstar,vstar
             
     def __call__(self,Xstar):
-        return self.predict(Xstar)
+        return self.predict(Xstar)[0]
 
 def negative_log_likelihood(g,X,f,e,N,v):
     M,m = X.shape
