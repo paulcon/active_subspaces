@@ -33,7 +33,7 @@ def linear_program_eq(c,A,b,lb,ub):
     if model.status == GRB.OPTIMAL:
         return model.getAttr('x', vars)
     else:
-        raise Exception('Gurobi did not solve the LP.')
+        raise Exception('Gurobi did not solve the LP. Blame Gurobi.')
         return None
 
 def quadratic_program_bnd(c,Q,lb,ub):
@@ -65,24 +65,5 @@ def quadratic_program_bnd(c,Q,lb,ub):
     if model.status == GRB.OPTIMAL:
         return model.getAttr('x', vars)
     else:
-        raise Exception('Gurobi did not solve the QP.')
+        raise Exception('Gurobi did not solve the QP. Blame Gurobi.')
         return None
-
-if __name__ == '__main__':
-    
-    m,n = 3,4
-    c = np.zeros(n)
-    A = np.eye(3,4)
-    b = np.ones(m)
-    lb = -np.ones(n)
-    ub = np.ones(n)
-    x = linear_program_eq(c,A,b,lb,ub)
-    print x
-    
-    c = np.zeros(n)
-    Q = np.eye(n)
-    lb = -np.ones(n)
-    ub = np.ones(n)
-    x = quadratic_program_bnd(c,Q,lb,ub)
-    print x
-    

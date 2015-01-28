@@ -280,7 +280,79 @@ def test_variable_maps():
     print 'XX'
     print XX
     '''
+    
+def ressurf_test():
+    '''
+    X1,X2 = np.meshgrid(np.linspace(-1.0,1.0,21),np.linspace(-1.0,1.0,21))
+    X = np.hstack((X1.reshape((X1.size,1)),X2.reshape((X2.size,1))))
+    f = np.sin(np.pi*np.sum(X,axis=1))
+    e = np.array([1.0,0.5,0.1])
+    Xstar = np.random.uniform(-1.0,1.0,size=(100,2))
+    fstar,vstar = gaussian_process_regression(X,f,Xstar,e=e,gl=0.0,gu=100.0,N=5)
+    '''
+    '''
+    X = np.linspace(-1.0,1.0,21).reshape((21,1))
+    f = np.sin(np.pi*X)
+    e = np.array([1.0,0.5,0.1])
+    D = np.load('true.npz')
+    Xstar = D['Xstar']
+    gp = GaussianProcess(5)
+    gp.train(X,f,e,gl=0.0,gu=100.0)
+    fstar,dfstar,vstar = gp.predict(Xstar,compvar=True)
+    plt.plot(X,f,'k-',Xstar,fstar,'bx')
+    plt.show()
+    print 'Error: %6.4e,%6.4e' % (np.linalg.norm(fstar-D['fstar']),np.linalg.norm(vstar-D['vstar']))
+    print 'Error: %6.4e' % np.linalg.norm(gp(Xstar)[0]-D['fstar'])
+    '''
+    '''
+    X = np.linspace(-1.0,1.0,21).reshape((21,1))
+    f = np.sin(np.pi*X)
+    e = np.array([1.0,0.5,0.1])
+    D = np.load('true.npz')
+    Xstar = D['Xstar']
+    gp = GaussianProcess(5)
+    gp.train(X,f,gl=0.0,gu=100.0)
+    fstar,dfstar,vstar = gp.predict(Xstar,compvar=True,compgrad=True)
+    h = 1e-9
+    fdfstar = (gp(Xstar+h)[0] - gp(Xstar)[0])/h
+    print 'Grad err: %6.4e' % np.linalg.norm(dfstar-fdfstar)
+    '''
+    X = np.linspace(-1.0,1.0,51).reshape((51,1))
+    f = np.sin(np.pi*X)
+    pr = PolynomialRegression(5)
+    pr.train(X,f)
+    D = np.load('true.npz')
+    Xstar = D['Xstar'] 
+    fstar,dfstar,vstar = pr.predict(Xstar,compgrad=True,compvar=True)
+    plt.close('all')
+    plt.figure()
+    plt.plot(X,f,'k-',Xstar,fstar,'bx')
+    plt.title('Prediction')
+    plt.figure()
+    plt.plot(Xstar,np.pi*np.cos(np.pi*Xstar),'ro',Xstar,dfstar,'bx')
+    plt.title('Derivative')
+    plt.figure()
+    plt.plot(Xstar,vstar,'bx')
+    plt.title('Variance')
+    plt.show()
 
+def gurobi_test():
+    m,n = 3,4
+    c = np.zeros(n)
+    A = np.eye(3,4)
+    b = np.ones(m)
+    lb = -np.ones(n)
+    ub = np.ones(n)
+    x = linear_program_eq(c,A,b,lb,ub)
+    print x
+    
+    c = np.zeros(n)
+    Q = np.eye(n)
+    lb = -np.ones(n)
+    ub = np.ones(n)
+    x = quadratic_program_bnd(c,Q,lb,ub)
+    print x
+    
 if __name__ == "__main__":
     
     #if not test_load_data():
