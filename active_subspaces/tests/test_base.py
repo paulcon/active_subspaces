@@ -36,9 +36,13 @@ if __name__ == '__main__':
     # make some plots
     #model.diagnostics()
     
+    # trying 2d
+    model.subspace.partition(n=2)
+    
     # just for tests -- these ran without error
     #model.set_domain()
     #model.set_response_surface()
+    
     
     # check response surface predictions
     qd = np.load('quad_predict.npz')
@@ -72,11 +76,7 @@ if __name__ == '__main__':
     print fmin
     print 'Argmin'
     print xmin
-    fmax,xmax = model.maximum()
-    print 'Maximum'
-    print fmax
-    print 'Argmax'
-    print xmax
+    
     
     
     

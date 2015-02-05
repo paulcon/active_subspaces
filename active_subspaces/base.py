@@ -142,7 +142,7 @@ class ActiveSubspaceModel():
                 ystar = fminbound(fun,yl,yu,xtol=1e-9,maxfun=1e4,full_output=1)[0]
             else:
                 y0 = np.random.normal(size=(1,n))
-                cons = self.domain.constraints
+                cons = self.domain.constraints()
                 result = minimize(fun,y0,constraints=cons,method='SLSQP',options=opts)
                 ystar = result.x
         else:
@@ -153,12 +153,13 @@ class ActiveSubspaceModel():
         ss = self.subspace
         mvm = MinVariableMap(ss.W1,ss.W2)
         mvm.train(self.X,self.f,bflag=self.bflag)
-        xstar = mvm.inverse(ystar)
+        xstar = mvm.inverse(ystar.reshape((1,n)))
         return xstar
     
     def minimum(self):
         def fun(y):
-            return self.rs.predict(y)[0]
+            n = y.size
+            return self.rs.predict(y.reshape((1,n)))[0]
         xmin = self.as_minimize(fun)
         fmin = fun(np.dot(xmin,self.subspace.W1))
         return fmin,xmin
