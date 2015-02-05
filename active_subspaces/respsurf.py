@@ -52,18 +52,21 @@ class PolynomialRegression(ResponseSurface):
         
         B = polynomial_bases(X,self.N)[0]
         f = np.dot(B,self.poly_weights)
+        f = f.reshape((M,1))
         
         if compgrad:
             dB = grad_polynomial_bases(X,self.N)
             df = np.zeros((M,m))
             for i in range(m):
                 df[:,i] = np.dot(dB[:,:,i],self.poly_weights).reshape((M))
+            df = df.reshape((M,m))
         else:
             df = None
         
         if compvar:
             R = np.linalg.solve(self.R.T,B.T)
             v = np.var(self.f)*np.diag(np.dot(R.T,R))
+            v = v.reshape((M,1))
         else:
             v = None
             
@@ -120,6 +123,7 @@ class GaussianProcess():
         B = polynomial_bases(X,self.N)[0]
         R = B - np.dot(P.T,self.B)
         f += np.dot(R,self.poly_weights)
+        f = f.reshape((M,1))
         
         if compgrad:
             dK = grad_exponential_squared_covariance(self.X,X,self.sig,self.ell)
@@ -130,6 +134,7 @@ class GaussianProcess():
                 dR = dB[:,:,i] - np.dot(dP.T,self.B)
                 df[:,i] = (np.dot(dK[:,:,i].T,self.radial_weights) \
                     + np.dot(dR,self.poly_weights)).reshape((M))
+                df = df.reshape((M,m))
         else:
             df = None
         
@@ -137,6 +142,7 @@ class GaussianProcess():
             V = exponential_squared_covariance(X,X,self.sig,self.ell)
             v = np.diag(V) - np.sum(P*P,axis=0)
             v += np.diag(np.dot(R,np.linalg.solve(self.A,R.T)))
+            v = v.reshape((M,1))
         else:
             v = None
             

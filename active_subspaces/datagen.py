@@ -88,7 +88,7 @@ def finite_difference_gradients(X,fun,h=1e-6):
     X,M,m = process_inputs(X)
     
     # points to run simulations
-    XX = np.kron(np.ones((m,1)),X) + \
+    XX = np.kron(np.ones((m+1,1)),X) + \
         h*np.kron(np.vstack((np.zeros((1,m)),np.eye(m))),np.ones((M,1)))
     
     sr = SimulationRunner(fun)

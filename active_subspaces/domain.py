@@ -13,7 +13,7 @@ class ActiveVariableDomain():
     def integration_rule(self,N):
         raise NotImplementedError()
         
-class UnoundedActiveVariableDomain(ActiveVariableDomain):
+class UnboundedActiveVariableDomain(ActiveVariableDomain):
     def design(self,N):
         n = self.W1.shape[1]
         if len(N) != n:

@@ -1,5 +1,23 @@
 import numpy as np
 
+def quadratic_model_check(X,f,gamma,k):
+    M,m = X.shape
+    gamma = gamma.reshape((1,m))
+    
+    pr = rg.PolynomialRegression(2)
+    pr.train(X,f)
+
+    # get regression coefficients
+    b,A = pr.g,pr.H
+    
+    # compute eigenpairs
+    e,W = np.linalg.eig(np.outer(b,b.T) + \
+        np.dot(A,np.dot(np.diagflat(gamma),A)))
+    ind = np.argsort(e)[::-1]
+    e,W = e[ind],W[:,ind]*np.sign(W[0,ind])
+    
+    return e[:k],W
+
 def response_surface_design(W,n,N,NMC,bflag=0):
     
     # check len(N) == n

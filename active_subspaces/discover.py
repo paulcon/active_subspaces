@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import os
 
 class Subspaces():
+    df = None
+    k = None
     eigenvalues = None
     eigenvectors = None
     W1 = None
@@ -10,19 +12,19 @@ class Subspaces():
     e_br = None
     sub_br = None
     
-    def compute(self,dF,k=0):
-        self.dF = dF
+    def compute(self,df,k=0):
+        self.df = df
 
-        if k==0: k=dF.shape[1]
+        if k==0: k=df.shape[1]
         self.k = k
 
-        self.eigenvalues,self.eigenvectors = spectral_decomposition(dF,k)
+        self.eigenvalues,self.eigenvectors = spectral_decomposition(df,k)
         
     def bootstrap(self,n_boot=1000):
-        dF,k,e,W = self.dF,self.k,self.e,self.W
+        df,k,e,W = self.df,self.k,self.eigenvalues,self.eigenvectors
         
         # set integers
-        M,m = self.dF.shape
+        M,m = self.df.shape
         k_sub = np.minimum(self.k,m-1)
         
         # bootstrap
@@ -32,7 +34,7 @@ class Subspaces():
                 
         # can i parallelize this?
         for i in range(n_boot):
-            W0,e0 = spectral_decomposition(dF[ind[:,i],:],k)
+            e0,W0 = spectral_decomposition(df[ind[:,i],:],k)
             e_boot[:,i] = e0[:k]
             for j in range(k_sub):
                 sub_dist[j,i] = np.linalg.norm(np.dot(W[:,:j+1].T,W0[:,j+1:]),ord=2)
@@ -47,13 +49,14 @@ class Subspaces():
             sub_br[i,1] = np.mean(sub_dist[i,:])
             sub_br[i,2] = np.amax(sub_dist[i,:])
             
-        return e_br,sub_br
+        self.e_br,self.sub_br = e_br,sub_br
         
-    def partition(self,W,n=0):
+    def partition(self,n=0):
             
         # crappy threshold for choosing active subspace dimension
         if n==0:
-            n = np.argmax(np.fabs(np.diff(np.log(self.e)))) + 1
+            n = np.argmax(np.fabs(np.diff(np.log(self.eigenvalues)))) + 1
+        print '%d active variables from %d variables.' % (n,self.eigenvectors.shape[0])
         self.W1,self.W2 = self.eigenvectors[:,:n],self.eigenvectors[:,n:]
         
 class ActiveSubspacePlotter():
@@ -189,14 +192,14 @@ class ActiveSubspacePlotter():
         
         plt.show()
     
-def spectral_decomposition(dF,k=0):
+def spectral_decomposition(df,k=0):
     
     # set integers
-    M,m = dF.shape
+    M,m = df.shape
     if k==0: k=m
     
     # compute active subspace
-    U,sig,W = np.linalg.svd(dF,full_matrices=False)
+    U,sig,W = np.linalg.svd(df,full_matrices=False)
     e = (sig[:k]**2)/M
     W = W.T
     W = W*np.sign(W[0,:])

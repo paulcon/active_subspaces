@@ -23,7 +23,7 @@ def linear_program_eq(c,A,b,lb,ub):
     # Populate objective
     obj = LinExpr()
     for j in range(n):
-        obj += c[j]*vars[j]
+        obj += c[j,0]*vars[j]
     model.setObjective(obj)
     model.update()
 
@@ -56,6 +56,45 @@ def quadratic_program_bnd(c,Q,lb,ub):
 
     for j in range(n):
         obj += c[j]*vars[j]
+    model.setObjective(obj)
+    model.update()
+
+    # Solve
+    model.optimize()
+
+    if model.status == GRB.OPTIMAL:
+        return model.getAttr('x', vars)
+    else:
+        raise Exception('Gurobi did not solve the QP. Blame Gurobi.')
+        return None
+        
+def quadratic_program_ineq(c,Q,A,b):
+    
+    m,n = A.shape
+    model = Model()
+    model.setParam('OutputFlag', 0)
+
+    # Add variables to model
+    vars = []
+    for j in range(n):
+        vars.append(model.addVar(vtype=GRB.CONTINUOUS))
+    model.update()
+    
+    # Populate linear constraints
+    for i in range(m):
+        expr = LinExpr()
+        for j in range(n):
+            expr += A[i,j]*vars[j]
+        model.addConstr(expr,GRB.GREATER_EQUAL,b[i])    
+    
+    # Populate objective
+    obj = QuadExpr()
+    for i in range(n):
+        for j in range(n):
+            obj += Q[i,j]*vars[i]*vars[j]
+
+    for j in range(n):
+        obj += c[j,0]*vars[j]
     model.setObjective(obj)
     model.update()
 
