@@ -1,31 +1,31 @@
 import numpy as np
 import gaussquad as gq
-from scipy.spatial import Delaunay,ConvexHull,distance_matrix
+from scipy.spatial import Delaunay,distance_matrix#ConvexHull,distance_matrix
 from scipy.optimize import minimize
 
 class ActiveVariableDomain():
     def __init__(self,W1):
         self.W1 = W1
-    
+
     def design(self,N):
         raise NotImplementedError()
-        
+
     def integration_rule(self,N):
         raise NotImplementedError()
-        
+
 class UnboundedActiveVariableDomain(ActiveVariableDomain):
     def design(self,N):
         n = self.W1.shape[1]
         if len(N) != n:
             raise Exception('N should be a list of integers of length n.')
         return gq.gauss_hermite(N)[0]
-        
+
     def integration_rule(self,N):
         n = self.W1.shape[1]
         if len(N) != n:
             raise Exception('N should be a list of integers of length n.')
         return gq.gauss_hermite(N)
-        
+
 class BoundedActiveVariableDomain(ActiveVariableDomain):
     def __init__(self,W1):
         self.W1 = W1
@@ -47,7 +47,7 @@ class BoundedActiveVariableDomain(ActiveVariableDomain):
 	    Y,X = zonotope_vertices(W1)
             self.convhull = ConvexHull(Y)
         self.vertY,self.vertX = Y,X
-        
+
     def design(self,N):
         if self.W1.shape[1] == 1:
             y = np.linspace(self.vertY[0],self.vertY[1],N[0]).reshape((N[0],1))
@@ -55,7 +55,7 @@ class BoundedActiveVariableDomain(ActiveVariableDomain):
         else:
             Y = maximin_design(self.vertY,N[0])
         return Y
-        
+
     def constraints(self):
         n = self.W1.shape[1]
         A = self.convhull.equations[:,:n]
@@ -64,14 +64,14 @@ class BoundedActiveVariableDomain(ActiveVariableDomain):
                 'fun' : lambda x: np.dot(A,x)-b,
                 'jac' : lambda x: A})
         return cons
-        
+
     def integration_rule(self,N):
         NX = 10000 # maybe user should have control of this
-        
+
         if self.W1.shape[1] == 1:
             y = np.linspace(self.vertY[0],self.vertY[1],N[0]).reshape((N[0],1))
             Y = 0.5*(y[1:]+y[:-1])
-            
+
             Ysamp = np.dot(np.random.uniform(-1.0,1.0, \
                 size=(NX,self.W1.shape[0])),self.W1)
             Wy = np.histogram(Ysamp.reshape((NX,)),bins=y.reshape((N[0],)), \
@@ -84,7 +84,7 @@ class BoundedActiveVariableDomain(ActiveVariableDomain):
             for t in T.simplices:
                 c.append(np.mean(T.points[t],axis=0))
             Y = np.array(c)
-            
+
             # approximate weights
             Ysamp = np.dot(np.random.uniform(-1.0,1.0, \
                 size=(NX,self.W1.shape[0])),self.W1)
@@ -92,7 +92,7 @@ class BoundedActiveVariableDomain(ActiveVariableDomain):
             Wy = np.zeros((T.nsimplex,1))
             for i in range(T.nsimplex):
                 Wy[i] = np.sum(I==i)/float(NX)
-                
+
         return Y,Wy
 
 def nzv(m,n,M=None):
@@ -127,7 +127,7 @@ def zonotope_vertices(W1):
     X = np.array(Xlist)
     Y = np.dot(X,W1)
     return Y,X
-    
+
 def maximin_design_obj(y,yzv=None):
     Ny,n = yzv.shape
     N = y.size/n

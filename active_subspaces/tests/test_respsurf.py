@@ -1,47 +1,55 @@
 from unittest import TestCase
 import unittest
 
-class TestBase(TestCase):
+class TestRespsurf(TestCase):
     @unittest.skip('not implemented yet')
-    def test_compute_subspaces(self):
+    def test_polynomial_regression_train(self):
         self.fail('not implemented yet')
 
     @unittest.skip('not implemented yet')
-    def test_build_from_data(self):
+    def test_polynomial_regression_predict(self):
         self.fail('not implemented yet')
 
     @unittest.skip('not implemented yet')
-    def test_build_from_interface(self):
+    def test_polynomial_regression_gradient(self):
         self.fail('not implemented yet')
 
     @unittest.skip('not implemented yet')
-    def test_diagnostics(self):
+    def test_gaussian_process_train(self):
         self.fail('not implemented yet')
 
     @unittest.skip('not implemented yet')
-    def test_set_domain(self):
+    def test_gaussian_process_predict(self):
         self.fail('not implemented yet')
 
     @unittest.skip('not implemented yet')
-    def test_set_response_surface(self):
+    def test_gaussian_process_gradient(self):
         self.fail('not implemented yet')
 
     @unittest.skip('not implemented yet')
-    def test_predict(self):
+    def test_negative_log_likelihood(self):
         self.fail('not implemented yet')
 
     @unittest.skip('not implemented yet')
-    def test_gradient(self):
+    def test_exponential_squared_covariance(self):
         self.fail('not implemented yet')
 
     @unittest.skip('not implemented yet')
-    def test_mean(self):
+    def test_grad_exponential_squared_covariance(self):
         self.fail('not implemented yet')
 
     @unittest.skip('not implemented yet')
-    def test_as_minimize(self):
+    def test_polynomial_bases(self):
         self.fail('not implemented yet')
 
     @unittest.skip('not implemented yet')
-    def test_minimum(self):
+    def test_grad_polynomial_bases(self):
+        self.fail('not implemented yet')
+
+    @unittest.skip('not implemented yet')
+    def test_full_index_set(self):
+        self.fail('not implemented yet')
+
+    @unittest.skip('not implemented yet')
+    def test_index_set(self):
         self.fail('not implemented yet')
