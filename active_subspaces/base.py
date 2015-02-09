@@ -132,8 +132,6 @@ class ActiveSubspaceModel():
     
     def as_minimize(self,fun):
         n = self.subspace.W1.shape[1]
-        if self.domain is None:
-            self.set_domain()
         
         opts = {'disp':True,'maxiter':1e4,'ftol':1e-9}
         if self.bflag:
@@ -157,6 +155,11 @@ class ActiveSubspaceModel():
         return xstar
     
     def minimum(self):
+        if self.domain is None:
+            self.set_domain()
+        if self.rs is None:
+            self.set_response_surface()
+        
         def fun(y):
             n = y.size
             return self.rs.predict(y.reshape((1,n)))[0]
