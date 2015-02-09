@@ -1,47 +1,35 @@
 from unittest import TestCase
 import unittest
 
-class TestBase(TestCase):
+class TestActiveVariableDomain(TestCase):
     @unittest.skip('not implemented yet')
-    def test_compute_subspaces(self):
+    def test_bounded_design(self):
         self.fail('not implemented yet')
 
     @unittest.skip('not implemented yet')
-    def test_build_from_data(self):
+    def test_bounded_integration_rule(self):
         self.fail('not implemented yet')
 
     @unittest.skip('not implemented yet')
-    def test_build_from_interface(self):
+    def test_bounded_conststraints(self):
         self.fail('not implemented yet')
 
     @unittest.skip('not implemented yet')
-    def test_diagnostics(self):
+    def test_unbounded_design(self):
         self.fail('not implemented yet')
 
     @unittest.skip('not implemented yet')
-    def test_set_domain(self):
+    def test_unbounded_integration_rule(self):
         self.fail('not implemented yet')
 
     @unittest.skip('not implemented yet')
-    def test_set_response_surface(self):
+    def test_nzv(self):
         self.fail('not implemented yet')
 
     @unittest.skip('not implemented yet')
-    def test_predict(self):
+    def test_maximin_design_obj(self):
         self.fail('not implemented yet')
 
     @unittest.skip('not implemented yet')
-    def test_gradient(self):
-        self.fail('not implemented yet')
-
-    @unittest.skip('not implemented yet')
-    def test_mean(self):
-        self.fail('not implemented yet')
-
-    @unittest.skip('not implemented yet')
-    def test_as_minimize(self):
-        self.fail('not implemented yet')
-
-    @unittest.skip('not implemented yet')
-    def test_minimum(self):
+    def test_maximin_design(self):
         self.fail('not implemented yet')
