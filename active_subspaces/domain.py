@@ -1,6 +1,6 @@
 import numpy as np
 import gaussquad as gq
-from scipy.spatial import Delaunay,distance_matrix#ConvexHull,distance_matrix
+from scipy.spatial import Delaunay,ConvexHull,distance_matrix
 from scipy.optimize import minimize
 
 class ActiveVariableDomain():

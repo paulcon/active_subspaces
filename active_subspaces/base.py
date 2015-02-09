@@ -28,8 +28,8 @@ class ActiveSubspaceModel():
 
     def compute_subspaces(self,df):
         # set up the active and inactive subspaces
-        self.subspace.compute(df)
-        n = self.subspace.compute_paritition
+        self.subspace.compute_spectral_decomposition(df)
+        n = self.subspace.compute_partition()
         print '%d active variables' % n
         self.subspace.partition(n)
 
@@ -73,7 +73,7 @@ class ActiveSubspaceModel():
 
     def diagnostics(self):
         ss = self.subspace
-        ss.bootstrap()
+        ss.compute_bootstrap_ranges()
         asp = ActiveSubspacePlotter()
         self.plotter = asp
 

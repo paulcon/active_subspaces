@@ -176,8 +176,7 @@ def spectral_decomposition(df,k=0):
     W = W*np.sign(W[0,:])
     return e,W
 
-def bootstrap_ranges(self,df, k, e, w, n_boot=1000):
-    # df,k,e,W = self.df,self.k,self.eigenvalues,self.eigenvectors
+def bootstrap_ranges(df, k, e, W, n_boot=1000):
 
     # set integers
     M,m = df.shape
