@@ -55,28 +55,32 @@ class MinVariableMap(ActiveVariableMap):
         Yp = np.dot(X,W[:,:p])
         pr = rs.PolynomialRegression(N=2)
         pr.train(Yp,f)        
-        gp,Hp = pr.g,pr.H
+        br,Ar = pr.g,pr.H
 
         # get coefficients 
-        g = np.dot(W[:,:p],gp)
-        H = np.dot(W[:,:p],np.dot(Hp,W[:,:p].T))
+        b = np.dot(W[:,:p],br)
+        A = np.dot(W[:,:p],np.dot(Ar,W[:,:p].T))
         
-        self.gz = np.dot(g.T,self.W2)
-        self.Hyz = np.dot(self.W1.T,np.dot(H,self.W2))
-        self.Hz = np.dot(self.W2.T,np.dot(H,self.W2)) \
+        self.bz = np.dot(self.W2.T,b)
+        self.zAy = np.dot(self.W2.T,np.dot(A,self.W1))
+        self.zAz = np.dot(self.W2.T,np.dot(A,self.W2)) \
             + 0.1*np.eye(self.W1.shape[0]-n)
         
     def inverse(self,Y,N=0):
-        H = self.Hz
+        m,n = self.W1.shape
         Xlist = []
+        A_ineq = np.vstack((self.W2,-self.W2))
         for y in Y:
-            g = self.gz + np.dot(y,self.Hyz)
+            c = self.bz.reshape((m-n,1)) + \
+                np.dot(self.zAy,y).reshape((m-n,1))
             if self.bflag:
-                lb = -1.0 - np.dot(self.W1,y)
-                ub = 1.0 - np.dot(self.W1,y)
-                z = gw.quadratic_program_bnd(g,H,lb,ub)
+                b_ineq = np.vstack((
+                    -1-np.dot(self.W1,y).reshape((m,1)),
+                    -1+np.dot(self.W1,y).reshape((m,1))
+                    ))
+                z = gw.quadratic_program_ineq(c,self.zAz,A_ineq,b_ineq)
             else:
-                z = np.linalg.solve(H,g)
+                z = np.linalg.solve(self.zAz,c)
             x = np.dot(self.W1,y) + np.dot(self.W2,z)
             Xlist.append(x)
         return np.array(Xlist)

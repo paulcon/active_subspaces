@@ -1,12 +1,11 @@
 import numpy as np
-import respsurf as rg
 from discover import ActiveSubspacePlotter
 
 def process_inputs(X):
     if len(X.shape) == 2:
         M,m = X.shape
     elif len(X.shape) == 1:
-        M = X.shape
+        M = X.shape[0]
         m = 1
         X = X.reshape((M,m))
     else:
@@ -49,23 +48,7 @@ def conditional_expectations(F,ind):
         VF[i] = np.var(f)
     return EF,VF
     
-def quadratic_model_check(X,f,gamma,k):
-    M,m = X.shape
-    gamma = gamma.reshape((1,m))
-    
-    pr = rg.PolynomialRegression(2)
-    pr.train(X,f)
 
-    # get regression coefficients
-    b,A = pr.g,pr.H
-    
-    # compute eigenpairs
-    e,W = np.linalg.eig(np.outer(b,b.T) + \
-        np.dot(A,np.dot(np.diagflat(gamma),A)))
-    ind = np.argsort(e)[::-1]
-    e,W = e[ind],W[:,ind]*np.sign(W[0,ind])
-    
-    return e[:k],W
 
 
     

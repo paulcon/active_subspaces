@@ -22,7 +22,7 @@ class ActiveSubspaceModel():
     plotter = None # make diagnostic plots 
     rs = None # response surface
     
-    def __init_(self,bflag=False):
+    def __init__(self,bflag=False):
         self.bflag = bflag
     
     def compute_subspaces(self,df):
@@ -76,10 +76,10 @@ class ActiveSubspaceModel():
         asp = ActiveSubspacePlotter()
         self.plotter = asp
         
-        asp.eigenvalues(ss.eigenvalues,e_br=self.ss.e_br)
+        asp.eigenvalues(ss.eigenvalues,e_br=ss.e_br)
         asp.subspace_errors(ss.sub_br)
         asp.eigenvectors(ss.eigenvectors)
-        Y = np.dot(self.X,self.ss.eigenvectors[:,:2])
+        Y = np.dot(self.X,ss.eigenvectors[:,:2])
         asp.sufficient_summary(Y,self.f)
         
     def set_domain(self):
@@ -111,10 +111,12 @@ class ActiveSubspaceModel():
         f,df,v = self.predict(X,compgrad=True)
         return df
         
-    def mean(self,N):
+    def mean(self,N=None):
+        # adding the N=None until I implement the integration
         return np.mean(self.f)
         
-    def variance(self):
+    def variance(self,N=None):
+        # adding the N=None until I implement the integration
         return np.var(self.f)
         
     def probability(self,lb,ub):
@@ -124,22 +126,21 @@ class ActiveSubspaceModel():
         else:
             X = np.random.normal(size=(M,self.m))
         f = self.predict(X)[0]
-        prob = np.sum((f>lb) and (f<ub))/float(M)
+        c = np.logical_and((f>lb), (f<ub))
+        prob = np.sum(c.astype(int))/float(M)
         return prob
     
     def as_minimize(self,fun):
         n = self.subspace.W1.shape[1]
-        if self.domain is None:
-            self.set_domain()
         
         opts = {'disp':True,'maxiter':1e4,'ftol':1e-9}
         if self.bflag:
             if n==1:
                 yl,yu = self.domain.vertY[0],self.domain.vertY[1]
-                ystar = fminbound(fun,yl,yu,options=opts)[0]
+                ystar = fminbound(fun,yl,yu,xtol=1e-9,maxfun=1e4,full_output=1)[0]
             else:
                 y0 = np.random.normal(size=(1,n))
-                cons = self.domain.constraints
+                cons = self.domain.constraints()
                 result = minimize(fun,y0,constraints=cons,method='SLSQP',options=opts)
                 ystar = result.x
         else:
@@ -147,23 +148,26 @@ class ActiveSubspaceModel():
             result = minimize(fun,y0,method='SLSQP',options=opts)
             ystar = result.x
         
-        mvm = MinVariableMap()
+        ss = self.subspace
+        mvm = MinVariableMap(ss.W1,ss.W2)
         mvm.train(self.X,self.f,bflag=self.bflag)
-        xstar = mvm.inverse(ystar)
+        xstar = mvm.inverse(ystar.reshape((1,n)))
         return xstar
     
     def minimum(self):
-        fun = self.rs.predict
-        return self.as_minimize(fun)
+        if self.domain is None:
+            self.set_domain()
+        if self.rs is None:
+            self.set_response_surface()
         
-    def maximum(self):
-        fun = self.rs.predict
-        def nfun(y):
-            f = fun(y)
-            return -f
-        return self.as_minimize(nfun)
+        def fun(y):
+            n = y.size
+            return self.rs.predict(y.reshape((1,n)))[0]
+        xmin = self.as_minimize(fun)
+        fmin = fun(np.dot(xmin,self.subspace.W1))
+        return fmin,xmin
         
     def __call__(self,x):
-        return self.predict(x)
+        return self.predict(x)[0]
         
         

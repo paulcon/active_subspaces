@@ -11,7 +11,7 @@
 figs/
 
 # test data
-*.npz
+#*.npz
 
 # logs
 gurobi.log
