@@ -26,7 +26,7 @@ if __name__ == '__main__':
     # build the model from an interface
     model.build_from_interface(m,quad_fun)
     model.build_from_interface(m,quad_fun,dfun=quad_grad)
-    
+
     """
     X = np.random.uniform(-1.0,1.0,size=(100,3))
     f = np.zeros((100,1))
@@ -37,9 +37,9 @@ if __name__ == '__main__':
         df[i,:] = v.T
     np.savez('quad_data',X=X,f=f,df=df)
     """
-    
+
     # build the model from data
-    qd = np.load('quad_data.npz')
+    qd = np.load('active_subspaces/tests/data/quad_data.npz')
     X,f,df = qd['X'],qd['f'],qd['df']
     model.build_from_data(X,f)
     model.build_from_data(X,f,df=df)
@@ -53,14 +53,14 @@ if __name__ == '__main__':
     # just for tests -- these ran without error
     model.set_domain()
     model.set_response_surface()
-    
+
     """
     XX = np.random.uniform(-1.0,1.0,size=(10,3))
     np.savez('quad_predict',XX=XX)
 
     """
     # check response surface predictions
-    qd = np.load('quad_predict.npz')
+    qd = np.load('active_subspaces/tests/data/quad_predict.npz')
     XX = qd['XX']
     ff,dff,vv = model.predict(XX)
     ff,dff,vv = model.predict(XX,compvar=True)
@@ -91,7 +91,7 @@ if __name__ == '__main__':
     print fmin
     print 'Argmin'
     print xmin
-    
+
 
 
 
