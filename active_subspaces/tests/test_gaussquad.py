@@ -1,6 +1,7 @@
 from unittest import TestCase
 import unittest
 import active_subspaces.gaussquad as gq
+import helper
 import numpy as np
 
 class TestGaussquad(TestCase):
@@ -49,36 +50,36 @@ class TestGaussquad(TestCase):
         np.testing.assert_equal(gq.jacobi_matrix(a), 2.0)
 
     def test_jacobi_matrix_5(self):
-        data = np.load('active_subspaces/tests/data/test_jacobi_matrix_5.npz')
+        data = helper.load_test_npz('test_jacobi_matrix_5.npz')
         J = data['J']
         np.testing.assert_equal(gq.jacobi_matrix(gq.r_hermite(5)), J)
 
     def test_gh1d_7pts(self):
-        data = np.load('test_gh1d_7pts.npz')
+        data = helper.load_test_npz('test_gh1d_7pts.npz')
         p,w = gq.gh1d(7)
         np.testing.assert_equal(p, data['p'])
         np.testing.assert_equal(w, data['w'])
 
     def test_gauss_hermite_1d_array_arg(self):
-        data = np.load('test_gh1d_7pts.npz')
+        data = helper.load_test_npz('test_gh1d_7pts.npz')
         p,w = gq.gauss_hermite([7])
         np.testing.assert_equal(p, data['p'])
         np.testing.assert_equal(w, data['w'])
 
     def test_gauss_hermite_1d_int_arg(self):
-        data = np.load('test_gh1d_7pts.npz')
+        data = helper.load_test_npz('test_gh1d_7pts.npz')
         p,w = gq.gauss_hermite(7)
         np.testing.assert_equal(p, data['p'])
         np.testing.assert_equal(w, data['w'])
 
     def test_gauss_hermite_2d(self):
-        data = np.load('test_gauss_hermite_2d.npz')
+        data = helper.load_test_npz('test_gauss_hermite_2d.npz')
         p,w = gq.gauss_hermite([4,3])
         np.testing.assert_equal(p, data['p'])
         np.testing.assert_equal(w, data['w'])
 
     def test_gauss_hermite_3d(self):
-        data = np.load('test_gauss_hermite_3d.npz')
+        data = helper.load_test_npz('test_gauss_hermite_3d.npz')
         p,w = gq.gauss_hermite([5,6,7])
         np.testing.assert_equal(p, data['p'])
         np.testing.assert_equal(w, data['w'])
