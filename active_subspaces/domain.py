@@ -115,7 +115,7 @@ def zonotope_vertices(W1, NY=10000):
     return Y, X
 
 def interval_design(a, b, N):
-    y = np.linspace(a, b, N).reshape((N, 1))
+    y = np.linspace(a, b, N+2).reshape((N+2, 1))
     return y[1:-1]
     
 def maximin_design(vert, N):
@@ -134,11 +134,11 @@ def maximin_design(vert, N):
     A = np.kron(np.eye(N), C.equations[:,:n])
     b = np.kron(np.ones(N), C.equations[:,n])
     cons = ({'type':'ineq',
-                'fun' : lambda x: np.dot(A,x)-b,
+                'fun' : lambda x: np.dot(A, x) - b,
                 'jac' : lambda x: A})
     y0 = np.random.normal(size=(N, n))
     res = minimize(maximin_design_obj, y0, args=(vert, ), constraints=cons,
-                    method='SLSQP', options={'disp':False,'maxiter':1e9,'ftol':1e-12})
+                    method='SLSQP', options={'disp':False, 'maxiter':1e9, 'ftol':1e-12})
     return res.x.reshape(y0.shape)
 
 def interval_quadrature_rule(a, b, W1, N, NX=10000):
@@ -147,21 +147,21 @@ def interval_quadrature_rule(a, b, W1, N, NX=10000):
     m = W1.shape[0]
     
     # points
-    y = np.linspace(a, b, N).reshape((N, 1))
-    points = 0.5*(y[1:]+y[:-1])
+    y = np.linspace(a, b, N+1).reshape((N+1, 1))
+    points = 0.5*(y[1:] + y[:-1])
 
     # weights
     Ysamp = np.dot(np.random.uniform(-1.0, 1.0, size=(NX, m)), W1)
-    weights = np.histogram(Ysamp.reshape((NX, )), bins=y.reshape((N, )), \
+    weights = np.histogram(Ysamp.reshape((NX, )), bins=y.reshape((N+1, )), \
         range=(np.amin(y),np.amax(y)))[0]
     weights = weights / float(NX)
     
-    return points.reshape((N-1, 1)), weights.reshape((N-1, 1))
+    return points.reshape((N, 1)), weights.reshape((N, 1))
     
 def zonotope_quadrature_rule(vert, W1, N, NX=10000):
     
     # number of dimensions
-    m = W1.shape[0]
+    m, n = W1.shape
     
     # points
     y = np.vstack((vert, maximin_design(vert, N)))
@@ -178,4 +178,4 @@ def zonotope_quadrature_rule(vert, W1, N, NX=10000):
     for i in range(T.nsimplex):
         weights[i] = np.sum(I==i) / float(NX)
 
-    return points, weights
+    return points.reshape((N, n)), weights.reshape((N, 1))
