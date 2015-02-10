@@ -23,7 +23,8 @@ setup(name='active_subspaces',
       packages=['active_subspaces'],
       install_requires=[
           'numpy',
-          'scipy',
+          'scipy >= 0.12.0',
+          'matplotlib'
       ],
       test_suite='nose.collector',
       tests_require=['nose'],
