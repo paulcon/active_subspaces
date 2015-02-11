@@ -92,14 +92,14 @@ def quadratic_model_check(X,f,gamma,k):
     
     return e[:k],W
 
-def conditional_expectations(F,ind):
-    n = int(np.amax(ind))+1
-    EF,VF = np.zeros((n,1)),np.zeros((n,1))
+def conditional_expectations(f, ind):
+    n = int(np.amax(ind)) + 1
+    Ef, Vf = np.zeros((n,1)), np.zeros((n,1))
     for i in range(n):
-        f = F[ind==i]
-        EF[i] = np.mean(f)
-        VF[i] = np.var(f)
-    return EF,VF
+        fi = f[ind==i]
+        Ef[i] = np.mean(fi)
+        Vf[i] = np.var(fi)
+    return Ef, Vf
     
 
 

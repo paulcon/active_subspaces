@@ -1,17 +1,15 @@
 import numpy as np
 import gaussquad as gq
-from scipy.spatial import Delaunay,ConvexHull,distance_matrix
-from scipy.optimize import minimize
+from scipy.spatial import ConvexHull
 from qp_solvers.qp_solver import QPSolver
 import respsurf as rs
 
 class ActiveVariableDomain():
-    def __init__(self, W1):
+    def __init__(self, subspace):
         
         # TODO: error checking on W1
-        self.W1 = W1
-        self.n = W1.shape[1]
-
+        self.subspace = subspace
+        
     def design(self, N):
         raise NotImplementedError()
 
@@ -39,7 +37,7 @@ class BoundedActiveVariableDomain(ActiveVariableDomain):
             convhull = ConvexHull(Y)
             A = convhull.equations[:,:n]
             b = convhull.equations[:,n]
-            constraints = ({'type':'ineq',
+            constraints = ({'type' : 'ineq',
                         'fun' : lambda x: np.dot(A, x) - b,
                         'jac' : lambda x: A})
 
@@ -72,8 +70,8 @@ class BoundedActiveVariableDomain(ActiveVariableDomain):
 
 
 class ActiveVariableMap():
-    def __init__(self, W1, W2):
-        self.W1, self.W2 = W1, W2
+    def __init__(self, subspace):
+        self.W1, self.W2 = subspace.W1, subspace.W2
 
     def forward(self, X):
         return np.dot(X, self.W1), np.dot(X, self.W2)
@@ -199,72 +197,6 @@ def zonotope_vertices(W1, NY=10000):
     X = np.array(Xlist)
     Y = np.dot(X, W1)
     return Y, X
-
-def interval_design(a, b, N):
-    y = np.linspace(a, b, N+2).reshape((N+2, 1))
-    return y[1:-1]
-    
-def maximin_design(vert, N):
-    
-    # objective function for maximin design
-    def maximin_design_obj(y, vert=None):
-        Ny,n = vert.shape
-        N = y.size / n
-        Y = y.reshape((N, n))
-        D0 = distance_matrix(Y, Y) + 1e4*np.eye(N)
-        D1 = distance_matrix(Y, vert)
-        return -np.amin(np.hstack((D0.flatten(), D1.flatten())))
-    
-    n = vert.shape[1]
-    C = ConvexHull(vert)
-    A = np.kron(np.eye(N), C.equations[:,:n])
-    b = np.kron(np.ones(N), C.equations[:,n])
-    cons = ({'type':'ineq',
-                'fun' : lambda x: np.dot(A, x) - b,
-                'jac' : lambda x: A})
-    y0 = np.random.normal(size=(N, n))
-    res = minimize(maximin_design_obj, y0, args=(vert, ), constraints=cons,
-                    method='SLSQP', options={'disp':False, 'maxiter':1e9, 'ftol':1e-12})
-    return res.x.reshape(y0.shape)
-
-def interval_quadrature_rule(a, b, W1, N, NX=10000):
-    
-    # number of dimensions
-    m = W1.shape[0]
-    
-    # points
-    y = np.linspace(a, b, N+1).reshape((N+1, 1))
-    points = 0.5*(y[1:] + y[:-1])
-
-    # weights
-    Ysamp = np.dot(np.random.uniform(-1.0, 1.0, size=(NX, m)), W1)
-    weights = np.histogram(Ysamp.reshape((NX, )), bins=y.reshape((N+1, )), \
-        range=(np.amin(y),np.amax(y)))[0]
-    weights = weights / float(NX)
-    
-    return points.reshape((N, 1)), weights.reshape((N, 1))
-    
-def zonotope_quadrature_rule(vert, W1, N, NX=10000):
-    
-    # number of dimensions
-    m, n = W1.shape
-    
-    # points
-    y = np.vstack((vert, maximin_design(vert, N)))
-    T = Delaunay(y)
-    c = []
-    for t in T.simplices:
-        c.append(np.mean(T.points[t], axis=0))
-    points = np.array(c)
-
-    # approximate weights
-    Ysamp = np.dot(np.random.uniform(-1.0, 1.0, size=(NX,m)), W1)
-    I = T.find_simplex(Ysamp)
-    weights = np.zeros((T.nsimplex, 1))
-    for i in range(T.nsimplex):
-        weights[i] = np.sum(I==i) / float(NX)
-
-    return points.reshape((N, n)), weights.reshape((N, 1))
 
 def sample_z(N, y, W1, W2):
     m, n = W1.shape
