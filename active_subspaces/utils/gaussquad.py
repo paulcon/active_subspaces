@@ -35,7 +35,7 @@ def jacobi_matrix(ab):
         Numpy array ((N-1)x(N-1))
     """
 
-    if type(ab) is not np.ndarray:
+    if isinstance(ab, np.ndarray):
         raise TypeError('ab must be a Numpy array')
 
     if len(ab.shape) != 2:
@@ -95,13 +95,10 @@ def gauss_hermite(N):
             Numpy array (len(N)x1), weights
     """
 
-    # if type(N) is Numpy.ndarray
-        # TODO: convert to list
-
     if type(N) is int:
         N = [N]
 
-    if type(N) is not list:
+    if !isinstance(N, list):
         raise TypeError('N must be a list, yo.')
 
     if len(N) == 1:
