@@ -1,10 +1,17 @@
-"""Base class for a linear solver"""
-
 import abc
 
 class QPSolver(object):
     """
+    Abstract Base Class for QP Solvers
 
+    To use custom QP Solver, subclass QPSolver:
+
+    class CustomSolver(QPSolver):
+        ...
+
+    and call:
+
+    QPSolver.set_qp_solver(CustomSolver)
     """
     __metaclass__  = abc.ABCMeta
 
@@ -22,6 +29,7 @@ class QPSolver(object):
             lb:
             ub:
         Output:
+
         """
 
         raise NotImplementedError()
@@ -37,6 +45,7 @@ class QPSolver(object):
             lb:
             ub:
         Output:
+
         """
 
         raise NotImplementedError()
@@ -52,13 +61,16 @@ class QPSolver(object):
             A:
             b:
         Output:
+
         """
 
         raise NotImplementedError()
 
     @classmethod
     def set_qp_solver(cls, qp_solver_cls):
-        # if qp_solver_cls != None
+        # if !instance(qp_solver_cls(), QPSolver):
+            # raise TypeError('qp_solver_cls must be an a sublcass of QPSolver')
+
         QPSolver.qp_solver_class = qp_solver_cls
 
     @classmethod

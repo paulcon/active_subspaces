@@ -3,6 +3,9 @@ from active_subspaces.qp_solvers.qp_solver import QPSolver
 from gurobipy import *
 
 class GurobiSolver(QPSolver):
+    """
+    Implementation of QPSolver that uses Gurobi to solve linear and quadratic programs
+    """
     def linear_program_eq(self, c, A, b, lb, ub):
 
         m,n = A.shape

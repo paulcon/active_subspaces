@@ -1,4 +1,5 @@
 """Gaussian Quadrature Utilities"""
+
 import numpy as np
 
 def r_hermite(N):
@@ -98,7 +99,7 @@ def gauss_hermite(N):
     if type(N) is int:
         N = [N]
 
-    if !isinstance(N, list):
+    if type(N) is not list:
         raise TypeError('N must be a list, yo.')
 
     if len(N) == 1:
