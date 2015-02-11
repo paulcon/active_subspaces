@@ -1,5 +1,5 @@
 import numpy as np
-from discover import ActiveSubspacePlotter
+from .plotters import ActiveSubspacePlotter
 
 import abc
 

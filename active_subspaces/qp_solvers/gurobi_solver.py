@@ -1,5 +1,5 @@
 import numpy as np
-from active_subspaces.qp_solvers.qp_solver import QPSolver
+from .qp_solver import QPSolver
 from gurobipy import *
 
 class GurobiSolver(QPSolver):
@@ -7,6 +7,7 @@ class GurobiSolver(QPSolver):
     Implementation of QPSolver that uses Gurobi to solve linear and quadratic programs
     """
     def linear_program_eq(self, c, A, b, lb, ub):
+        """See QPSolver#linear_program_eq"""
 
         m,n = A.shape
         model = Model()
@@ -42,6 +43,7 @@ class GurobiSolver(QPSolver):
             return None
 
     def quadratic_program_bnd(self, c, Q, lb, ub):
+        """See QPSolver#quadratic_program_bnd"""
 
         n = Q.shape[0]
         model = Model()
@@ -74,6 +76,7 @@ class GurobiSolver(QPSolver):
             return None
 
     def quadratic_program_ineq(self, c, Q, A, b):
+        """See QPSolver#quadratic_program_ineq"""
 
         m,n = A.shape
         model = Model()
