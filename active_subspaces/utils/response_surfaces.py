@@ -5,32 +5,32 @@ from scipy.optimize import fminbound
 class ResponseSurface():
     def train(self,X,f):
         raise NotImplementedError()
-        
+
     def predict(self,X,compgrad=False,compvar=False):
         raise NotImplementedError()
-        
+
     def gradient(self,X):
         return self.predict(X,compgrad=True)[1]
-        
+
     def __call__(self,X):
         return self.predict(X)[0]
 
 class PolynomialRegression(ResponseSurface):
     def __init__(self,N=2):
         self.N = N
-        
+
     def train(self,X,f):
         X,M,m = process_inputs(X)
-         
+
         B,indices = polynomial_bases(X,self.N)
         Q,R = np.linalg.qr(B)
         poly_weights = np.linalg.solve(R,np.dot(Q.T,f))
-        
+
         # store data
         self.X,self.f = X,f
         self.poly_weights = poly_weights
         self.Q,self.R = Q,R
-        
+
         # organize linear and quadratic coefficients
         self.g = poly_weights[1:m+1].copy()
         if self.N>1:
@@ -46,14 +46,14 @@ class PolynomialRegression(ResponseSurface):
                 else:
                     raise Exception('Error creating quadratic coefficients.')
             self.H = H
-        
+
     def predict(self,X,compgrad=False,compvar=False):
         X,M,m = process_inputs(X)
-        
+
         B = polynomial_bases(X,self.N)[0]
         f = np.dot(B,self.poly_weights)
         f = f.reshape((M,1))
-        
+
         if compgrad:
             dB = grad_polynomial_bases(X,self.N)
             df = np.zeros((M,m))
@@ -62,36 +62,36 @@ class PolynomialRegression(ResponseSurface):
             df = df.reshape((M,m))
         else:
             df = None
-        
+
         if compvar:
             R = np.linalg.solve(self.R.T,B.T)
             v = np.var(self.f)*np.diag(np.dot(R.T,R))
             v = v.reshape((M,1))
         else:
             v = None
-            
+
         return f,df,v
 
-class GaussianProcess():
+class GaussianProcess(ResponseSurface):
     def __init__(self,N=2,e=None,gl=0.0,gu=10.0,v=None):
         self.N = N
         self.e = e
         self.gl,self.gu = gl,gu
         self.v = v
-        
+
     def train(self,X,f):
         X,M,m = process_inputs(X)
-            
+
         if self.e is None:
             e = np.hstack((np.ones(m),np.array([np.var(f)])))
         else:
             e = self.e
         g = fminbound(negative_log_likelihood,self.gl,self.gu,args=(X,f,e,self.N,self.v,))
-        
+
         # set parameters
         sig = g*np.sum(e)
         ell = sig/e[:m]
-        
+
         # covariance matrix of observations
         K = exponential_squared_covariance(X,X,sig,ell)
         if self.v is None:
@@ -99,32 +99,32 @@ class GaussianProcess():
         else:
             K += np.diag(self.v)
         radial_weights = np.linalg.solve(K,f)
-        
+
         # coefficients of polynomial basis
         B = polynomial_bases(X,self.N)[0]
         A = np.dot(B.T,np.linalg.solve(K,B))
         poly_weights = np.linalg.solve(A,np.dot(B.T,radial_weights))
-        
+
         # store parameters
         self.X,self.f = X,f
         self.sig,self.ell = sig,ell
         self.radial_weights,self.poly_weights = radial_weights,poly_weights
         self.K,self.A,self.B = K,A,B
-        
+
     def predict(self,X,compgrad=False,compvar=False):
         X,M,m = process_inputs(X)
 
         # predict without polys
         K = exponential_squared_covariance(self.X,X,self.sig,self.ell)
         f = np.dot(K.T,self.radial_weights)
-        
+
         # update with polys
         P = np.linalg.solve(self.K,K)
         B = polynomial_bases(X,self.N)[0]
         R = B - np.dot(P.T,self.B)
         f += np.dot(R,self.poly_weights)
         f = f.reshape((M,1))
-        
+
         if compgrad:
             dK = grad_exponential_squared_covariance(self.X,X,self.sig,self.ell)
             dB = grad_polynomial_bases(X,self.N)
@@ -137,7 +137,7 @@ class GaussianProcess():
                 df = df.reshape((M,m))
         else:
             df = None
-        
+
         if compvar:
             V = exponential_squared_covariance(X,X,self.sig,self.ell)
             v = np.diag(V) - np.sum(P*P,axis=0)
@@ -145,14 +145,14 @@ class GaussianProcess():
             v = v.reshape((M,1))
         else:
             v = None
-            
+
         return f,df,v
 
 def negative_log_likelihood(g,X,f,e,N,v):
     M,m = X.shape
     sig = g*np.sum(e)
     ell = sig/e[:m]
-    
+
     # covariance matrix
     K = exponential_squared_covariance(X,X,sig,ell)
     if v is None:
@@ -160,12 +160,12 @@ def negative_log_likelihood(g,X,f,e,N,v):
     else:
         K += np.diag(v)
     L = np.linalg.cholesky(K)
-    
+
     # polynomial basis
     B = polynomial_bases(X,N)[0]
     A = np.dot(B.T,np.linalg.solve(K,B))
     AL = np.linalg.cholesky(A)
-    
+
     # negative log likelihood
     z = np.linalg.solve(K,f)
     Bz = np.dot(B.T,z)
@@ -208,7 +208,7 @@ def polynomial_bases(X,N):
         ind = I[i,:]
         B[:,i] = np.prod(np.power(X,ind),axis=1)
     return B,I
-    
+
 def grad_polynomial_bases(X,N):
     M,m = X.shape
     I = index_set(N,m)
@@ -238,7 +238,7 @@ def full_index_set(n,d):
             T = np.hstack((i*np.ones((m,1)),II))
             I = np.vstack((I,T))
     return I
-    
+
 def index_set(n,d):
     I = np.zeros((1,d))
     for i in range(1,n+1):
