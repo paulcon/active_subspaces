@@ -24,12 +24,12 @@ class PolynomialRegression(ResponseSurface):
         B, indices = polynomial_bases(X,  self.N)
         Q, R = np.linalg.qr(B)
         poly_weights = np.linalg.solve(R, np.dot(Q.T, f))
-        
+
         # store data
         self.X, self.f = X, f
         self.poly_weights = poly_weights
         self.Q, self.R = Q, R
-        
+
         # organize linear and quadratic coefficients
         self.g = poly_weights[1:m+1].copy()
         if self.N > 1:
@@ -60,14 +60,13 @@ class PolynomialRegression(ResponseSurface):
             df = df.reshape((M, m))
         else:
             df = None
-        
+
         if compvar:
             R = np.linalg.solve(self.R.T, B.T)
             v = np.var(self.f)*np.diag(np.dot(R.T, R))
             v = v.reshape((M, 1))
         else:
-            v = None
-            
+            v = None            
         return f, df, v
 
 class GaussianProcess():
@@ -79,17 +78,16 @@ class GaussianProcess():
         
     def train(self, X, f):
         X, M, m = process_inputs(X)
-            
         if self.e is None:
             e = np.hstack((np.ones(m), np.array([np.var(f)])))
         else:
             e = self.e
         g = fminbound(negative_log_likelihood, self.gl, self.gu, args=(X, f, e, self.N, self.v, ))
-        
+
         # set parameters
         sig = g*np.sum(e)
         ell = sig/e[:m]
-        
+
         # covariance matrix of observations
         K = exponential_squared_covariance(X, X, sig, ell)
         if self.v is None:
@@ -135,7 +133,7 @@ class GaussianProcess():
                 df = df.reshape((M, m))
         else:
             df = None
-        
+
         if compvar:
             V = exponential_squared_covariance(X, X, self.sig, self.ell)
             v = np.diag(V) - np.sum(P*P, axis=0)
@@ -146,11 +144,12 @@ class GaussianProcess():
             
         return f, df, v
 
+
 def negative_log_likelihood(g, X, f, e, N, v):
     M, m = X.shape
     sig = g*np.sum(e)
     ell = sig/e[:m]
-    
+
     # covariance matrix
     K = exponential_squared_covariance(X, X, sig, ell)
     if v is None:
@@ -158,12 +157,12 @@ def negative_log_likelihood(g, X, f, e, N, v):
     else:
         K += np.diag(v)
     L = np.linalg.cholesky(K)
-    
+
     # polynomial basis
     B = polynomial_bases(X, N)[0]
     A = np.dot(B.T, np.linalg.solve(K, B))
     AL = np.linalg.cholesky(A)
-    
+
     # negative log likelihood
     z = np.linalg.solve(K, f)
     Bz = np.dot(B.T, z)
@@ -254,3 +253,4 @@ def process_inputs(X):
     else:
         raise Exception('Bad inputs.')
     return X, M, m
+

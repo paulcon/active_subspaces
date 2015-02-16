@@ -1,4 +1,5 @@
 """Gaussian Quadrature Utilities"""
+
 import numpy as np
 
 def r_hermite(N):
@@ -35,7 +36,7 @@ def jacobi_matrix(ab):
         Numpy array ((N-1)x(N-1))
     """
 
-    if type(ab) is not np.ndarray:
+    if isinstance(ab, np.ndarray):
         raise TypeError('ab must be a Numpy array')
 
     if len(ab.shape) != 2:
@@ -94,9 +95,6 @@ def gauss_hermite(N):
             Numpy array (prod(N)xlen(N)), points
             Numpy array (len(N)x1), weights
     """
-
-    # if type(N) is Numpy.ndarray
-        # TODO: convert to list
 
     if type(N) is int:
         N = [N]
