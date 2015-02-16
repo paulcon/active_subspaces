@@ -1,43 +1,41 @@
 import numpy as np
-import utils.gaussquad as gq
-from utils.utils import conditional_expectation
+import utils.quadrature as gq
+from utils.utils import conditional_expectations
 from utils.designs import maximin_design
+from utils.simrunners import SimulationRunner
 from domains import UnboundedActiveVariableDomain, BoundedActiveVariableDomain, \
                     UnboundedActiveVariableMap, BoundedActiveVariableMap
-from simrunners import SimulationRunner
 from scipy.spatial import Delaunay
 
 def as_integrate(fun, domain, subspace, N, NMC=10):
+    w, x, ind = as_quadrature_rule(domain, subspace, N, NMC)
+    f = SimulationRunner(fun).run(x)
+    return compute_integral(w, f, ind)
+
+def as_quadrature_rule(domain, subspace, N, NMC=10):
     W1 = subspace.W1    
     m, n = W1.shape
     
     if isinstance(domain,UnboundedActiveVariableDomain):
-        amap = UnboundedActiveVariableMap(subspace)
+        avmap = UnboundedActiveVariableMap(subspace)
         order = []
         for i in range(domain.n):
             order.append(N)
-        yp, yw = gq.gauss_hermite(order)
+        y, w = gq.gauss_hermite(order)
                 
     elif isinstance(domain,BoundedActiveVariableDomain):
-        amap = BoundedActiveVariableMap(subspace)
+        avmap = BoundedActiveVariableMap(subspace)
         if domain.n == 1:
             a, b = domain.vertY[0], domain.vertY[1]
-            yp, yw = interval_quadrature_rule(a, b, W1, N)
+            y, w = interval_quadrature_rule(a, b, W1, N)
         else:
             vert = domain.vertY
-            yp, yw = zonotope_quadrature_rule(vert, W1, N)
+            y, w = zonotope_quadrature_rule(vert, W1, N)
     else:
         raise Exception('Shit, yo!')
         
-    xp, ind = amap.inverse(yp,NMC)
-    
-    f = SimulationRunner(fun).run(xp)
-    Ef, Vf = conditional_expectation(f, ind)
-    
-    mu = np.dot(Ef, yw)
-    sig2 = np.dot(Vf, yw*yw) / NMC
-    lb, ub = mu - 1.96*np.sqrt(sig2), mu + 1.96*np.sqrt(sig2)
-    return mu, lb, ub
+    x, ind = avmap.inverse(y,NMC)
+    return w, x, ind
 
 def interval_quadrature_rule(a, b, W1, N, NX=10000):
     
@@ -76,4 +74,13 @@ def zonotope_quadrature_rule(vert, W1, N, NX=10000):
     for i in range(T.nsimplex):
         weights[i] = np.sum(I==i) / float(NX)
 
-    return points.reshape((N, n)), weights.reshape((N, 1))
+    return points, weights
+    
+def compute_integral(w, f, ind):
+    NMC = np.sum(ind==0)
+    Ef, Vf = conditional_expectations(f, ind)
+    
+    mu = np.dot(Ef.T, w)
+    sig2 = np.dot(Vf.T, w*w) / NMC
+    lb, ub = mu - 1.96*np.sqrt(sig2), mu + 1.96*np.sqrt(sig2)
+    return mu, lb, ub

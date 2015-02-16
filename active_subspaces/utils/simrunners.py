@@ -12,7 +12,7 @@ class SimulationRunner():
         X,M,m = process_inputs(X)
         F = np.zeros((M,1))
         for i in range(M):
-            F[i] = self.fun(X[i,:])
+            F[i] = self.fun(X[i,:].reshape((1,m)))
         return F
         
 class SimulationGradientRunner():
@@ -26,6 +26,6 @@ class SimulationGradientRunner():
         X,M,m = process_inputs(X)
         dF = np.zeros((M,m))
         for i in range(M):
-            df = self.dfun(X[i,:])
+            df = self.dfun(X[i,:].reshape((1,m)))
             dF[i,:] = df.reshape(m)
         return dF

@@ -5,14 +5,14 @@ def quad_fun(x):
     A = np.array([[ 0.2406659045776698, -0.3159904335007421, -0.1746908591702878],
        [-0.3159904335007421,  0.5532215729009683,  0.3777995408101305],
        [-0.1746908591702878,  0.3777995408101305,  0.3161125225213613]])
-    f = 0.5*np.dot(x.T,np.dot(A,x))
+    f = 0.5*np.dot(x,np.dot(A,x.T))
     return f
 
 def quad_grad(x):
     A = np.array([[ 0.2406659045776698, -0.3159904335007421, -0.1746908591702878],
        [-0.3159904335007421,  0.5532215729009683,  0.3777995408101305],
        [-0.1746908591702878,  0.3777995408101305,  0.3161125225213613]])
-    df = np.dot(A,x)
+    df = np.dot(A,x.T)
     return df
 
 if __name__ == '__main__':
@@ -45,10 +45,10 @@ if __name__ == '__main__':
     model.build_from_data(X,f,df=df)
 
     # make some plots
-    model.diagnostics()
+    #model.diagnostics()
 
     # trying 2d
-    model.subspace.partition(n=1)
+    model.subspaces.partition(n=1)
 
     # just for tests -- these ran without error
     model.set_domain()
@@ -74,10 +74,10 @@ if __name__ == '__main__':
     print vv
 
     # check statistics
-    mu = model.mean()
+    mu = model.mean(N=20)
     print 'Mean'
     print mu
-    sig = model.variance()
+    sig = model.variance(N=20)
     print 'Variance'
     print sig
     np.random.seed(seed=1000)

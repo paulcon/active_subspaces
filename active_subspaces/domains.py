@@ -1,20 +1,14 @@
 import numpy as np
-import gaussquad as gq
+import utils.quadrature as gq
 from scipy.spatial import ConvexHull
 from qp_solvers.qp_solver import QPSolver
-import respsurf as rs
 
 class ActiveVariableDomain():
+    vertY, vertX = None, None
+    convhull, constraints = None, None
+    
     def __init__(self, subspace):
-        
-        # TODO: error checking on W1
-        self.subspace = subspace
-        
-    def design(self, N):
-        raise NotImplementedError()
-
-    def integration_rule(self, N):
-        raise NotImplementedError()
+        self.m, self.n = subspace.W1.shape
 
 class UnboundedActiveVariableDomain(ActiveVariableDomain):
     def design(self, N):
@@ -25,7 +19,8 @@ class UnboundedActiveVariableDomain(ActiveVariableDomain):
 
 class BoundedActiveVariableDomain(ActiveVariableDomain):
     
-    def __init__(self, W1):
+    def __init__(self, subspace):
+        W1 = subspace.W1
         m, n = W1.shape
         
         if n == 1:
@@ -42,32 +37,9 @@ class BoundedActiveVariableDomain(ActiveVariableDomain):
                         'jac' : lambda x: A})
 
         # store variables
-        self.W1 = W1
         self.m, self.n = m, n
         self.vertY, self.vertX = Y, X
         self.convhull, self.constraints = convhull, constraints
-
-    def design(self, N):
-        n = self.n
-        if n == 1:
-            a, b = self.vertY[0], self.vertY[1]
-            points = interval_design(a, b, N)
-        else:
-            points = maximin_design(self.vertY, N)
-        return points
-
-    def integration_rule(self, N):
-        n = self.n
-        W1 = self.W1
-
-        if n == 1:
-            a, b = self.vertY[0], self.vertY[1]
-            points, weights = interval_quadrature_rule(a, b, W1, N)
-        else:
-            vert = self.vertY
-            points, weights = zonotope_quadrature_rule(vert, W1, N)
-        return points, weights
-
 
 class ActiveVariableMap():
     def __init__(self, subspace):
@@ -106,51 +78,6 @@ class UnboundedActiveVariableMap(ActiveVariableMap):
         # sample z's
         NY = Y.shape[0]
         return np.random.normal(size=(NY, m-n, N))
-
-class MinVariableMap(ActiveVariableMap):
-    def train(self, X, f, bflag=False):
-        self.bflag = bflag
-        W1, W2 = self.W1, self.W2
-        m, n = W1.shape
-
-        # train quadratic surface on p>n active vars
-        W = np.hstack((W1, W2))
-        if m-n>2:
-            p = n+2
-        else:
-            p = n+1
-        Yp = np.dot(X, W[:,:p])
-        pr = rs.PolynomialRegression(N=2)
-        pr.train(Yp, f)
-        br, Ar = pr.g, pr.H
-
-        # get coefficients
-        b = np.dot(W[:,:p], br)
-        A = np.dot(W[:,:p], np.dot(Ar, W[:,:p].T))
-
-        self.bz = np.dot(W2.T, b)
-        self.zAy = np.dot(W2.T, np.dot(A, W1))
-        self.zAz = np.dot(W2.T, np.dot(A, W2)) + 0.01*np.eye(m-n)
-
-    def regularize_z(self, Y, N=1):
-        W1, W2 = self.W1, self.W2
-        m, n = W1.shape
-        NY = Y.shape[0]
-
-        Zlist = []
-        A_ineq = np.vstack((W2, -W2))
-        for y in Y:
-            c = self.bz.reshape((m-n, 1)) + np.dot(self.zAy, y).reshape((m-n, 1))
-            if self.bflag:
-                b_ineq = np.vstack((
-                    -1-np.dot(W1, y).reshape((m, 1)),
-                    -1+np.dot(W1, y).reshape((m, 1))
-                    ))
-                z = QPSolver.get_qp_solver().quadratic_program_ineq(c, self.zAz, A_ineq, b_ineq)
-            else:
-                z = np.linalg.solve(self.zAz, c)
-            Zlist.append(z)
-        return np.array(Zlist).reshape((NY, m-n, N))
 
 def nzv(m, n, M=None):
     # number of zonotope vertices
@@ -204,9 +131,9 @@ def sample_z(N, y, W1, W2):
     if np.all(np.zeros((m, 1)) <= 1-s) and np.all(np.zeros((m, 1)) >= -1-s):
         z0 = np.zeros((m-n, 1))
     else:
-        lb = -np.ones(m)
-        ub = np.ones(m)
-        c = np.zeros(m)
+        lb = -np.ones((m,1))
+        ub = np.ones((m,1))
+        c = np.zeros((m,1))
         x0 = QPSolver.get_qp_solver().linear_program_eq(c, W1.T, y, lb, ub)
         z0 = np.dot(W2.T, x0).reshape((m-n, 1))
 

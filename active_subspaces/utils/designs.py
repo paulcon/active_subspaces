@@ -1,4 +1,5 @@
 import numpy as np
+from quadrature import gauss_hermite
 from scipy.spatial import ConvexHull, distance_matrix
 from scipy.optimize import minimize
 
@@ -28,3 +29,6 @@ def maximin_design(vert, N):
     res = minimize(maximin_design_obj, y0, args=(vert, ), constraints=cons,
                     method='SLSQP', options={'disp':False, 'maxiter':1e9, 'ftol':1e-12})
     return res.x.reshape(y0.shape)
+
+def unbounded_design(N):
+    return gauss_hermite(N)[0]

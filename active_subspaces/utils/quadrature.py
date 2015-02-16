@@ -76,9 +76,9 @@ def gh1d(N):
         J = jacobi_matrix(ab)
         e, V = np.linalg.eig(J)
         ind = np.argsort(e)
-        x = e[ind].reshape((N,1))
+        x = e[ind].reshape((N, 1))
         x[np.fabs(x) < 1e-12] = 0.0
-        w = (V[0,ind]*V[0,ind]).reshape((N,1))
+        w = (V[0,ind]*V[0,ind]).reshape((N, 1))
     else:
         x, w = np.array([[0.0]]),np.array([[1.0]])
     return x, w
