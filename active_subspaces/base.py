@@ -26,7 +26,7 @@ class ActiveSubspaceModel():
 
     def build_from_data(self, X, f, df=None):
         X, M, m = process_inputs(X)
-        self.X,self.m,self.f = X, m, f
+        self.X, self.m, self.f = X, m, f
 
         # if gradients aren't available, estimate them from data
         if df is None:

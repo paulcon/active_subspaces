@@ -12,7 +12,7 @@ def local_linear_gradients(X, f, p=None):
     elif p < m+1 or p > M: 
         raise Exception('p must be between m+1 and M')
 
-    MM = int(np.ceil(6*m*np.log(m)))
+    MM = np.minimum(int(np.ceil(6*m*np.log(m))), M-1)
     dF = np.zeros((MM, m))
     for i in range(MM):
         x = X[i,:]
