@@ -12,8 +12,9 @@ def local_linear_gradients(X, f, p=None):
     elif p < m+1 or p > M: 
         raise Exception('p must be between m+1 and M')
 
-    dF = np.zeros((M, m))
-    for i in range(M):
+    MM = 6*m*np.log(m)
+    dF = np.zeros((MM, m))
+    for i in range(MM):
         x = X[i,:]
         ind = np.argsort(np.sum((X - x)**2, axis=1))
         A = np.hstack((np.ones((p,1)), X[ind[1:p+1],:]))
