@@ -1,17 +1,15 @@
 # this weird thing for mac file systems
 .DS_Store
 
-# Python
-*.py[cod]
-
-# Python C extensions
-*.so
+# compiled python codes
+*.pyc
 
 # figs directory
 figs/
 
 # test data
-#*.npz
+
+# *.npz
 
 # logs
 gurobi.log
@@ -42,4 +40,3 @@ nosetests.xml
 
 # Translations
 *.mo
-
