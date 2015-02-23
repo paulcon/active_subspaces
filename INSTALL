@@ -1,0 +1,214 @@
+# -----------------------------------------------------------
+#   Active Subspaces Installation Guide
+# -----------------------------------------------------------
+
+# Contents
+- Dependencies
+- Installation
+- Dealing with Write Access
+- Additional Options
+- Un-Installation
+
+Revision - February 2, 2015
+
+
+# -----------------------------------------------------------
+#   Dependencies
+# -----------------------------------------------------------
+
+# Installer Requirements
+
+setuptools - https://pypi.python.org/pypi/setuptools#id102  (download source)
+pip        - https://pypi.python.org/pypi/pip#downloads     (download source)
+
+Note: Setuptools and pip can be installed using the same 
+      installation instructions below.
+Note: Setuptools must be installed first, and pip second.
+
+The above can be obtained at once with the installation of python 
+distributions like "Anaconda" and "Enthought"
+
+
+# Package Requirements
+
+numpy      - http://sourceforge.net/projects/numpy/files/NumPy/1.8.0/
+  windows  - http://www.lfd.uci.edu/~gohlke/pythonlibs/#numpy
+    
+scipy      - http://sourceforge.net/projects/scipy/files/scipy/0.13.2/
+  windows  - http://www.lfd.uci.edu/~gohlke/pythonlibs/#scipy
+    
+matplotlib - http://sourceforge.net/projects/matplotlib/files/matplotlib/matplotlib-1.3.1/
+  windows  - http://www.lfd.uci.edu/~gohlke/pythonlibs/#matplotlib
+
+The above can be obtained at once with the installation of python 
+distributions like "Anaconda" and "Enthought"
+
+
+# More Requirements
+  
+gurobipy   - http://www.gurobi.com/documentation/6.0/windows-quick-start-guide/the_gurobi_python_interfac
+  
+
+
+# -----------------------------------------------------------
+#   Installation
+# -----------------------------------------------------------
+
+Active Subspaces uses setuptools to install.
+
+1. Navigate to the repository directory.
+   This should contain 'setup.py' and directory 'active_subspaces'.
+   setup.py is a script that will install the package.
+   
+   Windows users: open the start menu and type 'cmd' to
+   open a command line.
+   
+2. Execute the install command.
+   There are two options for intalling. These commands may 
+   require a sudo ('super-user-do') call.
+   
+   A. Full-Install
+      This will build and copy the package to your installation 
+      directory (known as site-packages).
+      
+      Command:
+      $ python setup.py install
+      
+   B. Developer-Install (requires the setuptools package)
+      This will place a link to your local Active Subspaces package.  
+      It's a nice option if you expect to be modifying source.
+      
+      Command:
+      $ python setup.py develop
+
+3. Test installation
+   Navigate to a different directory, and try these commands:
+   
+   $ python
+   >>> import active_subspaces
+   >>> print active_subspaces.__file__
+   
+   This should print the location of the Active Subspaces package.
+
+
+# -----------------------------------------------------------
+#   Dealing with Write Access
+# -----------------------------------------------------------
+
+If you don't have write-access to the python site-packages 
+directory, you can try these approaches to install Active 
+Subspaces
+
+
+# -----------------------------------------------------------
+#   Install to local site-packages
+
+This involves the install option --user, and should work for 
+either a full install or developer install
+
+Full Install Command:
+    $ python setup.py install --user
+
+Developer Install Command:
+    $ python setup.py develop --user	
+    
+    
+# -----------------------------------------------------------
+#   Start a local site-packages folder 
+
+This involves creating a local directory, and setting up your
+PYTHONPATH environment variable.
+
+1. Create a local directory.  
+   For example: mkdir ~/python-site-packages
+
+2. Append this path to PYTHONPATH
+
+   A. For Unix operating systems
+      i. Append this line to your ~/.bashrc file
+         export PYTHONPATH = $PYTHONPATH:~/python-site-packages
+      ii. And source the bashrc file
+         $ source ~/.bashrc
+         
+   B. For MacOS operating systems
+      i. Append this line to your ~/.bash_profile file
+         export PYTHONPATH = $PYTHONPATH:~/python-site-packages
+      ii. And source the bashrc file
+         $ source ~/.bashrc
+         
+   C. For Windows operating systems
+      i. Open the start menu and type "environ", this opens the environment
+         variable editor
+      ii. Create or edit the PYTHONPATH "System" environment variable, appending
+         the full path to your custom site-package directory, separating multiple
+         paths with semicolons.
+      iii. Open a new command line window.
+
+3. Install Active Subspaces
+   Using the example of the custom directoy '~/python-site-packages':
+   
+   A. Full-Install
+      Command:
+         $ python setup.py install --prefix=~/python-site-packages
+      
+   B. Developer-Install
+      Command:
+         $ python setup.py develop --prefix=~/python-site-packages      
+
+
+# -----------------------------------------------------------
+#   Additional Options
+# -----------------------------------------------------------
+
+Additional setup options, such as overriding the default install
+location, can be found with the following commands:
+
+python setup.py install --help
+python setup.py uninstall --help
+python setup.py develop --help
+python setup.py --help
+
+   
+# -----------------------------------------------------------
+#   Un-Installation
+# -----------------------------------------------------------
+
+Active Subspaces uses pip to uninstall.  An alternate approach 
+is provided further below if pip is not available.
+
+1. Navigate to the trunk directory.
+
+2. Uninstallation varies with the type of your install
+   These commands may require a sudo ('super-user-do') call.
+   
+   A. Full-UnInstall
+      Use this if you performed a full-install.
+      
+      Command:
+      $ python setup.py uninstall
+  
+   B. Developer-UnInstall
+      Use this if you performed a developer-install.
+      
+      Command:
+      $ python setup.py develop --uninstall
+
+
+Alternate Approach:
+   Use this if you don't have the pip package.
+
+   1. Find your site-packages folder.
+      Your site-packages folder
+      is typically located in your python's install directory.  
+      You can find it by using the following commands.
+         $ python
+         >>> import site
+         >>> site.getsitepackages()
+ 
+    2. Manually delete any file including the name "active_subspaces".  
+       You may also check the file 'easy_install.pth' if
+       it exists for references to the Active Subspaces package, and 
+       delete them.
+       
+       Never said this would be pretty...  However it is a
+       typical uninstall process for python packages.
