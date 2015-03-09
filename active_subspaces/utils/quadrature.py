@@ -21,10 +21,10 @@ def r_hermite(N):
     if N == 1:
         return np.array([[0.0, 1.0]])
     else:
-         n = np.array(range(1, N + 1))
-         B = np.vstack((1.0, 0.5 * n.reshape((N, 1))))
-         A = np.zeros(B.shape)
-         return np.hstack((A, B))
+        n = np.array(range(1, N + 1))
+        B = np.vstack((1.0, 0.5 * n.reshape((N, 1))))
+        A = np.zeros(B.shape)
+        return np.hstack((A, B))
 
 def jacobi_matrix(ab):
     """
@@ -35,9 +35,6 @@ def jacobi_matrix(ab):
     Output:
         Numpy array ((N-1)x(N-1))
     """
-
-    if isinstance(ab, np.ndarray):
-        raise TypeError('ab must be a Numpy array')
 
     if len(ab.shape) != 2:
         raise ValueError('ab must be 2 dimensional')

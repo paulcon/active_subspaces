@@ -213,7 +213,7 @@ def grad_polynomial_bases(X, N):
     B = np.zeros((M, n, m))
     for k in range(m):
         for i in range(n):
-            ind = I[i,:]
+            ind = I[i,:].copy()
             indk = ind[k]
             if indk==0:
                 B[:,i,k] = np.zeros(M)

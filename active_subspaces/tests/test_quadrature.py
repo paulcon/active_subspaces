@@ -1,10 +1,10 @@
 from unittest import TestCase
 import unittest
-import active_subspaces.gaussquad as gq
+import active_subspaces.utils.quadrature as gq
 import helper
 import numpy as np
 
-class TestGaussquad(TestCase):
+class TestQuadrature(TestCase):
     def test_r_hermite_type_error(self):
         self.assertRaises(TypeError, gq.r_hermite, 'string')
 
@@ -25,9 +25,6 @@ class TestGaussquad(TestCase):
         v = gq.r_hermite(5)
         self.assertIsInstance(v, np.ndarray)
         np.testing.assert_equal(v, np.array([[0.0, 1.0], [0.0, 0.5], [0.0, 1.0], [0.0, 1.5], [0.0, 2.0], [0.0, 2.5]]))
-
-    def test_jacobi_matrix_type_error(self):
-        self.assertRaises(TypeError, gq.jacobi_matrix, 'string')
 
     def test_jacobi_matrix_multi_dimension_1(self):
         self.assertRaises(ValueError, gq.jacobi_matrix, np.array([0.0]))
@@ -74,23 +71,18 @@ class TestGaussquad(TestCase):
 
     def test_gauss_hermite_2d(self):
         data = helper.load_test_npz('test_gauss_hermite_2d.npz')
-        p,w = gq.gauss_hermite([4,3])
+        p,w = gq.gauss_hermite([3,3])
         np.testing.assert_equal(p, data['p'])
         np.testing.assert_equal(w, data['w'])
 
     def test_gauss_hermite_3d(self):
         data = helper.load_test_npz('test_gauss_hermite_3d.npz')
-        p,w = gq.gauss_hermite([5,6,7])
+        p,w = gq.gauss_hermite([3,3,4])
         np.testing.assert_equal(p, data['p'])
         np.testing.assert_equal(w, data['w'])
 
     def test_gauss_hermite_type_error(self):
         self.assertRaises(TypeError, gq.gauss_hermite, 'sting')
 
-    @unittest.skip('not implemented yet')
-    def test_gh1d(self):
-        self.fail('not implemented yet')
-
-    @unittest.skip('not implemented yet')
-    def test_gauss_hermite(self):
-        self.fail('not implemented yet')
+if __name__ == '__main__':
+    unittest.main()

@@ -7,7 +7,7 @@ from subspaces import Subspaces
 from gradients import local_linear_gradients, finite_difference_gradients
 from domains import UnboundedActiveVariableDomain, BoundedActiveVariableDomain
 from as_integrals import as_integrate
-from as_optimizers import as_minimize
+from as_optimizers import as_minimize, UnboundedMinVariableMap, BoundedMinVariableMap
 
 class ActiveSubspaceModel():
     bflag = None # indicates if domain is bounded
@@ -145,7 +145,14 @@ class ActiveSubspaceModel():
         def av_fun(y):
             n = y.size
             return self.rs.predict(y.reshape((1, n)))[0]
-        return as_minimize(av_fun, self.domain)
+            
+        ystar, fval = as_minimize(av_fun, self.domain)
+        if self.bflag:
+            mvm = BoundedMinVariableMap()
+        else:
+            mvm = UnboundedMinVariableMap()
+        mvm.train(self.X, self.f)
+        return mvm.inverse(ystar), fval
         
     def __call__(self,x):
         return self.predict(x)[0]
