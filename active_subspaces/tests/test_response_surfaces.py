@@ -389,6 +389,5 @@ class TestResponseSurfaces(TestCase):
             err_df2 = np.linalg.norm(df[:,1].reshape((50,1)) - df2_true)/np.linalg.norm(df2_true)
             print 'Points: %d, Error in f: %6.4e, Error in df1: %6.4e, Error in df2: %6.4e' % ((2**N+1)**2, err_f, err_df1, err_df2)
         
-
 if __name__ == '__main__':
     unittest.main()
