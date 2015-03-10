@@ -13,14 +13,15 @@ def local_linear_gradients(X, f, p=None):
         raise Exception('p must be between m+1 and M')
 
     MM = np.minimum(int(np.ceil(6*m*np.log(m))), M-1)
-    dF = np.zeros((MM, m))
+    df = np.zeros((MM, m))
     for i in range(MM):
-        x = X[i,:]
+        ii = np.random.randint(M)
+        x = X[ii,:]
         ind = np.argsort(np.sum((X - x)**2, axis=1))
         A = np.hstack((np.ones((p,1)), X[ind[1:p+1],:]))
         u = np.linalg.lstsq(A, f[ind[1:p+1]])[0]
-        dF[i,:] = u[1:].T
-    return dF
+        df[i,:] = u[1:].T
+    return df
     
 def finite_difference_gradients(X, simrun, h=1e-6):
     X, M, m = process_inputs(X)
@@ -32,5 +33,5 @@ def finite_difference_gradients(X, simrun, h=1e-6):
     # run the simulation
     F = simrun.run(XX)
     
-    dF = (F[M:].reshape((M, m)) - F[:M]) / h
-    return dF
+    df = (F[M:].reshape((M, m)) - F[:M]) / h
+    return df

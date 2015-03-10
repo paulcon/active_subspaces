@@ -8,11 +8,14 @@ import pdb
 
 class TestResponseSurfaces(TestCase):
     
+    
+ 
     def test_full_index_set(self):
         I = rs.full_index_set(7,3)
         data = helper.load_test_npz('test_full_index_set_7_3.npz')
         np.testing.assert_equal(I,data['I'])
-        
+    
+     
     def test_polynomial_bases(self):
         data = helper.load_test_npz('test_points_10_2.npz')
         X = data['X']
@@ -21,13 +24,15 @@ class TestResponseSurfaces(TestCase):
         np.testing.assert_equal(B, data['B'])
         np.testing.assert_equal(I, data['I'])
 
+ 
     def test_grad_polynomial_bases(self):
         data = helper.load_test_npz('test_points_10_2.npz')
         X = data['X']
         data = helper.load_test_npz('test_grad_poly_bases_3.npz')
         dB = rs.grad_polynomial_bases(X, 3)
         np.testing.assert_equal(dB,data['dB'])    
-        
+    
+     
     def test_grad_polynomial_bases_fd(self):
         data = helper.load_test_npz('test_points_10_2.npz')
         X0 = data['X']
@@ -49,6 +54,7 @@ class TestResponseSurfaces(TestCase):
         dB2 = (B2 - B0)/e
         np.testing.assert_array_almost_equal(dB[:,:,1], dB2, decimal=5)
     
+ 
     def test_exponential_squared_covariance(self):
         
         data = helper.load_test_npz('test_points_10_2.npz')
@@ -58,7 +64,8 @@ class TestResponseSurfaces(TestCase):
         
         data = helper.load_test_npz('test_exp_cov.npz')
         np.testing.assert_equal(C, data['C'])
-        
+    
+     
     def test_grad_exponential_squared_covariance_fd(self):
         
         data = helper.load_test_npz('test_points_10_2.npz')
@@ -80,7 +87,8 @@ class TestResponseSurfaces(TestCase):
         C2 = rs.exponential_squared_covariance(X1, X2p2, 1.0, np.array([1.0,1.0]))
         dC2 = (C2 - C0)/e
         np.testing.assert_array_almost_equal(dC[:,:,1], dC2, decimal=5)
-        
+    
+     
     def test_grad_exponential_squared_covariance(self):
     
         data = helper.load_test_npz('test_points_10_2.npz')
@@ -90,7 +98,8 @@ class TestResponseSurfaces(TestCase):
         
         data = helper.load_test_npz('test_grad_exp_cov.npz')
         np.testing.assert_equal(dC, data['dC'])
-        
+    
+     
     def test_exact_polynomial_approximation_1d(self):
         data = helper.load_test_npz('train_points_10_2.npz')
         X = data['X']
@@ -117,7 +126,8 @@ class TestResponseSurfaces(TestCase):
         df_test = -3 + 10*X_1d_test
         np.testing.assert_almost_equal(f, f_test.reshape((10,1)), decimal=10)
         np.testing.assert_almost_equal(df, df_test.reshape((10,1)), decimal=10)
-
+    
+ 
     def test_exact_polynomial_approximation_2d(self):
         data = helper.load_test_npz('train_points_10_2.npz')
         X = data['X']
@@ -148,7 +158,8 @@ class TestResponseSurfaces(TestCase):
         np.testing.assert_almost_equal(f, f_test.reshape((10,1)), decimal=10)
         np.testing.assert_almost_equal(df[:,0].reshape((10,1)), df1_test.reshape((10,1)), decimal=10)
         np.testing.assert_almost_equal(df[:,1].reshape((10,1)), df2_test.reshape((10,1)), decimal=10)
-
+    
+ 
     def test_exact_gp_approximation_1d(self):
         data = helper.load_test_npz('train_points_10_2.npz')
         X = data['X']
@@ -175,7 +186,8 @@ class TestResponseSurfaces(TestCase):
         df_test = -3 + 10*X_1d_test
         np.testing.assert_almost_equal(f, f_test.reshape((10,1)), decimal=10)
         np.testing.assert_almost_equal(df, df_test.reshape((10,1)), decimal=10)
-
+    
+ 
     def test_exact_gp_approximation_2d(self):
         data = helper.load_test_npz('train_points_10_2.npz')
         X = data['X']
@@ -206,7 +218,8 @@ class TestResponseSurfaces(TestCase):
         np.testing.assert_almost_equal(f, f_test.reshape((10,1)), decimal=10)
         np.testing.assert_almost_equal(df[:,0].reshape((10,1)), df1_test.reshape((10,1)), decimal=10)
         np.testing.assert_almost_equal(df[:,1].reshape((10,1)), df2_test.reshape((10,1)), decimal=10)
-
+    
+ 
     def test_polynomial_grad_1d(self):
         data = helper.load_test_npz('train_points_10_2.npz')
         X = data['X']
@@ -225,7 +238,8 @@ class TestResponseSurfaces(TestCase):
         f1 = pr.predict(X_1d_testp)[0]
         df0_fd = (f1 - f0)/e
         np.testing.assert_almost_equal(df0, df0_fd, decimal=5)
-
+    
+ 
     def test_polynomial_grad_2d(self):
         data = helper.load_test_npz('train_points_200_2.npz')
         X = data['X']
@@ -252,7 +266,8 @@ class TestResponseSurfaces(TestCase):
         f1 = pr.predict(X_testp)[0]
         df2_fd = (f1 - f0)/e
         np.testing.assert_almost_equal(df0[:,1].reshape((10,1)), df2_fd, decimal=5)
-        
+    
+     
     def test_gp_grad_1d(self):
         data = helper.load_test_npz('train_points_10_2.npz')
         X = data['X']
@@ -271,7 +286,8 @@ class TestResponseSurfaces(TestCase):
         f1 = gp.predict(X_1d_testp)[0]
         df0_fd = (f1 - f0)/e
         np.testing.assert_almost_equal(df0, df0_fd, decimal=5)
-
+    
+ 
     def test_gp_grad_2d(self):
         data = helper.load_test_npz('train_points_200_2.npz')
         X = data['X']
@@ -299,6 +315,7 @@ class TestResponseSurfaces(TestCase):
         df2_fd = (f1 - f0)/e
         np.testing.assert_almost_equal(df0[:,1].reshape((10,1)), df2_fd, decimal=5)
     
+ 
     def test_poly_order_1d(self):
         data = helper.load_test_npz('test_points_uniform_50_2.npz')
         X = data['X']
@@ -320,6 +337,7 @@ class TestResponseSurfaces(TestCase):
             err_df = np.linalg.norm(df - df_true)/np.linalg.norm(df_true)
             print 'Order: %d, Error in f: %6.4e, Error in df: %6.4e' % (N, err_f, err_df)
     
+ 
     def test_poly_order_2d(self):
         data = helper.load_test_npz('test_points_uniform_50_2.npz')
         X = data['X']
@@ -344,6 +362,7 @@ class TestResponseSurfaces(TestCase):
             err_df2 = np.linalg.norm(df[:,1].reshape((50,1)) - df2_true)/np.linalg.norm(df2_true)
             print 'Order: %d, Error in f: %6.4e, Error in df1: %6.4e, Error in df2: %6.4e' % (N, err_f, err_df1, err_df2)
     
+ 
     def test_gp_points_1d(self):
         data = helper.load_test_npz('test_points_uniform_50_2.npz')
         X = data['X']
@@ -364,7 +383,8 @@ class TestResponseSurfaces(TestCase):
             df_true = np.pi*np.cos(np.pi*X_1d_test)
             err_df = np.linalg.norm(df - df_true)/np.linalg.norm(df_true)
             print 'Points: %d, Error in f: %6.4e, Error in df: %6.4e' % (2**N+1, err_f, err_df)
-        
+    
+     
     def test_gp_points_2d(self):
         data = helper.load_test_npz('test_points_uniform_50_2.npz')
         X = data['X']
@@ -388,6 +408,32 @@ class TestResponseSurfaces(TestCase):
             err_df1 = np.linalg.norm(df[:,0].reshape((50,1)) - df1_true)/np.linalg.norm(df1_true)
             err_df2 = np.linalg.norm(df[:,1].reshape((50,1)) - df2_true)/np.linalg.norm(df2_true)
             print 'Points: %d, Error in f: %6.4e, Error in df1: %6.4e, Error in df2: %6.4e' % ((2**N+1)**2, err_f, err_df1, err_df2)
+
+    def test_gp_as(self):
+        data = helper.load_test_npz('test_points_uniform_50_2.npz')
+        X_test = data['X'].copy()
+        data = helper.load_test_npz('train_points_200_2.npz')
+        X_train = data['X'].copy()
+        f_train = 2 + 5*X_train[:,0] - 4*X_train[:,1] +2*X_train[:,0]*X_train[:,1]
+
+        gp = rs.GaussianProcess(N=1)
+        e = np.array([1.0, 0.5, 0.1, 0.05, 0.01])
+        gp.train(X_train, f_train, e=e)
+        f, df, vf = gp.predict(X_test, compgrad=True, compvar=True)
+        data = helper.load_test_npz('test_gp_0.npz')
+        np.testing.assert_equal(f, data['f'])
+        np.testing.assert_equal(df, data['df'])
+        np.testing.assert_equal(vf, data['vf'])
+        
+        v = 0.0001*np.ones(f_train.shape)
+        gp.train(X_train, f_train, e=e, v=v)
+        f, df, vf = gp.predict(X_test, compgrad=True, compvar=True)
+        data = helper.load_test_npz('test_gp_1.npz')
+        np.testing.assert_equal(f, data['f'])
+        np.testing.assert_equal(df, data['df'])
+        np.testing.assert_equal(vf, data['vf'])
+                
+        
         
 if __name__ == '__main__':
     unittest.main()

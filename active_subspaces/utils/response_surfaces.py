@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.optimize import fminbound
 from scipy.misc import comb
+import pdb
 
 class ResponseSurface():
     def train(self, X, f):
@@ -85,27 +86,23 @@ class GaussianProcess():
         if M < comb(self.N + m, m):
             raise Exception('Not enough points to fit response surface of order %d' % self.N)
         
-        # default values of variance
-        if e is None and v is None:
-            v = 0.000001*np.ones(f.size)
-            
         # use maximum likelihood to tune parameters
         g = fminbound(negative_log_likelihood, 0.0, 10.0, args=(X, f, v, self.N, e, ))
-
-        # set parameters
+        
         if e is None:
             sig = 1.0
             ell = g*np.ones((m,1))
+            if v is None:
+                v = 0.000001*np.ones(f.size)
         else:
             sig = g*np.sum(e)
             ell = sig/e[:m]
-
+            if v is None:
+                v = g*np.sum(e[m:])*np.ones(f.size)
+        
         # covariance matrix of observations
         K = exponential_squared_covariance(X, X, sig, ell)
-        if e is None:
-            K += np.diag(v)
-        else:
-            K += g*np.sum(e[m:])*np.eye(M)
+        K += np.diag(v)
         radial_weights = np.linalg.solve(K, f)
         
         # coefficients of polynomial basis
@@ -162,16 +159,18 @@ def negative_log_likelihood(g, X, f, v, N, e):
     if e is None:
         sig = 1.0
         ell = g*np.ones((m,1))
+        if v is None:
+            v = 0.000001*np.ones(f.shape)
     else:
         sig = g*np.sum(e)
         ell = sig/e[:m]
+        if v is None:
+            v = g*np.sum(e[m:])*np.ones(f.shape)
 
     # covariance matrix
     K = exponential_squared_covariance(X, X, sig, ell)
-    if e is None:
-        K += np.diag(v)
-    else:
-        K += g*np.sum(e[m:])*np.eye(M)
+    K += np.diag(v.reshape((M,)))
+    #pdb.set_trace()
     L = np.linalg.cholesky(K)
 
     # polynomial basis
