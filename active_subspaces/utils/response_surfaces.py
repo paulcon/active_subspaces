@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.optimize import fminbound
+from scipy.misc import comb
 
 class ResponseSurface():
     def train(self, X, f):
@@ -19,7 +20,11 @@ class PolynomialRegression(ResponseSurface):
         self.N = N
         
     def train(self, X, f):
-        X, M, m = process_inputs(X)
+        X, f, M, m = process_inputs_outputs(X, f)
+        
+        # check that there are enough points to train the polynomial
+        if M < comb(self.N + m, m):
+            raise Exception('Not enough points to fit response surface of order %d' % self.N)
          
         B, indices = polynomial_bases(X,  self.N)
         Q, R = np.linalg.qr(B)
@@ -70,30 +75,37 @@ class PolynomialRegression(ResponseSurface):
         return f, df, v
 
 class GaussianProcess():
-    def __init__(self, N=2, e=None, gl=0.0, gu=10.0, v=None):
+    def __init__(self, N=2):
         self.N = N
-        self.e = e
-        self.gl, self.gu = gl, gu
-        self.v = v
         
-    def train(self, X, f):
-        X, M, m = process_inputs(X)
-        if self.e is None:
-            e = np.hstack((np.ones(m), np.array([np.var(f)])))
-        else:
-            e = self.e
-        g = fminbound(negative_log_likelihood, self.gl, self.gu, args=(X, f, e, self.N, self.v, ))
+    def train(self, X, f, v=None, e=None):
+        X, f, M, m = process_inputs_outputs(X, f)
+        
+        # check that there are enough points to train the polynomial
+        if M < comb(self.N + m, m):
+            raise Exception('Not enough points to fit response surface of order %d' % self.N)
+        
+        # default values of variance
+        if e is None and v is None:
+            v = 0.000001*np.ones(f.size)
+            
+        # use maximum likelihood to tune parameters
+        g = fminbound(negative_log_likelihood, 0.0, 10.0, args=(X, f, v, self.N, e, ))
 
         # set parameters
-        sig = g*np.sum(e)
-        ell = sig/e[:m]
+        if e is None:
+            sig = 1.0
+            ell = g*np.ones((m,1))
+        else:
+            sig = g*np.sum(e)
+            ell = sig/e[:m]
 
         # covariance matrix of observations
         K = exponential_squared_covariance(X, X, sig, ell)
-        if self.v is None:
-            K += g*np.sum(e[m:])*np.eye(M)
+        if e is None:
+            K += np.diag(v)
         else:
-            K += np.diag(self.v)
+            K += g*np.sum(e[m:])*np.eye(M)
         radial_weights = np.linalg.solve(K, f)
         
         # coefficients of polynomial basis
@@ -145,17 +157,21 @@ class GaussianProcess():
         return f, df, v
 
 
-def negative_log_likelihood(g, X, f, e, N, v):
+def negative_log_likelihood(g, X, f, v, N, e):
     M, m = X.shape
-    sig = g*np.sum(e)
-    ell = sig/e[:m]
+    if e is None:
+        sig = 1.0
+        ell = g*np.ones((m,1))
+    else:
+        sig = g*np.sum(e)
+        ell = sig/e[:m]
 
     # covariance matrix
     K = exponential_squared_covariance(X, X, sig, ell)
-    if v is None:
-        K += g*np.sum(e[m:])*np.eye(M)
-    else:
+    if e is None:
         K += np.diag(v)
+    else:
+        K += g*np.sum(e[m:])*np.eye(M)
     L = np.linalg.cholesky(K)
 
     # polynomial basis
@@ -242,15 +258,38 @@ def index_set(n, d):
         II = full_index_set(i, d)
         I = np.vstack((I, II))
     return I[:,::-1]
-    
+
 def process_inputs(X):
     if len(X.shape) == 2:
-        M, m = X.shape
+        MX, mX = X.shape
     elif len(X.shape) == 1:
-        M = X.shape[0]
-        m = 1
-        X = X.reshape((M, m))
+        MX = X.shape[0]
+        mX = 1
     else:
         raise Exception('Bad inputs.')
-    return X, M, m
 
+    M, m = MX, mX
+    X = X.reshape((M, m))
+    
+    return X, M, m    
+            
+def process_inputs_outputs(X, f):
+    X, M, m = process_inputs(X)
+
+    if len(f.shape) == 2:
+        Mf, mf = f.shape
+    elif len(f.shape) == 1:
+        Mf = f.shape[0]
+        mf = 1
+    else:
+        raise Exception('Bad outputs.')
+        
+    if Mf != M:
+        raise Exception('Different number of inputs and outputs.')
+        
+    if mf != 1:
+        raise Exception('Only scalar-valued functions.')
+        
+    f = f.reshape((M, 1))
+    
+    return X, f, M, m
