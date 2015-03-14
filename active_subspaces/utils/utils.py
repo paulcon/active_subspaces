@@ -95,12 +95,8 @@ def process_inputs(X):
 
     if len(X.shape) == 2:
         M, m = X.shape
-    elif len(X.shape) == 1:
-        M = X.shape[0]
-        m = 1
-        X = X.reshape((M, m))
     else:
-        raise ValueError('Bad inputs.')
+        raise ValueError('The inputs X should be a two-d numpy array.')
     return X, M, m
 
 def lingrad(X, f):

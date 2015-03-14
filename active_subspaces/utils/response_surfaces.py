@@ -261,11 +261,8 @@ def index_set(n, d):
 def process_inputs(X):
     if len(X.shape) == 2:
         MX, mX = X.shape
-    elif len(X.shape) == 1:
-        MX = X.shape[0]
-        mX = 1
     else:
-        raise Exception('Bad inputs.')
+        raise ValueError('The inputs X should be a two-d numpy array.')
 
     M, m = MX, mX
     X = X.reshape((M, m))
@@ -277,11 +274,8 @@ def process_inputs_outputs(X, f):
 
     if len(f.shape) == 2:
         Mf, mf = f.shape
-    elif len(f.shape) == 1:
-        Mf = f.shape[0]
-        mf = 1
     else:
-        raise Exception('Bad outputs.')
+        raise ValueError('The outputs f should be a two-d numpy array.')
         
     if Mf != M:
         raise Exception('Different number of inputs and outputs.')

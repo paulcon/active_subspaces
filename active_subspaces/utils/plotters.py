@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
-def plot_opts(savefigs=True, figtype='eps'):
+def plot_opts(savefigs=True, figtype='.eps'):
     # make figs directory
     if savefigs:
         if not os.path.isdir('figs'):
