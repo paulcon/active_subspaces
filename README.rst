@@ -1,8 +1,7 @@
 Python utilities for working with active subspaces. 
 
 WARNING: Development is very active right now, so the interfaces are far from
-stable. It should settle down by mid-March, when the Active Subspaces book 
-comes out.
+stable. It should settle down soon. Feel free to follow development.
 
 Right now I'm using Enthought's Python Distribution and Canopy for development.
 You'll need numpy and scipy for these tools. 

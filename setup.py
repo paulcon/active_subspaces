@@ -5,7 +5,7 @@ def readme():
         return f.read()
 
 setup(name='active_subspaces',
-      version='0.1',
+      version='0.1.1',
       description='Tools to apply active subspaces to analyze their models and data.',
       long_description=readme(),
       classifiers=[
@@ -20,7 +20,7 @@ setup(name='active_subspaces',
       author='Paul Constantine',
       author_email='paul.constantine@mines.edu',
       license='MIT',
-      packages=['active_subspaces'],
+      packages=['active_subspaces', 'active_subspaces.qp_solvers', 'active_subspaces.utils'],
       install_requires=[
           'numpy',
           'scipy >= 0.12.0',
