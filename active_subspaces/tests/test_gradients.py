@@ -23,7 +23,7 @@ class TestGradients(TestCase):
         f = 2 - np.sin(X[:,0]) + np.cos(X[:,1])        
         np.random.seed(1234)
         df = gr.local_linear_gradients(X, f)
-        #np.savez('data/test_llm_gradients',df=df)
+        
         data = helper.load_test_npz('test_llm_gradients.npz')
         np.testing.assert_equal(df, data['df'])        
 

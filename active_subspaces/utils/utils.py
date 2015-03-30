@@ -1,4 +1,4 @@
-import numpy as np
+import numpy as np    
 from plotters import sufficient_summary, eigenvectors
 from response_surfaces import PolynomialRegression
 import abc
@@ -198,8 +198,34 @@ def conditional_expectations(f, ind):
         Vf[i] = np.var(fi)
     return Ef, Vf
 
+# thanks to Trent for these functions!!!
+def atleast_2d_col(A):
+    return atleast_2d(A,'col')
 
+def atleast_2d_row(A):
+    return atleast_2d(A,'row')
 
+def atleast_2d(A,oned_as='row'):
+    ''' ensures A is an array and at least of rank 2
+    '''
+    
+    # not an array yet
+    if not isinstance(A,(np.ndarray,np.matrixlib.defmatrix.matrix)):
+        if not isinstance(A,(list,tuple)):
+            A = [A]
+        A = np.array(A)
+        
+    # check rank
+    if np.ndim(A) < 2:
+        # expand row or col
+        if oned_as == 'row':
+            A = A[None,:]
+        elif oned_as == 'col':
+            A = A[:,None]
+        else:
+            raise Exception , "oned_as must be 'row' or 'col' "
+            
+    return A
 
 
 
