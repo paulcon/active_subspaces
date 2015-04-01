@@ -1,6 +1,7 @@
 """Gaussian Quadrature Utilities"""
 
 import numpy as np
+import utils as ut
 
 def r_hermite(N):
     """
@@ -111,4 +112,4 @@ def gauss_hermite(N):
             xU = np.kron(np.ones((x.shape[0],1)), xi)
             x = np.hstack((xL, xU))
             w = np.kron(w.copy(), wi)
-        return x[:,1:], w
+        return np.atleast_2d(x[:,1:]), ut.atleast_2d_col(w)

@@ -1,7 +1,7 @@
 """Runners for simulations"""
 
 import numpy as np
-from utils import process_inputs
+from utils import process_inputs, atleast_2d_
 
 class SimulationRunner():
     """
@@ -61,5 +61,5 @@ class SimulationGradientRunner():
         dF = np.zeros((M, m))
         for i in range(M):
             df = self.dfun(X[i,:].reshape((1,m)))
-            dF[i,:] = df.reshape(m)
+            dF[i,:] = df.reshape((1,m))
         return dF

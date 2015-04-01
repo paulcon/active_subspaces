@@ -1,7 +1,6 @@
 import numpy as np
 from scipy.optimize import fminbound
 from scipy.misc import comb
-import pdb
 
 class ResponseSurface():
     def train(self, X, f):
