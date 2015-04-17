@@ -99,8 +99,6 @@ class TestPlotters(TestCase):
         f = np.sin(y[:,0])*np.sin(y[:,1])
         plt.sufficient_summary(y, f)
 
-
-
 if __name__ == '__main__':
     mplt.close('all')
     unittest.main()
