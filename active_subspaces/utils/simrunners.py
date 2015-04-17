@@ -1,7 +1,7 @@
 """Runners for simulations"""
 
 import numpy as np
-from utils import process_inputs, atleast_2d_
+from utils import process_inputs
 
 class SimulationRunner():
     """
