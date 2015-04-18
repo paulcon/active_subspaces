@@ -31,13 +31,13 @@ class TestDesigns(TestCase):
         Y2 = dn.maximin_design(vert, 10)
         np.testing.assert_equal(Y1, Y2)
         
-    def test_unbounded_design_1(self):
-        Y = dn.unbounded_design([1])
+    def test_gauss_hermite_design_1(self):
+        Y = dn.gauss_hermite_design([1])
         Ytrue = np.array([[0.0]])
         np.testing.assert_equal(Y, Ytrue)
         
-    def test_unbounded_design_2(self):
-        Y = dn.unbounded_design([1,1])
+    def test_gauss_hermite_design_2(self):
+        Y = dn.gauss_hermite_design([1,1])
         Ytrue = np.array([[0.0, 0.0]])
         np.testing.assert_equal(Y, Ytrue)
     

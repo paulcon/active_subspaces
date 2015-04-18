@@ -259,13 +259,11 @@ def index_set(n, d):
 
 def process_inputs(X):
     if len(X.shape) == 2:
-        MX, mX = X.shape
+        M, m = X.shape
     else:
         raise ValueError('The inputs X should be a two-d numpy array.')
 
-    M, m = MX, mX
     X = X.reshape((M, m))
-    
     return X, M, m    
             
 def process_inputs_outputs(X, f):

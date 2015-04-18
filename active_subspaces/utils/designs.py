@@ -44,5 +44,5 @@ def maximin_design(vert, N):
     np.random.set_state(curr_state)
     return minres.x.reshape((N, n))
 
-def unbounded_design(N):
+def gauss_hermite_design(N):
     return gauss_hermite(N)[0]

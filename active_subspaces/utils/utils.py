@@ -44,10 +44,12 @@ class BoundedNormalizer(Normalizer):
 
     def normalize(self, X):
         """See Normalizer#normalize"""
+        X, M, m = process_inputs(X)
         return 2.0 * (X - self.lb) / (self.ub - self.lb) - 1.0
 
     def unnormalize(self, X):
         """See Normalizer#unnormalize"""
+        X, M, m = process_inputs(X)
         return (self.ub - self.lb) * (X + 1.0) / 2.0 + self.lb
 
 class UnboundedNormalizer(Normalizer):
@@ -61,17 +63,18 @@ class UnboundedNormalizer(Normalizer):
             mu:
             C:
         """
-        m = mu.size
-        self.mu = mu.reshape((1, m))
+        self.mu = mu.reshape((1, mu.size))
         self.L = np.linalg.cholesky(C)
 
     def normalize(self, X):
         """See Normalizer#normalize"""
+        X, M, m = process_inputs(X)
         X0 = X - self.mu
         return np.linalg.solve(self.L,X0.T).T
 
     def unnormalize(self, X):
         """See Normalizer#unnormalize"""
+        X, M, m = process_inputs(X)
         X0 = np.dot(X,self.L.T)
         return X0 + self.mu
 
