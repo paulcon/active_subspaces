@@ -1,5 +1,5 @@
 import numpy as np
-import utils.quadrature as gq
+from utils.utils import process_inputs
 from scipy.spatial import ConvexHull
 from utils.qp_solver import QPSolver
 
@@ -7,15 +7,10 @@ class ActiveVariableDomain():
     vertY, vertX = None, None
     convhull, constraints = None, None
     
+class UnboundedActiveVariableDomain(ActiveVariableDomain):
+    
     def __init__(self, subspace):
         self.m, self.n = subspace.W1.shape
-
-class UnboundedActiveVariableDomain(ActiveVariableDomain):
-    def design(self, N):
-        return gq.gauss_hermite(N)[0]
-
-    def integration_rule(self, N):
-        return gq.gauss_hermite(N)
 
 class BoundedActiveVariableDomain(ActiveVariableDomain):
     
@@ -46,9 +41,15 @@ class ActiveVariableMap():
         self.W1, self.W2 = subspace.W1, subspace.W2
 
     def forward(self, X):
+        X = process_inputs(X)[0]
         return np.dot(X, self.W1), np.dot(X, self.W2)
 
     def inverse(self, Y, N=1):
+        # check inputs
+        Y = process_inputs(Y)[0]
+        if type(N) is not int:
+            raise TypeError('N must be an int') 
+        
         Z = self.regularize_z(Y, N)
         W = np.hstack((self.W1, self.W2))
         return rotate_x(Y, Z, W)
@@ -111,6 +112,7 @@ def zonotope_vertices(W1, NY=10000):
     m, n = W1.shape
     
     Xlist = []
+    nzv = 0
     for i in range(NY):
         y = np.random.normal(size=(n))
         x = np.sign(np.dot(y, W1.transpose()))
@@ -121,12 +123,15 @@ def zonotope_vertices(W1, NY=10000):
                 break
         if addx:
             Xlist.append(x)
-    X = np.array(Xlist)
-    Y = np.dot(X, W1)
+            nzv += 1
+    X = np.array(Xlist).reshape((nzv, m))
+    Y = np.dot(X, W1).reshape((nzv, n))
     return Y, X
 
 def sample_z(N, y, W1, W2):
     m, n = W1.shape
+    qps = QPSolver()
+    
     s = np.dot(W1, y).reshape((m, 1))
     if np.all(np.zeros((m, 1)) <= 1-s) and np.all(np.zeros((m, 1)) >= -1-s):
         z0 = np.zeros((m-n, 1))
@@ -134,16 +139,16 @@ def sample_z(N, y, W1, W2):
         lb = -np.ones((m,1))
         ub = np.ones((m,1))
         c = np.zeros((m,1))
-        x0 = QPSolver.get_qp_solver().linear_program_eq(c, W1.T, y, lb, ub)
+        x0 = qps.linear_program_eq(c, W1.T, y.reshape((n,1)), lb, ub)
         z0 = np.dot(W2.T, x0).reshape((m-n, 1))
 
     # get MCMC step size
-    sig = 0.1*np.maximum(
+    sig = 0.1*np.minimum(
             np.linalg.norm(np.dot(W2, z0) + s - 1),
             np.linalg.norm(np.dot(W2, z0) + s + 1))
 
     # burn in
-    for i in range(N):
+    for i in range(10*N):
         zc = z0 + sig*np.random.normal(size=z0.shape)
         if np.all(np.dot(W2, zc) <= 1-s) and np.all(np.dot(W2, zc) >= -1-s):
             z0 = zc
@@ -165,6 +170,6 @@ def rotate_x(Y, Z, W):
 
     YY = np.tile(Y.reshape((NY, n, 1)), (1, 1, N))
     YZ = np.concatenate((YY, Z), axis=1).transpose((1, 0, 2)).reshape((m, N*NY)).transpose((1, 0))
-    X = np.dot(YZ, W.T)
-    ind = np.kron(np.arange(NY), np.ones(N))
+    X = np.dot(YZ, W.T).reshape((N*NY,m))
+    ind = np.kron(np.arange(NY), np.ones(N)).reshape((N*NY,1))
     return X, ind

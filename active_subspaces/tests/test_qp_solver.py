@@ -10,7 +10,7 @@ class TestGurobi(TestCase):
         b = np.array([[0.5],[0.5]])
         lb, ub = -np.ones((5,1)), np.ones((5,1))
         
-        gs = qp.QPSolver(solver='GUROBI')
+        gs = qp.QPSolver()
         x = gs.linear_program_eq(c, A, b, lb, ub)
         xtrue = np.array([0.75,-1.0,0.75,-1.0,-1.0]).reshape((5,1))
         np.testing.assert_almost_equal(x,xtrue)
@@ -20,7 +20,7 @@ class TestGurobi(TestCase):
         Q = np.eye(5)
         lb, ub = -np.ones((5,1)), np.ones((5,1))
         
-        gs = qp.QPSolver(solver='GUROBI')
+        gs = qp.QPSolver()
         x = gs.quadratic_program_bnd(c, Q, lb, ub)
         xtrue = -0.5*np.ones((5,1))
         np.testing.assert_almost_equal(x,xtrue)
@@ -31,7 +31,7 @@ class TestGurobi(TestCase):
         A = np.array([[1.,0.,0.,0.,0.],[0.,1.,0.,0.,0.]])
         b = np.array([[-1.0],[-1.0]])
         
-        gs = qp.QPSolver(solver='GUROBI')
+        gs = qp.QPSolver()
         x = gs.quadratic_program_ineq(c, Q, A, b)
         xtrue = -0.5*np.ones((5,1))
         np.testing.assert_almost_equal(x,xtrue)
@@ -42,7 +42,7 @@ class TestGurobi(TestCase):
         b = np.array([[0.5],[0.5]])
         lb, ub = -np.ones((5,1)), np.ones((5,1))
         
-        gs = qp.QPSolver()
+        gs = qp.QPSolver(solver='SCIPY')
         x = gs.linear_program_eq(c, A, b, lb, ub)
         xtrue = np.array([0.75,-1.0,0.75,-1.0,-1.0]).reshape((5,1))
         np.testing.assert_almost_equal(x,xtrue)
@@ -52,7 +52,7 @@ class TestGurobi(TestCase):
         Q = np.eye(5)
         lb, ub = -np.ones((5,1)), np.ones((5,1))
         
-        gs = qp.QPSolver()
+        gs = qp.QPSolver(solver='SCIPY')
         x = gs.quadratic_program_bnd(c, Q, lb, ub)
         xtrue = -0.5*np.ones((5,1))
         np.testing.assert_almost_equal(x,xtrue)
@@ -63,15 +63,13 @@ class TestGurobi(TestCase):
         A = np.array([[1.,0.,0.,0.,0.],[0.,1.,0.,0.,0.]])
         b = np.array([[-1.0],[-1.0]])
         
-        gs = qp.QPSolver()
+        gs = qp.QPSolver(solver='SCIPY')
         x = gs.quadratic_program_ineq(c, Q, A, b)
         xtrue = -0.5*np.ones((5,1))
         np.testing.assert_almost_equal(x,xtrue)
         
     def test_bad_solver(self):
-        with self.assertRaises(ValueError):
-            gs = qp.QPSolver(solver='CVXOPT')
-        
+        gs = qp.QPSolver(solver='CVXOPT')
 
 if __name__ == '__main__':
     unittest.main()

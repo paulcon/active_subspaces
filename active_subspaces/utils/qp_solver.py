@@ -1,21 +1,30 @@
 import numpy as np
+import warnings
 from scipy.optimize import linprog, minimize
+
+# checking to see if system has gurobi
 try:
+    HAS_GUROBI = True
     import gurobipy as gpy
 except ImportError, e:
+    HAS_GUROBI = False
     pass
 
 # string constants for QP solver names
 solver_SCIPY = 'SCIPY'
 solver_GUROBI = 'GUROBI'
 
-
 class QPSolver():
-    def __init__(self, solver='SCIPY'):
+    def __init__(self, solver='GUROBI'):
                 
-        if not (solver == solver_SCIPY or solver == solver_GUROBI):
-            raise ValueError('QP solver %s not available' % solver)
-        self.solver = solver
+        if solver==solver_GUROBI and HAS_GUROBI:
+            self.solver = solver_GUROBI
+        elif solver=='SCIPY':
+            self.solver = solver_SCIPY
+        else:
+            warnings.warn('QP solver %s is not available. Using scipy optimization package.' % solver)
+            self.solver = solver_SCIPY
+            
 
     def linear_program_eq(self, c, A, b, lb, ub):
         """
