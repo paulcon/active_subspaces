@@ -3,7 +3,7 @@ from domains import UnboundedActiveVariableDomain, BoundedActiveVariableDomain, 
                 ActiveVariableMap
 from scipy.optimize import minimize, fminbound
 from utils.response_surfaces import PolynomialRegression
-from qp_solvers.qp_solver import QPSolver
+from utils.qp_solver import QPSolver
 
 class MinVariableMap(ActiveVariableMap):
     def train(self, X, f):

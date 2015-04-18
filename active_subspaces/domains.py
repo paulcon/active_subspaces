@@ -1,7 +1,7 @@
 import numpy as np
 import utils.quadrature as gq
 from scipy.spatial import ConvexHull
-from qp_solvers.qp_solver import QPSolver
+from utils.qp_solver import QPSolver
 
 class ActiveVariableDomain():
     vertY, vertX = None, None
