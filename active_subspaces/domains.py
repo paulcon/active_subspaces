@@ -1,4 +1,5 @@
 import numpy as np
+import warnings
 from utils.utils import process_inputs
 from scipy.spatial import ConvexHull
 from utils.qp_solver import QPSolver
@@ -24,6 +25,10 @@ class BoundedActiveVariableDomain(ActiveVariableDomain):
             constraints = None
         else:
 	    Y, X = zonotope_vertices(W1)
+	    numverts = nzv(m,n)[0]
+	    if Y.shape[0] != numverts:
+	        warnings.warn('Number of zonotope vertices should be %d but is %d' % (numverts,Y.shape[0]))
+	    
             convhull = ConvexHull(Y)
             A = convhull.equations[:,:n]
             b = convhull.equations[:,n]
@@ -104,7 +109,7 @@ def interval_endpoints(W1):
     else:
         yl, yu = -y0, y0
         xl, xu = -np.sign(W1), np.sign(W1)
-    Y = np.array([[yl], [yu]])
+    Y = np.array([yl, yu]).reshape((2,1))
     X = np.vstack((xl.reshape((1, m)), xu.reshape((1, m))))
     return Y, X
 
