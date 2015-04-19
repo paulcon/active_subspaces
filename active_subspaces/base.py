@@ -6,7 +6,6 @@ from utils.response_surfaces import GaussianProcess
 from subspaces import Subspaces
 from gradients import local_linear_gradients, finite_difference_gradients
 from domains import UnboundedActiveVariableDomain, BoundedActiveVariableDomain
-from as_integrals import as_integrate
 from as_optimizers import as_minimize, UnboundedMinVariableMap, BoundedMinVariableMap
 
 class ActiveSubspaceModel():
@@ -101,7 +100,7 @@ class ActiveSubspaceModel():
     def gradient(self, X):
         f, df, v = self.predict(X, compgrad=True)
         return df
-
+    """
     def mean(self, N):
         if self.domain is None:
             self.set_domain()
@@ -119,7 +118,7 @@ class ActiveSubspaceModel():
         def varfun(x):
             return (self.predict(x)[0] - mu)**2
         return as_integrate(varfun, self.domain, self.subspaces, N)[0]
-
+    """
     def probability(self, lb, ub):
         if self.domain is None:
             self.set_domain()

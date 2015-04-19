@@ -5,11 +5,16 @@ import utils.quadrature as gq
 from utils.utils import conditional_expectations
 from utils.designs import maximin_design
 from utils.simrunners import SimulationRunner
-from domains import UnboundedActiveVariableDomain, BoundedActiveVariableDomain, \
-                    UnboundedActiveVariableMap, BoundedActiveVariableMap
+from domains import UnboundedActiveVariableDomain, BoundedActiveVariableDomain
 from scipy.spatial import Delaunay
 
-def as_integrate(fun, domain, subspace, N, NMC=10):
+def integrate(fun, avmap, N, NMC=10):
+    Yp, Yw = av_quadrature_rule(avmap, N)
+    Xp, Xw, ind = quadrature_rule(Yp, Yw, avmap, NMC=NMC)
+    f = SimulationRunner(fun).run(Xp)
+    return compute_integral(f, Yw, ind)
+
+def av_integrate(avfun, avmap, N):
     """
     Description of as_integrate
 
@@ -24,35 +29,34 @@ def as_integrate(fun, domain, subspace, N, NMC=10):
         lb:
         ub:
     """
-    w, x, ind = as_quadrature_rule(domain, subspace, N, NMC)
-    f = SimulationRunner(fun).run(x)
-    return compute_integral(w, f, ind)
+    Yp, Yw = av_quadrature_rule(avmap, N)
+    avf = SimulationRunner(avfun).run(Yp)
+    return np.dot(Yw.T, avf)[0,0]
 
-def as_quadrature_rule(domain, subspace, N, NMC=10):
-    W1 = subspace.W1    
-    m, n = W1.shape
+def quadrature_rule(Yp, Yw, avmap, NMC=10):
+    
+    # get points on x space with MC
+    Xp, ind = avmap.inverse(Yp, NMC)
+    Xw = np.kron(Yw, np.ones((NMC,1)))/float(NMC)
+    return Xp, Xw, ind
 
-    if isinstance(domain,UnboundedActiveVariableDomain):
-        avmap = UnboundedActiveVariableMap(subspace)
-        order = []
-        for i in range(domain.n):
-            order.append(N)
-        y, w = gq.gauss_hermite(order)
+def av_quadrature_rule(avmap, N):
+    m, n = avmap.domain.subspaces.W1.shape
+
+    if isinstance(avmap.domain, UnboundedActiveVariableDomain):
+        NN = [int(np.floor(np.power(N, 1.0/n))) for i in range(n)]
+        Yp, Yw = gq.gauss_hermite(NN)
                 
-    elif isinstance(domain,BoundedActiveVariableDomain):
-        avmap = BoundedActiveVariableMap(subspace)
-        if domain.n == 1:
-            a, b = domain.vertY[0], domain.vertY[1]
-            y, w = interval_quadrature_rule(a, b, W1, N)
+    elif isinstance(avmap.domain, BoundedActiveVariableDomain):
+        if n == 1:
+            Yp, Yw = interval_quadrature_rule(avmap, N)
         else:
-            vert = domain.vertY
-            y, w = zonotope_quadrature_rule(vert, W1, N)
+            Yp, Yw = zonotope_quadrature_rule(avmap, N)
     else:
-        raise Exception('Shit, yo!')
-    x, ind = avmap.inverse(y,NMC)
-    return w, x, ind
+        raise Exception('There is a problem with the avmap.domain.')
+    return Yp, Yw
 
-def interval_quadrature_rule(a, b, W1, N, NX=10000):
+def interval_quadrature_rule(avmap, N, NX=10000):
     """
     Description of interval_quadrature_rule
 
@@ -66,7 +70,9 @@ def interval_quadrature_rule(a, b, W1, N, NX=10000):
         points:
         weights:
     """
-
+    W1 = avmap.domain.subspaces.W1
+    a, b = avmap.domain.vertY[0,0], avmap.domain.vertY[1,0]    
+    
     # number of dimensions
     m = W1.shape[0]
 
@@ -75,14 +81,14 @@ def interval_quadrature_rule(a, b, W1, N, NX=10000):
     points = 0.5*(y[1:] + y[:-1])
 
     # weights
-    Ysamp = np.dot(np.random.uniform(-1.0, 1.0, size=(NX, m)), W1)
-    weights = np.histogram(Ysamp.reshape((NX, )), bins=y.reshape((N+1, )), \
+    Y_samples = np.dot(np.random.uniform(-1.0, 1.0, size=(NX, m)), W1)
+    weights = np.histogram(Y_samples.reshape((NX, )), bins=y.reshape((N+1, )), \
         range=(np.amin(y), np.amax(y)))[0]
     weights = weights / float(NX)
 
     return points.reshape((N, 1)), weights.reshape((N, 1))
 
-def zonotope_quadrature_rule(vert, W1, N, NX=10000):
+def zonotope_quadrature_rule(avmap, N, NX=10000):
     """
     Description of zonotope_quadrature_rule
 
@@ -95,7 +101,10 @@ def zonotope_quadrature_rule(vert, W1, N, NX=10000):
         points:
         weights:
     """
-
+    
+    vert = avmap.domain.vertY
+    W1 = avmap.domain.subspaces.W1    
+    
     # number of dimensions
     m, n = W1.shape
 
@@ -108,19 +117,19 @@ def zonotope_quadrature_rule(vert, W1, N, NX=10000):
     points = np.array(c)
 
     # approximate weights
-    Ysamp = np.dot(np.random.uniform(-1.0, 1.0, size=(NX,m)), W1)
-    I = T.find_simplex(Ysamp)
+    Y_samples = np.dot(np.random.uniform(-1.0, 1.0, size=(NX,m)), W1)
+    I = T.find_simplex(Y_samples)
     weights = np.zeros((T.nsimplex, 1))
     for i in range(T.nsimplex):
         weights[i] = np.sum(I==i) / float(NX)
     return points.reshape((T.nsimplex,n)), weights.reshape((T.nsimplex,1))
     
-def compute_integral(w, f, ind):
+def compute_integral(f, w, ind):
     NMC = np.sum(ind==0)
     Ef, Vf = conditional_expectations(f, ind)
     
     mu = np.dot(Ef.T, w)
     sig2 = np.dot(Vf.T, w*w) / NMC
     lb, ub = mu - 1.96*np.sqrt(sig2), mu + 1.96*np.sqrt(sig2)
-    return mu, lb, ub
+    return mu[0,0], lb[0,0], ub[0,0]
 
