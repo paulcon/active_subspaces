@@ -1,24 +1,57 @@
 import numpy as np
-import designs as dn
-from domains import UnboundedActiveVariableDomain, BoundedActiveVariableDomain, \
-                UnboundedActiveVariableMap, BoundedActiveVariableMap
-from simrunners import SimulationRunner
-from utils import conditional_expectations
+import utils.designs as dn
+from utils.simrunners import SimulationRunner
+from utils.utils import conditional_expectations
+from utils.response_surfaces import GaussianProcess
+from domains import UnboundedActiveVariableDomain, BoundedActiveVariableDomain
 
 class ActiveSubspaceResponseSurface():
-    def __init__(self,rs,subspace):
-        self.rs = rs
-        self.subspace = subspace
+    def __init__(self, avmap, respsurf=None):
+        if respsurf == None:
+            self.respsurf = GaussianProcess()
+        else:
+            self.respsurf = respsurf
+        self.avmap = avmap
     
-    def train(self, X, f, Vf=None):
-        W1 = self.subspace.W1
-        Y = np.dot(X, W1)
-        self.rs.train(Y, f)
-
+    def train(self, Y, f, v=None):
+        if isinstance(self.respsurf, GaussianProcess):
+            evals = self.avmap.domain.subspaces.eigenvalues
+            self.respsurf.train(Y, f, v=v, e=evals)
+        else:
+            self.respsurf.train(Y, f)
+    
+    def train_with_data(self, X, f, v=None):
+        Y = self.avmap.forward(X)[0]
+        self.train(Y, f, v=v)
+        
+    def train_with_interface(self, fun, N, NMC=10):
+        Y, X, ind = as_design(self.avmap, N, NMC=NMC)
+        
+        if isinstance(self.avmap.domain, BoundedActiveVariableDomain):
+            X = np.vstack((X, self.avmap.domain.vertX))
+            Y = np.vstack((Y, self.avmap.domain.vertY))
+            il = np.amax(ind) + 1
+            iu = np.amax(ind) + self.avmap.domain.vertX.shape[0] + 1
+            iind = np.arange(il, iu)
+            ind = np.vstack(( ind, iind.reshape((iind.size,1)) ))
+            
+        # run simulation interface at all design points
+        sr = SimulationRunner(fun)
+        f = sr.run(X)
+        
+        Ef, Vf = conditional_expectations(f, ind)
+        self.train(Y, Ef, v=Vf)
+        
     def predict(self, X, compgrad=False, compvar=False):
-        W1 = self.subspace.W1
-        Y = np.dot(X, W1)
-        return self.rs.predict(Y, compgrad, compvar)
+        Y = self.avmap.forward(X)[0]
+        f, dfdy, v = self.respsurf.predict(Y, compgrad, compvar)
+        if compgrad:
+            W1 = self.avmap.domain.subspaces.W1
+            dfdx = np.dot(dfdy, W1.T)
+        else:
+            dfdx = None
+        return f, dfdx, v
+        
         
     def gradient(self, X):
         return self.predict(X, compgrad=True)[1]
@@ -26,51 +59,28 @@ class ActiveSubspaceResponseSurface():
     def __call__(self, X):
         return self.predict(X)[0]
         
-def compute_training_data(fun, domain, subspace, N, NMC=10):
-    x, ind = as_design(domain, subspace, N, NMC)
-    f = SimulationRunner(fun).run(x)
-    return get_training_data(x, f, ind)
+def as_design(avmap, N, NMC=10):
+    # interpret N as total number of points in the design
+    if type(N) is not int:
+        raise Exception('N should be an integer.')
     
-def as_design(domain, subspace, N, NMC=10):
-    W1 = subspace.W1    
-    m, n = W1.shape
+    m, n = avmap.domain.subspaces.W1.shape
     
-    if isinstance(domain, UnboundedActiveVariableDomain):
-        avmap = UnboundedActiveVariableMap(subspace)
-        y = dn.unbounded_design(N)
-        x, ind = avmap.inverse(y, NMC)
+    if isinstance(avmap.domain, UnboundedActiveVariableDomain):
+        NN = [int(np.floor(np.power(N, 1.0/n))) for i in range(n)]
+        Y = dn.gauss_hermite_design(NN)
         
-    elif isinstance(domain, BoundedActiveVariableDomain):
-        avmap = BoundedActiveVariableMap(subspace)
+    elif isinstance(avmap.domain, BoundedActiveVariableDomain):
+        
         if n==1:
-            a, b = domain.vertY[0], domain.vertY[1]
-            y = dn.interval_design(a, b, N)
+            a, b = avmap.domain.vertY[0,0], avmap.domain.vertY[1,0]
+            Y = dn.interval_design(a, b, N)
         else:
-            vertices = domain.vertY
-            y = dn.maximin_design(vertices, N)
-        x, ind = avmap.inverse(y, NMC)
-        x = np.vstack((x, domain.vertX))
+            vertices = avmap.domain.vertY
+            Y = dn.maximin_design(vertices, N)
     else:
-        raise Exception('Shit, yo')
+        raise Exception('There is a problem with the avmap.domain.')
     
-    return x, ind
-    
-def get_training_data(x, f, ind):
-    
-    k = len(ind)
-    Ef, Vf = conditional_expectations(f[:k], ind)
-    
-    # get subset of x's
-    NMC = np.sum(ind==0)
-    indx = np.arange(0, k, NMC)
-    X = x[indx,:]
-    
-    if len(f) > k:
-        # vertex values
-        X = np.vstack((X, x[k:,:]))
-        Ef = np.vstack((Ef, f[k:]))
-        Vf = np.vstack((Vf, np.zeros((len(f)-k, 1))))
-
-    return X, Ef, Vf
-        
+    X, ind = avmap.inverse(Y, NMC)
+    return Y, X, ind
     

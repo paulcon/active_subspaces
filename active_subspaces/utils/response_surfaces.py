@@ -3,6 +3,9 @@ from scipy.optimize import fminbound
 from scipy.misc import comb
 
 class ResponseSurface():
+    def __init__(self, N=2):
+        self.N = N
+        
     def train(self, X, f):
         raise NotImplementedError()
         
@@ -16,9 +19,7 @@ class ResponseSurface():
         return self.predict(X)[0]
 
 class PolynomialRegression(ResponseSurface):
-    def __init__(self, N=2):
-        self.N = N
-        
+
     def train(self, X, f):
         X, f, M, m = process_inputs_outputs(X, f)
         
@@ -74,9 +75,7 @@ class PolynomialRegression(ResponseSurface):
             v = None            
         return f, df, v
 
-class GaussianProcess():
-    def __init__(self, N=2):
-        self.N = N
+class GaussianProcess(ResponseSurface):
         
     def train(self, X, f, v=None, e=None):
         X, f, M, m = process_inputs_outputs(X, f)
@@ -92,16 +91,16 @@ class GaussianProcess():
             sig = 1.0
             ell = g*np.ones((m,1))
             if v is None:
-                v = 0.000001*np.ones(f.size)
+                v = 0.000001*np.ones(f.shape)
         else:
             sig = g*np.sum(e)
             ell = sig/e[:m]
             if v is None:
-                v = g*np.sum(e[m:])*np.ones(f.size)
+                v = g*np.sum(e[m:])*np.ones(f.shape)
         
         # covariance matrix of observations
         K = exponential_squared_covariance(X, X, sig, ell)
-        K += np.diag(v)
+        K += np.diag(v.reshape((M,)))
         radial_weights = np.linalg.solve(K, f)
         
         # coefficients of polynomial basis

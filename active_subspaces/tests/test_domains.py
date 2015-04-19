@@ -4,7 +4,6 @@ import active_subspaces.subspaces as ss
 import active_subspaces.domains as dom
 import helper
 import numpy as np
-import pdb
 
 class TestDomains(TestCase):
     
@@ -64,7 +63,8 @@ class TestDomains(TestCase):
         sub.compute(df0)
         m, n = sub.W1.shape
         
-        uavm = dom.UnboundedActiveVariableMap(sub)
+        uavd = dom.UnboundedActiveVariableDomain(sub)
+        uavm = dom.UnboundedActiveVariableMap(uavd)
         
         X = np.random.normal(size=(100,m))
         Y,Z = uavm.forward(X)
@@ -79,7 +79,8 @@ class TestDomains(TestCase):
         sub.compute(df0)
         m, n = sub.W1.shape
         
-        uavm = dom.UnboundedActiveVariableMap(sub)
+        uavd = dom.UnboundedActiveVariableDomain(sub)
+        uavm = dom.UnboundedActiveVariableMap(uavd)
         
         X = np.random.normal(size=(100,m))
         Y,Z = uavm.forward(X)
@@ -94,7 +95,8 @@ class TestDomains(TestCase):
         sub.compute(df0)
         m, n = sub.W1.shape
         
-        uavm = dom.UnboundedActiveVariableMap(sub)
+        uavd = dom.UnboundedActiveVariableDomain(sub)
+        uavm = dom.UnboundedActiveVariableMap(uavd)
         
         X = np.random.normal(size=(100,m))
         Y,Z = uavm.forward(X)
@@ -109,7 +111,8 @@ class TestDomains(TestCase):
         sub.compute(df0)
         m, n = sub.W1.shape
         
-        uavm = dom.UnboundedActiveVariableMap(sub)
+        uavd = dom.UnboundedActiveVariableDomain(sub)
+        uavm = dom.UnboundedActiveVariableMap(uavd)
         
         X = np.random.normal(size=(100,m))
         Y,Z = uavm.forward(X)
@@ -124,7 +127,8 @@ class TestDomains(TestCase):
         sub.compute(df0)
         m, n = sub.W1.shape
         
-        bavm = dom.BoundedActiveVariableMap(sub)
+        bavd = dom.BoundedActiveVariableDomain(sub)
+        bavm = dom.BoundedActiveVariableMap(bavd)
         
         X = np.random.uniform(-1.0,1.0,size=(100,m))
         Y,Z = bavm.forward(X)
@@ -139,7 +143,8 @@ class TestDomains(TestCase):
         sub.compute(df0)
         m, n = sub.W1.shape
         
-        bavm = dom.BoundedActiveVariableMap(sub)
+        bavd = dom.BoundedActiveVariableDomain(sub)
+        bavm = dom.BoundedActiveVariableMap(bavd)
         
         X = np.random.uniform(-1.0,1.0,size=(100,m))
         Y,Z = bavm.forward(X)
@@ -154,7 +159,8 @@ class TestDomains(TestCase):
         sub.compute(df0)
         m, n = sub.W1.shape
         
-        bavm = dom.BoundedActiveVariableMap(sub)
+        bavd = dom.BoundedActiveVariableDomain(sub)
+        bavm = dom.BoundedActiveVariableMap(bavd)
         
         X = np.random.uniform(-1.0,1.0,size=(100,m))
         Y,Z = bavm.forward(X)
@@ -169,7 +175,8 @@ class TestDomains(TestCase):
         sub.compute(df0)
         m, n = sub.W1.shape
         
-        bavm = dom.BoundedActiveVariableMap(sub)
+        bavd = dom.BoundedActiveVariableDomain(sub)
+        bavm = dom.BoundedActiveVariableMap(bavd)
         
         X = np.random.uniform(-1.0,1.0,size=(100,m))
         Y,Z = bavm.forward(X)

@@ -10,13 +10,15 @@ class ActiveVariableDomain():
     
 class UnboundedActiveVariableDomain(ActiveVariableDomain):
     
-    def __init__(self, subspace):
-        self.m, self.n = subspace.W1.shape
+    def __init__(self, subspaces):
+        self.subspaces = subspaces
+        self.m, self.n = subspaces.W1.shape
 
 class BoundedActiveVariableDomain(ActiveVariableDomain):
     
-    def __init__(self, subspace):
-        W1 = subspace.W1
+    def __init__(self, subspaces):
+        self.subspaces = subspaces
+        W1 = subspaces.W1
         m, n = W1.shape
         
         if n == 1:
@@ -42,12 +44,13 @@ class BoundedActiveVariableDomain(ActiveVariableDomain):
         self.convhull, self.constraints = convhull, constraints
 
 class ActiveVariableMap():
-    def __init__(self, subspace):
-        self.W1, self.W2 = subspace.W1, subspace.W2
+    def __init__(self, domain):
+        self.domain = domain
 
     def forward(self, X):
         X = process_inputs(X)[0]
-        return np.dot(X, self.W1), np.dot(X, self.W2)
+        W1, W2 = self.domain.subspaces.W1, self.domain.subspaces.W2
+        return np.dot(X, W1), np.dot(X, W2)
 
     def inverse(self, Y, N=1):
         # check inputs
@@ -56,7 +59,7 @@ class ActiveVariableMap():
             raise TypeError('N must be an int') 
         
         Z = self.regularize_z(Y, N)
-        W = np.hstack((self.W1, self.W2))
+        W = self.domain.subspaces.eigenvectors
         return rotate_x(Y, Z, W)
 
     def regularize_z(self, Y, N):
@@ -65,7 +68,7 @@ class ActiveVariableMap():
 class BoundedActiveVariableMap(ActiveVariableMap):
 
     def regularize_z(self, Y, N):
-        W1, W2 = self.W1, self.W2
+        W1, W2 = self.domain.subspaces.W1, self.domain.subspaces.W2
         m, n = W1.shape
 
         # sample the z's
@@ -79,7 +82,7 @@ class BoundedActiveVariableMap(ActiveVariableMap):
 class UnboundedActiveVariableMap(ActiveVariableMap):
 
     def regularize_z(self, Y, N):
-        m, n = self.W1.shape
+        m, n = self.domain.subspaces.W1.shape
 
         # sample z's
         NY = Y.shape[0]

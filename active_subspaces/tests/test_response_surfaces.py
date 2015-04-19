@@ -103,14 +103,16 @@ class TestResponseSurfaces(TestCase):
     def test_exact_polynomial_approximation_1d(self):
         data = helper.load_test_npz('train_points_10_2.npz')
         X = data['X']
-        X_1d = X[:,0].copy()
+        M = X.shape[0]
+        X_1d = X[:,0].copy().reshape((M,1))
         f_1d = 2 + 5*X_1d
         
         pr = rs.PolynomialRegression(N=1)
         pr.train(X_1d, f_1d)
         data = helper.load_test_npz('test_points_10_2.npz')
         X = data['X']
-        X_1d_test = X[:,0].copy()
+        M = X.shape[0]
+        X_1d_test = X[:,0].copy().reshape((M,1))
         f, df, v = pr.predict(X_1d_test, compgrad=True, compvar=True)
         np.testing.assert_almost_equal(f, 2+5*X_1d_test.reshape((10,1)), decimal=10)
         np.testing.assert_almost_equal(df, 5*np.ones((10,1)), decimal=10)
@@ -120,7 +122,8 @@ class TestResponseSurfaces(TestCase):
         pr.train(X_1d, f_1d)
         data = helper.load_test_npz('test_points_10_2.npz')
         X = data['X']
-        X_1d_test = X[:,0].copy()
+        M = X.shape[0]
+        X_1d_test = X[:,0].copy().reshape((M,1))
         f, df, v = pr.predict(X_1d_test, compgrad=True, compvar=True)
         f_test = 2 - 3*X_1d_test + 5*X_1d_test*X_1d_test
         df_test = -3 + 10*X_1d_test
@@ -135,7 +138,7 @@ class TestResponseSurfaces(TestCase):
         f_2d = 2 + 5*X_train[:,0] - 4*X_train[:,1]
         
         pr = rs.PolynomialRegression(N=1)
-        pr.train(X_train, f_2d)
+        pr.train(X_train, f_2d.reshape((f_2d.size,1)))
         data = helper.load_test_npz('test_points_10_2.npz')
         X = data['X']
         X_test = X.copy()
@@ -147,7 +150,7 @@ class TestResponseSurfaces(TestCase):
         
         f_2d = 2 - 3*X_train[:,1] + 5*X_train[:,0]*X_train[:,1]
         pr = rs.PolynomialRegression(N=2)
-        pr.train(X_train, f_2d)
+        pr.train(X_train, f_2d.reshape((f_2d.size,1)))
         data = helper.load_test_npz('test_points_10_2.npz')
         X = data['X']
         X_test = X.copy()
@@ -163,14 +166,16 @@ class TestResponseSurfaces(TestCase):
     def test_exact_gp_approximation_1d(self):
         data = helper.load_test_npz('train_points_10_2.npz')
         X = data['X']
-        X_1d = X[:,0].copy()
+        M = X.shape[0]
+        X_1d = X[:,0].copy().reshape((M,1))
         f_1d = 2 + 5*X_1d
         
         gp = rs.GaussianProcess(N=1)
         gp.train(X_1d, f_1d)
         data = helper.load_test_npz('test_points_10_2.npz')
         X = data['X']
-        X_1d_test = X[:,0].copy()
+        M = X.shape[0]
+        X_1d_test = X[:,0].copy().reshape((M,1))
         f, df, v = gp.predict(X_1d_test, compgrad=True, compvar=True)
         np.testing.assert_almost_equal(f, 2+5*X_1d_test.reshape((10,1)), decimal=10)
         np.testing.assert_almost_equal(df, 5*np.ones((10,1)), decimal=10)
@@ -180,7 +185,8 @@ class TestResponseSurfaces(TestCase):
         gp.train(X_1d, f_1d)
         data = helper.load_test_npz('test_points_10_2.npz')
         X = data['X']
-        X_1d_test = X[:,0].copy()
+        M = X.shape[0]
+        X_1d_test = X[:,0].copy().reshape((M,1))
         f, df, v = gp.predict(X_1d_test, compgrad=True, compvar=True)
         f_test = 2 - 3*X_1d_test + 5*X_1d_test*X_1d_test
         df_test = -3 + 10*X_1d_test
@@ -195,7 +201,7 @@ class TestResponseSurfaces(TestCase):
         f_2d = 2 + 5*X_train[:,0] - 4*X_train[:,1]
         
         gp = rs.GaussianProcess(N=1)
-        gp.train(X_train, f_2d)
+        gp.train(X_train, f_2d.reshape((f_2d.size,1)))
         data = helper.load_test_npz('test_points_10_2.npz')
         X = data['X']
         X_test = X.copy()
@@ -207,7 +213,7 @@ class TestResponseSurfaces(TestCase):
         
         f_2d = 2 - 3*X_train[:,1] + 5*X_train[:,0]*X_train[:,1]
         gp = rs.GaussianProcess(N=2)
-        gp.train(X_train, f_2d)
+        gp.train(X_train, f_2d.reshape((f_2d.size,1)))
         data = helper.load_test_npz('test_points_10_2.npz')
         X = data['X']
         X_test = X.copy()
@@ -223,14 +229,16 @@ class TestResponseSurfaces(TestCase):
     def test_polynomial_grad_1d(self):
         data = helper.load_test_npz('train_points_10_2.npz')
         X = data['X']
-        X_1d = X[:,0].copy()
+        M = X.shape[0]
+        X_1d = X[:,0].copy().reshape((M,1))
         f_1d = np.cos(X_1d)
         
         pr = rs.PolynomialRegression(N=7)
         pr.train(X_1d, f_1d)
         data = helper.load_test_npz('test_points_10_2.npz')
         X = data['X']
-        X_1d_test = X[:,0].copy()
+        M = X.shape[0]
+        X_1d_test = X[:,0].copy().reshape((M,1))
         f0, df0, v0 = pr.predict(X_1d_test, compgrad=True, compvar=True)
 
         e = 1e-6
@@ -271,14 +279,16 @@ class TestResponseSurfaces(TestCase):
     def test_gp_grad_1d(self):
         data = helper.load_test_npz('train_points_10_2.npz')
         X = data['X']
-        X_1d = X[:,0].copy()
+        M = X.shape[0]
+        X_1d = X[:,0].copy().reshape((M,1))
         f_1d = np.cos(X_1d)
         
         gp = rs.GaussianProcess(N=0)
         gp.train(X_1d, f_1d)
         data = helper.load_test_npz('test_points_10_2.npz')
         X = data['X']
-        X_1d_test = X[:,0].copy()
+        M = X.shape[0]
+        X_1d_test = X[:,0].copy().reshape((M,1))
         f0, df0, v0 = gp.predict(X_1d_test, compgrad=True, compvar=True)
 
         e = 1e-6
@@ -418,21 +428,24 @@ class TestResponseSurfaces(TestCase):
 
         gp = rs.GaussianProcess(N=1)
         e = np.array([1.0, 0.5, 0.1, 0.05, 0.01])
-        gp.train(X_train, f_train, e=e)
+        gp.train(X_train, f_train.reshape((f_train.size,1)), e=e)
         f, df, vf = gp.predict(X_test, compgrad=True, compvar=True)
+        #np.savez('data/test_gp_0',f=f,df=df,vf=vf)
+        
         data = helper.load_test_npz('test_gp_0.npz')
         np.testing.assert_equal(f, data['f'])
         np.testing.assert_equal(df, data['df'])
         np.testing.assert_equal(vf, data['vf'])
         
         v = 0.0001*np.ones(f_train.shape)
-        gp.train(X_train, f_train, e=e, v=v)
+        gp.train(X_train, f_train.reshape((f_train.size,1)), e=e, v=v)
         f, df, vf = gp.predict(X_test, compgrad=True, compvar=True)
+        #np.savez('data/test_gp_1',f=f,df=df,vf=vf)
+        
         data = helper.load_test_npz('test_gp_1.npz')
         np.testing.assert_equal(f, data['f'])
         np.testing.assert_equal(df, data['df'])
         np.testing.assert_equal(vf, data['vf'])
-                
         
         
 if __name__ == '__main__':
