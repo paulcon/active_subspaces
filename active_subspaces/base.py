@@ -105,7 +105,7 @@ class ActiveSubspaceReducedModel():
         sufficient_summary(Y, self.f)
 
     def predict(self, X, compvar=False, compgrad=False):
-        return self.avrs.predict(X, compgrad=compgrad, compvar=compvar)
+        return self.av_respsurf.predict(X, compgrad=compgrad, compvar=compvar)
 
     def average(self, N):
         if self.funr is not None:
