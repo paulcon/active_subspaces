@@ -1,6 +1,6 @@
 import numpy as np
 from utils.utils import process_inputs
-import pdb
+from utils.simrunners import SimulationRunner
 
 def local_linear_gradients(X, f, p=None):
     # modify this to include a different set of points
@@ -23,7 +23,7 @@ def local_linear_gradients(X, f, p=None):
         df[i,:] = u[1:].T
     return df
     
-def finite_difference_gradients(X, simrun, h=1e-6):
+def finite_difference_gradients(X, fun, h=1e-6):
     X, M, m = process_inputs(X)
     
     # points to run simulations
@@ -31,7 +31,7 @@ def finite_difference_gradients(X, simrun, h=1e-6):
         h*np.kron(np.vstack((np.zeros((1, m)), np.eye(m))), np.ones((M, 1)))
     
     # run the simulation
-    F = simrun.run(XX)
+    F = SimulationRunner(fun).run(XX)
     
     df = (F[M:].reshape((m, M)).transpose() - F[:M]) / h
-    return df
+    return df.reshape((M,m))

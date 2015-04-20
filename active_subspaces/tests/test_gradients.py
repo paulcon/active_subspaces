@@ -3,7 +3,6 @@ import unittest
 import helper
 import numpy as np
 import active_subspaces.gradients as gr
-from active_subspaces.utils.simrunners import SimulationRunner
 
 class TestGradients(TestCase):
 
@@ -31,11 +30,10 @@ class TestGradients(TestCase):
         def myfun(x):
             return 2 - 5*x[0,0] + 4*x[0,1]
             
-        sr = SimulationRunner(myfun)
         data = helper.load_test_npz('train_points_10_2.npz')
         X = data['X'].copy()
 
-        df = gr.finite_difference_gradients(X, sr)
+        df = gr.finite_difference_gradients(X, myfun)
         M = df.shape[0]
         df_test = np.tile(np.array([-5.0, 4.0]), (M,1))
         np.testing.assert_array_almost_equal(df, df_test, decimal=6)

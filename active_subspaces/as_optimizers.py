@@ -5,7 +5,6 @@ import scipy.optimize as scopt
 from utils.response_surfaces import PolynomialRegression
 from utils.qp_solver import QPSolver
 from utils.utils import process_inputs_outputs
-import pdb
 
 class MinVariableMap(ActiveVariableMap):
     def train(self, X, f):

@@ -6,12 +6,16 @@ from utils.utils import conditional_expectations
 from utils.designs import maximin_design
 from utils.simrunners import SimulationRunner
 from domains import UnboundedActiveVariableDomain, BoundedActiveVariableDomain
+from as_response_surfaces import ActiveSubspaceResponseSurface
 from scipy.spatial import Delaunay
 
 def integrate(fun, avmap, N, NMC=10):
     Yp, Yw = av_quadrature_rule(avmap, N)
     Xp, Xw, ind = quadrature_rule(Yp, Yw, avmap, NMC=NMC)
-    f = SimulationRunner(fun).run(Xp)
+    if isinstance(fun, SimulationRunner):
+        f = fun.run(Xp)
+    else:
+        f = SimulationRunner(fun).run(Xp)
     return compute_integral(f, Yw, ind)
 
 def av_integrate(avfun, avmap, N):
@@ -30,7 +34,10 @@ def av_integrate(avfun, avmap, N):
         ub:
     """
     Yp, Yw = av_quadrature_rule(avmap, N)
-    avf = SimulationRunner(avfun).run(Yp)
+    if isinstance(avfun, ActiveSubspaceResponseSurface):
+        avf = avfun.predict_av(Yp)[0]
+    else:
+        avf = SimulationRunner(avfun).run(Yp)
     return np.dot(Yw.T, avf)[0,0]
 
 def quadrature_rule(Yp, Yw, avmap, NMC=10):

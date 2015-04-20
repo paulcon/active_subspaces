@@ -32,8 +32,6 @@ class Subspaces():
         
     def partition(self, n=0):
         self.W1, self.W2 = self.eigenvectors[:,:n], self.eigenvectors[:,n:]
-        
-
 
 def compute_partition(evals):
     
