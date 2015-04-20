@@ -6,7 +6,7 @@ from utils.response_surfaces import GaussianProcess
 from subspaces import Subspaces
 from gradients import local_linear_gradients, finite_difference_gradients
 from domains import UnboundedActiveVariableDomain, BoundedActiveVariableDomain
-from as_optimizers import as_minimize, UnboundedMinVariableMap, BoundedMinVariableMap
+#from as_optimizers import as_minimize, UnboundedMinVariableMap, BoundedMinVariableMap
 
 class ActiveSubspaceModel():
     bflag = None # indicates if domain is bounded
@@ -134,7 +134,7 @@ class ActiveSubspaceModel():
         c = np.logical_and((f>lb), (f<ub))
         prob = np.sum(c.astype(int)) / float(M)
         return prob
-
+    """
     def minimum(self):
         if self.domain is None:
             self.set_domain()
@@ -152,7 +152,8 @@ class ActiveSubspaceModel():
             mvm = UnboundedMinVariableMap()
         mvm.train(self.X, self.f)
         return mvm.inverse(ystar), fval
-        
+    """
+    
     def __call__(self,x):
         return self.predict(x)[0]
 

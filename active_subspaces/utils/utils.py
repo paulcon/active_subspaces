@@ -77,24 +77,33 @@ class UnboundedNormalizer(Normalizer):
         X, M, m = process_inputs(X)
         X0 = np.dot(X,self.L.T)
         return X0 + self.mu
-
+    
 def process_inputs(X):
-    """
-    Description of process_inputs.
-
-    Arguments:
-        X:
-    Outputs:
-        X:
-        M:
-        m:
-    """
-
     if len(X.shape) == 2:
         M, m = X.shape
     else:
         raise ValueError('The inputs X should be a two-d numpy array.')
-    return X, M, m
+
+    X = X.reshape((M, m))
+    return X, M, m    
+            
+def process_inputs_outputs(X, f):
+    X, M, m = process_inputs(X)
+
+    if len(f.shape) == 2:
+        Mf, mf = f.shape
+    else:
+        raise ValueError('The outputs f should be a two-d numpy array.')
+        
+    if Mf != M:
+        raise Exception('Different number of inputs and outputs.')
+        
+    if mf != 1:
+        raise Exception('Only scalar-valued functions.')
+        
+    f = f.reshape((M, 1))
+    
+    return X, f, M, m
 
 def conditional_expectations(f, ind):
     """

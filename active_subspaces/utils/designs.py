@@ -27,7 +27,7 @@ def maximin_design(vert, N):
                 'fun' : lambda x: np.dot(A, x) - b,
                 'jac' : lambda x: A})
     
-    # some tricks for the global optimization
+    # some tricks for the globalization
     curr_state = np.random.get_state()
     
     np.random.seed(42)
