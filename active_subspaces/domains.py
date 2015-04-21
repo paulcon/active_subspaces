@@ -1,8 +1,9 @@
 import numpy as np
 import warnings
-from utils.utils import process_inputs
+from utils.utils import process_inputs, BoundedNormalizer
 from scipy.spatial import ConvexHull
 from utils.qp_solver import QPSolver
+import pdb
 
 class ActiveVariableDomain():
     vertY, vertX = None, None
@@ -137,24 +138,118 @@ def zonotope_vertices(W1, NY=10000):
     return Y, X
 
 def sample_z(N, y, W1, W2):
-    m, n = W1.shape
-    qps = QPSolver()
     
+    Z = rejection_sampling_z(N, y, W1, W2)
+    if Z is None:
+        warnings.warn('Rejection sampling has failed miserably. Will try hit and run sampling.')
+        Z = hit_and_run_z(N, y, W1, W2)
+    return Z
+
+def hit_and_run_z(N, y, W1, W2):
+    m, n = W1.shape
+    
+    # get an initial feasible point
+    qps = QPSolver()
+    lb = -np.ones((m,1))
+    ub = np.ones((m,1))
+    c = np.zeros((m,1))
+    x0 = qps.linear_program_eq(c, W1.T, y.reshape((n,1)), lb, ub)
+    z0 = np.dot(W2.T, x0).reshape((m-n, 1))
+    
+    # define the polytope A >= b
     s = np.dot(W1, y).reshape((m, 1))
+    A = np.vstack((W2, -W2))
+    b = np.vstack((-1-s, -1+s)).reshape((2*m, 1))
+    
+    # tolerance
+    ztol = 1e-6
+    eps0 = ztol/4.0
+    
+    Z = np.zeros((N, m-n))
+    for i in range(N):
+        
+        # random direction
+        bad_dir = True
+        count, maxcount = 0, 50
+        while bad_dir:
+            d = np.random.normal(size=(m-n,1))
+            bad_dir = np.any(np.dot(A, z0 + eps0*d) <= b)
+            count += 1
+            if count >= maxcount:
+                warnings.warn('There are no more directions worth pursuing in hit and run. Got {:d} samples.'.format(i))
+                Z[i:,:] = np.tile(z0, (1,N-i)).transpose()
+                return Z
+                
+        # find constraints that impose lower and upper bounds on eps
+        f, g = b - np.dot(A,z0), np.dot(A, d)
+        min_ind = g<=0
+        max_ind = g>0
+        eps_max = np.amin(f[min_ind])
+        eps_min = np.amax(f[max_ind])
+        
+        # randomly sample eps
+        eps1 = np.random.uniform(eps_min, eps_max)
+        
+        # take a step along d
+        z1 = z0 + eps1*d
+        Z[i,:] = z1.reshape((m-n, ))
+        
+        # update temp vars
+        z0, eps0 = z1, eps1
+        
+    return Z
+
+def rejection_sampling_z(N, y, W1, W2):
+    m, n = W1.shape
+    s = np.dot(W1, y).reshape((m, 1))
+    
+    # Build a box around z for uniform sampling
+    qps = QPSolver()
+    A = np.vstack((W2, -W2))
+    b = np.vstack((-1-s, -1+s)).reshape((2*m, 1))
+    lbox, ubox = np.zeros((1,m-n)), np.zeros((1,m-n))
+    for i in range(m-n):
+        clb = np.zeros((m-n,1))
+        clb[i,0] = 1.0
+        lbox[0,i] = qps.linear_program_ineq(clb, A, b)[i,0]
+        cub = np.zeros((m-n,1))
+        cub[i,0] = -1.0
+        ubox[0,i] = qps.linear_program_ineq(cub, A, b)[i,0]
+    bn = BoundedNormalizer(lbox, ubox)
+    Zbox = bn.unnormalize(np.random.uniform(-1.0,1.0,size=(50*N,m-n)))
+    ind = np.all(np.dot(A, Zbox.T) >= b, axis=0)
+    
+    if np.sum(ind) >= N:
+        Z = Zbox[ind,:]
+        return Z[:N,:].reshape((N,m-n))
+    else:
+        return None
+    
+def random_walk_z(N, y, W1, W2):
+    """
+    I tried getting a random walk to work for MCMC sampling from the polytope
+    that z lives in. But it doesn't seem to work very well. Gonna try rejection
+    sampling.
+    """
+    m, n = W1.shape
+    s = np.dot(W1, y).reshape((m, 1))
+
+    # linear program to get starting z0
     if np.all(np.zeros((m, 1)) <= 1-s) and np.all(np.zeros((m, 1)) >= -1-s):
         z0 = np.zeros((m-n, 1))
     else:
+        qps = QPSolver()
         lb = -np.ones((m,1))
         ub = np.ones((m,1))
         c = np.zeros((m,1))
         x0 = qps.linear_program_eq(c, W1.T, y.reshape((n,1)), lb, ub)
         z0 = np.dot(W2.T, x0).reshape((m-n, 1))
-
+    
     # get MCMC step size
     sig = 0.1*np.minimum(
             np.linalg.norm(np.dot(W2, z0) + s - 1),
             np.linalg.norm(np.dot(W2, z0) + s + 1))
-
+    
     # burn in
     for i in range(10*N):
         zc = z0 + sig*np.random.normal(size=z0.shape)

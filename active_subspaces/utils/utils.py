@@ -1,9 +1,6 @@
 import numpy as np
 
 class Normalizer():
-    """
-    Abstract Base Class for Normalizers
-    """
 
     def normalize(self, X):
         """

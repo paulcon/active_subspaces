@@ -50,6 +50,30 @@ class QPSolver():
             return gurobi_linear_program_eq(c, A, b, lb, ub)
         else:
             raise ValueError('QP solver %s not available' % self.solver)
+            
+    def linear_program_ineq(self, c, A, b):
+        """
+        Solves the equality constrained linear program
+        minimize_x  c^T x
+        subject to  A x >= b
+
+        Arguments:
+            c:
+            A:
+            b:
+            lb:
+            ub:
+        Output:
+
+        """
+        if self.solver == solver_SCIPY:
+            c = c.reshape((c.size,))
+            b = b.reshape((b.size,))
+            return scipy_linear_program_ineq(c, A, b)
+        elif self.solver == solver_GUROBI:
+            return gurobi_linear_program_ineq(c, A, b)
+        else:
+            raise ValueError('QP solver %s not available' % self.solver)
 
     def quadratic_program_bnd(self, c, Q, lb, ub):
         """
@@ -103,6 +127,11 @@ def scipy_linear_program_eq(c, A, b, lb, ub):
         bounds.append((lb[i,0],ub[i,0]))
 
     res = linprog(c, A_eq=A, b_eq=b, bounds=bounds, options={"disp": False})
+    return res.x.reshape((c.size,1))
+    
+def scipy_linear_program_ineq(c, A, b):
+    
+    res = linprog(c, A_ub=-A, b_ub=-b, options={"disp": False})
     return res.x.reshape((c.size,1))
 
 def scipy_quadratic_program_bnd(c, Q, lb, ub):
@@ -175,6 +204,42 @@ def gurobi_linear_program_eq(c, A, b, lb, ub):
         for j in range(n):
             expr += A[i,j]*vars[j]
         model.addConstr(expr, gpy.GRB.EQUAL, b[i,0])
+
+    # Populate objective
+    obj = gpy.LinExpr()
+    for j in range(n):
+        obj += c[j,0]*vars[j]
+    model.setObjective(obj)
+    model.update()
+
+    # Solve
+    model.optimize()
+
+    if model.status == gpy.GRB.OPTIMAL:
+        return np.array(model.getAttr('x', vars)).reshape((n,1))
+    else:
+        raise Exception('Gurobi did not solve the LP. Blame Gurobi.')
+        return None
+
+
+def gurobi_linear_program_ineq(c, A, b):
+
+    m,n = A.shape
+    model = gpy.Model()
+    model.setParam('OutputFlag', 0)
+
+    # Add variables to model
+    vars = []
+    for j in range(n):
+        vars.append(model.addVar(lb=-gpy.GRB.INFINITY, ub=gpy.GRB.INFINITY, vtype=gpy.GRB.CONTINUOUS))
+    model.update()
+
+    # Populate linear constraints
+    for i in range(m):
+        expr = gpy.LinExpr()
+        for j in range(n):
+            expr += A[i,j]*vars[j]
+        model.addConstr(expr, gpy.GRB.GREATER_EQUAL, b[i,0])
 
     # Populate objective
     obj = gpy.LinExpr()

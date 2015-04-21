@@ -9,6 +9,7 @@ from subspaces import Subspaces
 from gradients import local_linear_gradients, finite_difference_gradients
 from domains import UnboundedActiveVariableDomain, BoundedActiveVariableDomain, \
                     UnboundedActiveVariableMap, BoundedActiveVariableMap
+import pdb
 
 class ActiveSubspaceReducedModel():
     bndflag = None # indicates if domain is bounded
@@ -41,11 +42,11 @@ class ActiveSubspaceReducedModel():
         
         # set up the active variable domain and map
         if self.bndflag:
-            avdom = UnboundedActiveVariableDomain(ss)
-            avmap = UnboundedActiveVariableMap(avdom)
-        else:
             avdom = BoundedActiveVariableDomain(ss)
             avmap = BoundedActiveVariableMap(avdom)
+        else:
+            avdom = UnboundedActiveVariableDomain(ss)
+            avmap = UnboundedActiveVariableMap(avdom)
             
         # build the response surface
         avrs = ActiveSubspaceResponseSurface(avmap)
@@ -56,10 +57,10 @@ class ActiveSubspaceReducedModel():
         self.m = m
 
         # number of gradient samples
-        M = 6*(m+1)*np.log(m)
+        M = int(np.floor(6*(m+1)*np.log(m)))
 
         # sample points for gradients
-        if self.bflag:
+        if self.bndflag:
             X = np.random.uniform(-1.0, 1.0, size=(M, m))
         else:
             X = np.random.normal(size=(M, m))
@@ -85,15 +86,15 @@ class ActiveSubspaceReducedModel():
         
         # set up the active variable domain and map
         if self.bndflag:
-            avdom = UnboundedActiveVariableDomain(ss)
-            avmap = UnboundedActiveVariableMap(avdom)
-        else:
             avdom = BoundedActiveVariableDomain(ss)
             avmap = BoundedActiveVariableMap(avdom)
+        else:
+            avdom = UnboundedActiveVariableDomain(ss)
+            avmap = UnboundedActiveVariableMap(avdom)
             
         # build the response surface
         avrs = ActiveSubspaceResponseSurface(avmap)
-        avrs.train_with_interface(fun, np.power(10,self.n))
+        avrs.train_with_interface(fun, int(np.power(5,self.n)))
         self.av_respsurf = avrs
 
     def diagnostics(self):
@@ -122,11 +123,12 @@ class ActiveSubspaceReducedModel():
             X = np.random.uniform(-1.0,1.0,size=(M,self.m))
         else:
             X = np.random.normal(size=(M,self.m))
-        f = self.av_respsurf(X)[0]
-        c = np.logical_and((f>lb), (f<ub))
-        p = np.sum(c.astype(int)) / float(M)
-        lb, ub = p+2.58*np.sqrt(p*(1-p)/M), p-2.58*np.sqrt(p*(1-p)/M)
-        return p, lb, ub
+        f = self.av_respsurf(X)
+        #pdb.set_trace()
+        c = np.all(np.hstack(( f>lb, f<ub )), axis=1)
+        p = np.sum(c) / float(M)
+        plb, pub = p+2.58*np.sqrt(p*(1-p)/M), p-2.58*np.sqrt(p*(1-p)/M)
+        return p, plb, pub
 
     def minimum(self):
         xstar, fstar = minimize(self.av_respsurf, self.X, self.f)

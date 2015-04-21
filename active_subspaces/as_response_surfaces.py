@@ -4,6 +4,7 @@ from utils.simrunners import SimulationRunner
 from utils.utils import conditional_expectations
 from utils.response_surfaces import GaussianProcess
 from domains import UnboundedActiveVariableDomain, BoundedActiveVariableDomain
+import pdb
 
 class ActiveSubspaceResponseSurface():
     def __init__(self, avmap, respsurf=None):

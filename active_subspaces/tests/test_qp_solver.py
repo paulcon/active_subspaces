@@ -4,6 +4,16 @@ import numpy as np
 import active_subspaces.utils.qp_solver as qp
 
 class TestGurobi(TestCase):
+    def test_gurobi_linear_program_ineq(self):
+        c = np.ones((2,1))
+        A = np.array([[1.0,0.0],[0.0,1.0],[1.0,1.0]])
+        b = np.array([[0.1],[0.1],[0.1]])
+        
+        gs = qp.QPSolver()
+        x = gs.linear_program_ineq(c, A, b)
+        xtrue = np.array([0.1,0.1]).reshape((2,1))
+        np.testing.assert_almost_equal(x,xtrue)
+    
     def test_gurobi_linear_program_eq(self):
         c = np.ones((5,1))
         A = np.array([[2.0,1.0,0.,0.,0.],[0.,0.,2.0,1.0,0.]])
@@ -35,7 +45,17 @@ class TestGurobi(TestCase):
         x = gs.quadratic_program_ineq(c, Q, A, b)
         xtrue = -0.5*np.ones((5,1))
         np.testing.assert_almost_equal(x,xtrue)
+    
+    def test_scipy_linear_program_ineq(self):
+        c = np.ones((2,1))
+        A = np.array([[1.0,0.0],[0.0,1.0],[1.0,1.0]])
+        b = np.array([[0.1],[0.1],[0.1]])
         
+        gs = qp.QPSolver(solver='SCIPY')
+        x = gs.linear_program_ineq(c, A, b)
+        xtrue = np.array([0.1,0.1]).reshape((2,1))
+        np.testing.assert_almost_equal(x,xtrue)
+    
     def test_scipy_linear_program_eq(self):
         c = np.ones((5,1))
         A = np.array([[2.0,1.0,0.,0.,0.],[0.,0.,2.0,1.0,0.]])

@@ -4,6 +4,7 @@ import active_subspaces.subspaces as ss
 import active_subspaces.domains as dom
 import helper
 import numpy as np
+import pdb
 
 class TestDomains(TestCase):
     
@@ -162,7 +163,7 @@ class TestDomains(TestCase):
         bavd = dom.BoundedActiveVariableDomain(sub)
         bavm = dom.BoundedActiveVariableMap(bavd)
         
-        X = np.random.uniform(-1.0,1.0,size=(100,m))
+        X = np.random.uniform(-1.0,1.0,size=(10,m))
         Y,Z = bavm.forward(X)
         X0 = bavm.inverse(Y, N=10)[0]
         np.testing.assert_almost_equal(np.dot(X0, sub.W1), np.kron(Y, np.ones((10,1))) )
@@ -178,7 +179,7 @@ class TestDomains(TestCase):
         bavd = dom.BoundedActiveVariableDomain(sub)
         bavm = dom.BoundedActiveVariableMap(bavd)
         
-        X = np.random.uniform(-1.0,1.0,size=(100,m))
+        X = np.random.uniform(-1.0,1.0,size=(10,m))
         Y,Z = bavm.forward(X)
         X0 = bavm.inverse(Y, N=10)[0]
         np.testing.assert_almost_equal(np.dot(X0, sub.W1), np.kron(Y, np.ones((10,1))) )
