@@ -6,7 +6,7 @@ def readme():
 
 setup(name='active_subspaces',
       version='0.1.1',
-      description='Tools to apply active subspaces to analyze their models and data.',
+      description='Tools to apply active subspaces to analyze models and data.',
       long_description=readme(),
       classifiers=[
         'Development Status :: 3 - Alpha',
@@ -15,7 +15,7 @@ setup(name='active_subspaces',
         'Intended Audience :: Science/Research',
         'Topic :: Scientific/Engineering :: Mathematics'
       ],
-      keywords='math mathematics active subspaces uncertainty quantification uq',
+      keywords='dimension reduction mathematics active subspaces uncertainty quantification uq',
       url='https://github.com/paulcon/active_subspaces',
       author='Paul Constantine',
       author_email='paul.constantine@mines.edu',

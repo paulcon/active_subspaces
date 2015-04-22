@@ -3,7 +3,6 @@ import warnings
 from utils.utils import process_inputs, BoundedNormalizer
 from scipy.spatial import ConvexHull
 from utils.qp_solver import QPSolver
-import pdb
 
 class ActiveVariableDomain():
     vertY, vertX = None, None
@@ -182,10 +181,14 @@ def hit_and_run_z(N, y, W1, W2):
                 
         # find constraints that impose lower and upper bounds on eps
         f, g = b - np.dot(A,z0), np.dot(A, d)
-        min_ind = g<=0
-        max_ind = g>0
-        eps_max = np.amin(f[min_ind])
-        eps_min = np.amax(f[max_ind])
+        
+        # find an upper bound on the step
+        min_ind = np.logical_and(g<=0, f < -np.sqrt(np.finfo(np.float).eps))
+        eps_max = np.amin(f[min_ind]/g[min_ind])
+        
+        # find a lower bound on the step
+        max_ind = np.logical_and(g>0, f < -np.sqrt(np.finfo(np.float).eps))
+        eps_min = np.amax(f[max_ind]/g[max_ind])
         
         # randomly sample eps
         eps1 = np.random.uniform(eps_min, eps_max)
@@ -264,7 +267,7 @@ def random_walk_z(N, y, W1, W2):
             z0 = zc
         Z[:,i] = z0.reshape((z0.shape[0], ))
 
-    return Z
+    return Z.reshape((N, m-n))
 
 def rotate_x(Y, Z, W):
     NY, n = Y.shape
