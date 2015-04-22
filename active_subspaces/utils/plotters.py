@@ -1,8 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.patches import Polygon
+from matplotlib.lines import Line2D
+#from matplotlib.patches import PathPatch
 from scipy.spatial import ConvexHull, Delaunay, convex_hull_plot_2d, delaunay_plot_2d
 import os
+import pdb
 
 def plot_opts(savefigs=True, figtype='.eps'):
     # make figs directory
@@ -338,6 +340,9 @@ def zonotope_2d_plot(vertices, design=None, y=None, f=None, out_label=None, opts
     
     if design is not None:
         fig = delaunay_plot_2d(dtri, ax=ax)
+        for l in fig.axes[0].get_children():
+            if type(l) is Line2D:
+	        l.set_color('0.75')
         
     if y is not None:
         plt.scatter(y[:,0], y[:,1], c=f, s=100.0, vmin=np.min(f), vmax=np.max(f))
