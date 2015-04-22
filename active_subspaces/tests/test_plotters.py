@@ -1,10 +1,15 @@
 from unittest import TestCase
 import unittest
 import active_subspaces.utils.plotters as plt
+import active_subspaces.subspaces as ss
+import active_subspaces.domains as dom
+from active_subspaces.as_response_surfaces import as_design
 import numpy as np
 import matplotlib.pyplot as mplt
+import helper
 
 class TestPlotters(TestCase):
+    """
     def test_eigenvalues(self):
         e = np.power(10*np.ones(6),-np.arange(1,7)).reshape((6,1))
         plt.eigenvalues(e)
@@ -98,6 +103,58 @@ class TestPlotters(TestCase):
         y = np.random.uniform(-1.0,1.0,size=(20,2))
         f = np.sin(y[:,0])*np.sin(y[:,1])
         plt.sufficient_summary(y, f)
+    """
+    
+    def test_zonotope_0(self):
+        data = helper.load_test_npz('test_spec_decomp_1.npz')
+        df0 = data['df']
+        
+        sub = ss.Subspaces()
+        sub.compute(df0)
+        sub.partition(2)
+        
+        np.random.seed(42)
+        bavd = dom.BoundedActiveVariableDomain(sub)
+        vertices = bavd.vertY
+        plt.zonotope_2d_plot(vertices)
+        
+    def test_zonotope_1(self):
+        data = helper.load_test_npz('test_spec_decomp_1.npz')
+        df0 = data['df']
+        
+        sub = ss.Subspaces()
+        sub.compute(df0)
+        sub.partition(2)
+        
+        np.random.seed(42)
+        bavd = dom.BoundedActiveVariableDomain(sub)
+        bavm = dom.BoundedActiveVariableMap(bavd)
+        Y = as_design(bavm, 8, NMC=1)[0]
+        
+        vertices = bavd.vertY
+        plt.zonotope_2d_plot(vertices, design=Y)
+        
+    def test_zonotope_2(self):
+        data = helper.load_test_npz('test_spec_decomp_1.npz')
+        df0 = data['df']
+        
+        sub = ss.Subspaces()
+        sub.compute(df0)
+        sub.partition(2)
+        
+        np.random.seed(42)
+        bavd = dom.BoundedActiveVariableDomain(sub)
+        bavm = dom.BoundedActiveVariableMap(bavd)
+        Y = as_design(bavm, 8, NMC=1)[0]
+        
+        vertices = bavd.vertY
+        
+        Xp = np.random.uniform(-1.0,1.0,size=(20, sub.W1.shape[0]))
+        Yp = np.dot(Xp, sub.W1)
+        fp = np.sum(Yp, axis=1)
+        
+        plt.zonotope_2d_plot(vertices, design=Y, y=Yp, f=fp)
+        
 
 if __name__ == '__main__':
     mplt.close('all')

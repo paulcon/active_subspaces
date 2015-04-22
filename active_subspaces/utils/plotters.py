@@ -1,5 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.patches import Polygon
+from scipy.spatial import ConvexHull, Delaunay, convex_hull_plot_2d, delaunay_plot_2d
 import os
 
 def plot_opts(savefigs=True, figtype='.eps'):
@@ -269,8 +271,8 @@ def sufficient_summary(y, f, out_label=None, opts=None):
     plt.xlabel('Active variable')
     plt.ylabel(out_label)
     plt.grid(True)
-    figname = 'figs/ssp1_' + out_label + opts['figtype']
     if opts['savefigs']:
+        figname = 'figs/ssp1_' + out_label + opts['figtype']
         plt.savefig(figname, dpi=300, bbox_inches='tight', pad_inches=0.0)
 
     if n==2:
@@ -286,8 +288,73 @@ def sufficient_summary(y, f, out_label=None, opts=None):
         plt.axes().set_aspect('equal')
         plt.title(out_label)
         plt.colorbar()
-        figname = 'figs/ssp2_' + out_label + opts['figtype']
         if opts['savefigs']:
+            figname = 'figs/ssp2_' + out_label + opts['figtype']
             plt.savefig(figname, dpi=300, bbox_inches='tight', pad_inches=0.0)
 
     plt.show()
+    
+def zonotope_2d_plot(vertices, design=None, y=None, f=None, out_label=None, opts=None):
+    
+    if opts == None:
+        opts = plot_opts()
+
+    # set labels for plots
+    if out_label is None:
+        out_label = 'Output'
+        
+    if vertices.shape[1] != 2:
+        raise Exception('Zonotope vertices should be 2d.')
+        
+    if design is not None:
+        if design.shape[1] != 2:
+            raise Exception('Zonotope design should be 2d.')
+            
+    if y is not None:
+        if y.shape[1] != 2:
+            raise Exception('Zonotope design should be 2d.')
+            
+    if (y is not None and f is None) or (y is None and f is not None):
+        raise Exception('You need both y and f to plot.')
+        
+    if y is not None and f is not None:
+        if y.shape[0] != f.shape[0]:
+            raise Exception('Lengths of y and f are not the same.')
+    
+    # get the xlim and ylim
+    xmin, xmax = np.amin(vertices), np.amax(vertices)
+    
+    # make the Polygon patch for the zonotope
+    ch = ConvexHull(vertices)
+    
+    # make the Delaunay triangulation 
+    if design is not None:
+        points = np.vstack((design, vertices))
+        dtri = Delaunay(points)
+    
+    fig = plt.figure(figsize=(7,7))
+    ax = fig.add_subplot(111)
+    convex_hull_plot_2d(ch, ax=ax)
+    
+    if design is not None:
+        fig = delaunay_plot_2d(dtri, ax=ax)
+        
+    if y is not None:
+        plt.scatter(y[:,0], y[:,1], c=f, s=100.0, vmin=np.min(f), vmax=np.max(f))
+        plt.axes().set_aspect('equal')
+        plt.title(out_label)
+        plt.colorbar()
+        
+    plt.axis([1.1*xmin,1.1*xmax,1.1*xmin,1.1*xmax])
+    plt.xlabel('Active variable 1')
+    plt.ylabel('Active variable 2')
+    plt.show()
+    if opts['savefigs']:
+        figname = 'figs/zonotope_2d_' + out_label + opts['figtype']
+        plt.savefig(figname, dpi=300, bbox_inches='tight', pad_inches=0.0)
+    
+    
+    
+        
+    
+    
