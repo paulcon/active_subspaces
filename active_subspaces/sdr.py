@@ -1,6 +1,6 @@
 import numpy as np
-from active_subspaces.utils.plotters import sufficient_summary, eigenvectors
-from active_subspaces.utils.response_surfaces import PolynomialRegression
+from utils.plotters import sufficient_summary, eigenvectors
+from utils.response_surfaces import PolynomialRegression
 
 def lingrad(X, f):
     """
@@ -38,20 +38,26 @@ def quick_check(X, f, n_boot=1000, in_labels=None, out_label=None):
 
     # bootstrap
     ind = np.random.randint(M, size=(M, n_boot))
-    w_boot = np.zeros((m, n_boot))
+    w_lb, w_ub = np.ones((m, 1)), -np.ones((m, 1))
     for i in range(n_boot):
-        w_boot[:,i] = lingrad(X[ind[:,i],:], f[ind[:,i]])
+        w_boot = lingrad(X[ind[:,i],:], f[ind[:,i]]).reshape((m, 1))
+        for j in range(m):
+            if w_boot[j,0] < w_lb[j,0]:
+                w_lb[j,0] = w_boot[j,0]
+            if w_boot[j,0] > w_ub[j,0]:
+                w_ub[j,0] = w_boot[j,0]
+    w_br = np.hstack((w_lb, w_ub))
 
     # make sufficient summary plot
     y = np.dot(X, w)
     sufficient_summary(y, f, out_label=out_label)
 
     # plot weights
-    eigenvectors(w, W_boot=w_boot, in_labels=in_labels, out_label=out_label)
+    eigenvectors(w, W_br=w_br, in_labels=in_labels, out_label=out_label)
 
     return w
 
-def quadratic_model_check(X, f, gamma, k):
+def quadratic_model_check(X, f, gamma):
     """
     Description of quadratic_model_check.
 
@@ -59,7 +65,6 @@ def quadratic_model_check(X, f, gamma, k):
         X:
         f:
         gamma:
-        k:
     Outputs:
         w:
     """
@@ -79,4 +84,4 @@ def quadratic_model_check(X, f, gamma, k):
     ind = np.argsort(e)[::-1]
     e, W = e[ind], W[:,ind]*np.sign(W[0,ind])
     
-    return e[:k], W
+    return e.reshape((m,1)), W.reshape((m,m))
