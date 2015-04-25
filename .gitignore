@@ -11,6 +11,9 @@ figs/
 
 # *.npz
 
+# the etc directory
+etc/
+
 # logs
 gurobi.log
 
