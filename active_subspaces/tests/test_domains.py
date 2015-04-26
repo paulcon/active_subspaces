@@ -4,6 +4,7 @@ import active_subspaces.subspaces as ss
 import active_subspaces.domains as dom
 import helper
 import numpy as np
+import pdb
 
 class TestDomains(TestCase):
     
@@ -199,7 +200,7 @@ class TestDomains(TestCase):
         np.random.seed(42)
         Z = dom.rejection_sampling_z(N, y, W1, W2)
             
-        #np.savez('data/test_sampling_z_0_0',Z=Z)
+        np.savez('data/test_sampling_z_0_0',Z=Z)
         data_test = helper.load_test_npz('test_sampling_z_0_0.npz')
         np.testing.assert_equal(Z, data_test['Z'])
         
