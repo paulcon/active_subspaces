@@ -77,7 +77,7 @@ def subspace_errors(sub_br ,out_label=None, opts=None):
     plt.title(out_label)
     plt.grid(True)
     plt.xticks(range(1, kk+1))
-    plt.axis([1, kk, np.amin(sub_br[:,0]), 1])
+    plt.axis([0, kk+1, 0.1*np.amin(sub_br[:,0]), 1])
     
     if opts['savefigs']:
         figname = 'figs/subspace_' + out_label + opts['figtype']

@@ -18,7 +18,11 @@ class BoundedActiveVariableDomain(ActiveVariableDomain):
     
     def __init__(self, subspaces):
         self.subspaces = subspaces
-        W1 = subspaces.W1
+        self.m, self.n = subspaces.W1.shape
+        self.compute_boundary()
+        
+    def compute_boundary(self):
+        W1 = self.subspaces.W1
         m, n = W1.shape
         
         if n == 1:
@@ -39,7 +43,6 @@ class BoundedActiveVariableDomain(ActiveVariableDomain):
                         'jac' : lambda x: A})
 
         # store variables
-        self.m, self.n = m, n
         self.vertY, self.vertX = Y, X
         self.convhull, self.constraints = convhull, constraints
 
