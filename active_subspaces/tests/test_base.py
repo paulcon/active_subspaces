@@ -34,7 +34,7 @@ class TestBase(TestCase):
         prob, pl, pu = model.probability(0.0, 1.0)
         fstar, xstar = model.minimum()
 
-        np.savez('data/test_base_0_0',avg=avg, prob=prob, pl=pl, pu=pu, xstar=xstar, fstar=fstar)
+        #np.savez('data/test_base_0_0',avg=avg, prob=prob, pl=pl, pu=pu, xstar=xstar, fstar=fstar)
         data_test = helper.load_test_npz('test_base_0_0.npz')
         np.testing.assert_equal(avg, data_test['avg'])
         np.testing.assert_equal(prob, data_test['prob'])
@@ -61,7 +61,7 @@ class TestBase(TestCase):
         prob, pl, pu = model.probability(0.0, 1.0)
         fstar, xstar = model.minimum()
 
-        np.savez('data/test_base_0_1',avg=avg, prob=prob, pl=pl, pu=pu, xstar=xstar, fstar=fstar)
+        #np.savez('data/test_base_0_1',avg=avg, prob=prob, pl=pl, pu=pu, xstar=xstar, fstar=fstar)
         data_test = helper.load_test_npz('test_base_0_1.npz')
         np.testing.assert_equal(avg, data_test['avg'])
         np.testing.assert_equal(prob, data_test['prob'])
@@ -88,7 +88,7 @@ class TestBase(TestCase):
         prob, pl, pu = model.probability(0.0, 1.0)
         fstar, xstar = model.minimum()
 
-        np.savez('data/test_base_0_2',avg=avg, prob=prob, pl=pl, pu=pu, xstar=xstar, fstar=fstar)
+        #np.savez('data/test_base_0_2',avg=avg, prob=prob, pl=pl, pu=pu, xstar=xstar, fstar=fstar)
         data_test = helper.load_test_npz('test_base_0_2.npz')
         np.testing.assert_equal(avg, data_test['avg'])
         np.testing.assert_equal(prob, data_test['prob'])
@@ -115,7 +115,7 @@ class TestBase(TestCase):
         prob, pl, pu = model.probability(0.0, 1.0)
         fstar, xstar = model.minimum()
 
-        np.savez('data/test_base_0_3',avg=avg, prob=prob, pl=pl, pu=pu, xstar=xstar, fstar=fstar)
+        #np.savez('data/test_base_0_3',avg=avg, prob=prob, pl=pl, pu=pu, xstar=xstar, fstar=fstar)
         data_test = helper.load_test_npz('test_base_0_3.npz')
         np.testing.assert_equal(avg, data_test['avg'])
         np.testing.assert_equal(prob, data_test['prob'])
@@ -169,7 +169,7 @@ class TestBase(TestCase):
         prob, pl, pu = model.probability(0.0, 1.0)
         fstar, xstar = model.minimum()
 
-        np.savez('data/test_base_1_0',avg=avg, prob=prob, pl=pl, pu=pu, xstar=xstar, fstar=fstar)
+        #np.savez('data/test_base_1_0',avg=avg, prob=prob, pl=pl, pu=pu, xstar=xstar, fstar=fstar)
         data_test = helper.load_test_npz('test_base_1_0.npz')
         np.testing.assert_equal(avg, data_test['avg'])
         np.testing.assert_equal(prob, data_test['prob'])
@@ -196,7 +196,7 @@ class TestBase(TestCase):
         prob, pl, pu = model.probability(0.0, 1.0)
         fstar, xstar = model.minimum()
 
-        np.savez('data/test_base_1_1',avg=avg, prob=prob, pl=pl, pu=pu, xstar=xstar, fstar=fstar)
+        #np.savez('data/test_base_1_1',avg=avg, prob=prob, pl=pl, pu=pu, xstar=xstar, fstar=fstar)
         data_test = helper.load_test_npz('test_base_1_1.npz')
         np.testing.assert_equal(avg, data_test['avg'])
         np.testing.assert_equal(prob, data_test['prob'])
@@ -223,7 +223,7 @@ class TestBase(TestCase):
         prob, pl, pu = model.probability(0.0, 1.0)
         fstar, xstar = model.minimum()
 
-        np.savez('data/test_base_1_2',avg=avg, prob=prob, pl=pl, pu=pu, xstar=xstar, fstar=fstar)
+        #np.savez('data/test_base_1_2',avg=avg, prob=prob, pl=pl, pu=pu, xstar=xstar, fstar=fstar)
         data_test = helper.load_test_npz('test_base_1_2.npz')
         np.testing.assert_equal(avg, data_test['avg'])
         np.testing.assert_equal(prob, data_test['prob'])
@@ -250,7 +250,7 @@ class TestBase(TestCase):
         prob, pl, pu = model.probability(0.0, 1.0)
         fstar, xstar = model.minimum()
 
-        np.savez('data/test_base_1_3',avg=avg, prob=prob, pl=pl, pu=pu, xstar=xstar, fstar=fstar)
+        #np.savez('data/test_base_1_3',avg=avg, prob=prob, pl=pl, pu=pu, xstar=xstar, fstar=fstar)
         data_test = helper.load_test_npz('test_base_1_3.npz')
         np.testing.assert_equal(avg, data_test['avg'])
         np.testing.assert_equal(prob, data_test['prob'])
