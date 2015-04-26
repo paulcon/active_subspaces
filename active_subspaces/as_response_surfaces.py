@@ -4,7 +4,6 @@ from utils.simrunners import SimulationRunner
 from utils.utils import conditional_expectations
 from utils.response_surfaces import GaussianProcess
 from domains import UnboundedActiveVariableDomain, BoundedActiveVariableDomain
-import pdb
 
 class ActiveSubspaceResponseSurface():
     def __init__(self, avmap, respsurf=None):
@@ -37,8 +36,10 @@ class ActiveSubspaceResponseSurface():
             ind = np.vstack(( ind, iind.reshape((iind.size,1)) ))
             
         # run simulation interface at all design points
-        sr = SimulationRunner(fun)
-        f = sr.run(X)
+        if isinstance(fun, SimulationRunner):
+            f = fun.run(X)
+        else:
+            f = SimulationRunner(fun).run(X)
         
         Ef, Vf = conditional_expectations(f, ind)
         self.train(Y, Ef, v=Vf)

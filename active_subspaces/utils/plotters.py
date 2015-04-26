@@ -259,9 +259,11 @@ def sufficient_summary(y, f, out_label=None, opts=None):
     n = y.shape[1]
     if n == 1:
         y1 = y
-    else:
+    elif n == 2:
         y1 = y[:,0]
         y2 = y[:,1]
+    else:
+        raise Exception('Sufficient summary plots cannot be made in more than 2 dimensions.')
 
     # set labels for plots
     if out_label is None:
@@ -288,6 +290,7 @@ def sufficient_summary(y, f, out_label=None, opts=None):
         ymax = 1.1*np.amax([np.amax(y1), np.amax(y2)])
         plt.axis([ymin, ymax, ymin, ymax])
         plt.axes().set_aspect('equal')
+        plt.grid(True)
         plt.title(out_label)
         plt.colorbar()
         if opts['savefigs']:

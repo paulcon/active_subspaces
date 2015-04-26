@@ -9,22 +9,18 @@ from subspaces import Subspaces
 from gradients import local_linear_gradients, finite_difference_gradients
 from domains import UnboundedActiveVariableDomain, BoundedActiveVariableDomain, \
                     UnboundedActiveVariableMap, BoundedActiveVariableMap
-import pdb
 
 class ActiveSubspaceReducedModel():
-    bndflag = None # indicates if domain is bounded
+    bounded_inputs = None # indicates if domain is bounded
     X = None # sample points
     f = None # function evaluations at sample points
     m = None # dimension of inputs
     n = None # dimension of reduced space
-    funr = None
-    dfunr = None
+    fun_run = None
+    dfun_run = None
     av_respsurf = None # response surface
 
-    def __init__(self, bounded_inputs=False):
-        self.bndflag = bounded_inputs
-
-    def build_from_data(self, X, f, df=None, avdim=None):
+    def build_from_data(self, X, f, df=None, avdim=None, bounded_inputs=False):
         X, f, M, m = process_inputs_outputs(X, f)
         self.X, self.f, self.m = X, f, m
         
@@ -38,43 +34,46 @@ class ActiveSubspaceReducedModel():
         if avdim is not None:
             ss.partition(avdim)
         self.n = ss.W1.shape[1]
-        print 'Dimension of subspace is {:d}'.format(self.n)
+        print 'The dimension of the active subspace is {:d}.'.format(self.n)
         
         # set up the active variable domain and map
-        if self.bndflag:
+        if bounded_inputs:
             avdom = BoundedActiveVariableDomain(ss)
             avmap = BoundedActiveVariableMap(avdom)
         else:
             avdom = UnboundedActiveVariableDomain(ss)
             avmap = UnboundedActiveVariableMap(avdom)
+        self.bounded_inputs = bounded_inputs
             
         # build the response surface
         avrs = ActiveSubspaceResponseSurface(avmap)
         avrs.train_with_data(X, f)
         self.av_respsurf = avrs
         
-    def build_from_interface(self, m, fun, dfun=None, avdim=None):
+    def build_from_interface(self, m, fun, dfun=None, avdim=None, bounded_inputs=False):
         self.m = m
 
         # number of gradient samples
         M = int(np.floor(6*(m+1)*np.log(m)))
 
         # sample points for gradients
-        if self.bndflag:
+        if bounded_inputs:
             X = np.random.uniform(-1.0, 1.0, size=(M, m))
         else:
             X = np.random.normal(size=(M, m))
-        funr = SimulationRunner(fun) 
-        f = funr.run(X)
-        self.X, self.f, self.funr = X, f, funr
+        self.bounded_inputs = bounded_inputs
+            
+        fun_run = SimulationRunner(fun) 
+        f = fun_run.run(X)
+        self.X, self.f, self.fun_run = X, f, fun_run
         
         # sample the simulation's gradients
         if dfun == None:
             df = finite_difference_gradients(X, fun)
         else:
-            dfunr = SimulationGradientRunner(dfun)
-            df = dfunr.run(X)
-            self.dfunr = dfunr
+            dfun_run = SimulationGradientRunner(dfun)
+            df = dfun_run.run(X)
+            self.dfun_run = dfun_run
 
         # compute the active subspace
         ss = Subspaces()
@@ -82,15 +81,16 @@ class ActiveSubspaceReducedModel():
         if avdim is not None:
             ss.partition(avdim)
         self.n = ss.W1.shape[1]
-        print 'Dimension of subspace is {:d}'.format(self.n)
+        print 'The dimension of the active subspace is {:d}.'.format(self.n)
         
         # set up the active variable domain and map
-        if self.bndflag:
+        if bounded_inputs:
             avdom = BoundedActiveVariableDomain(ss)
             avmap = BoundedActiveVariableMap(avdom)
         else:
             avdom = UnboundedActiveVariableDomain(ss)
             avmap = UnboundedActiveVariableMap(avdom)
+        self.bounded_inputs = bounded_inputs
             
         # build the response surface
         avrs = ActiveSubspaceResponseSurface(avmap)
@@ -106,11 +106,13 @@ class ActiveSubspaceReducedModel():
         sufficient_summary(Y, self.f)
 
     def predict(self, X, compvar=False, compgrad=False):
+        if X.shape[1] != self.m:
+            raise Exception('The dimension of the points is {:d} but should be {:d}.'.format(X.shape[1], self.m))
         return self.av_respsurf.predict(X, compgrad=compgrad, compvar=compvar)
 
     def average(self, N):
-        if self.funr is not None:
-            mu, lb, ub = integrate(self.funr, self.av_respsurf.avmap, N)
+        if self.fun_run is not None:
+            mu, lb, ub = integrate(self.fun_run, self.av_respsurf.avmap, N)
         else:
             mu = av_integrate(self.av_respsurf, self.av_respsurf.avmap, N)
             lb, ub = None, None
@@ -119,12 +121,11 @@ class ActiveSubspaceReducedModel():
     def probability(self, lb, ub):
 
         M = 10000
-        if self.bndflag:
+        if self.bounded_inputs:
             X = np.random.uniform(-1.0,1.0,size=(M,self.m))
         else:
             X = np.random.normal(size=(M,self.m))
         f = self.av_respsurf(X)
-        #pdb.set_trace()
         c = np.all(np.hstack(( f>lb, f<ub )), axis=1)
         p = np.sum(c) / float(M)
         plb, pub = p+2.58*np.sqrt(p*(1-p)/M), p-2.58*np.sqrt(p*(1-p)/M)
