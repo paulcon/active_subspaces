@@ -1,16 +1,33 @@
-"""Gaussian Quadrature Utilities"""
+"""
+Gaussian quadrature utilities for use with the Python Active-subspaces Utility 
+Library.
+"""
 
 import numpy as np
 import utils as ut
 
 def r_hermite(N):
-    """
-    Recurence coeffiecents for the Hermite orthogonal polynomials
+    """Recurence coefficients for the Hermite orthogonal polynomials. 
 
-    Arguments:
-        N: integer, size of basis
-    Output:
-        Numpy array (Nx2)
+    Parameters
+    ----------
+    N : int
+        The number of recurence coefficients.
+
+    Returns
+    -------
+    ab : ndarray
+        An `N`-by-2 array of the recurrence coefficients.
+        
+    See Also
+    --------
+    utils.quadrature.jacobi_matrix
+    utils.quadrature.gauss_hermite
+    
+    Notes
+    -----
+    This computation is inspired by Walter Gautschi's code at 
+    https://www.cs.purdue.edu/archives/2002/wxg/codes/OPQ.html. 
     """
 
     if type(N) is not int:
@@ -23,18 +40,35 @@ def r_hermite(N):
         return np.array([[0.0, 1.0]])
     else:
         n = np.array(range(1, N + 1))
-        B = np.vstack((1.0, 0.5 * n.reshape((N, 1))))
-        A = np.zeros(B.shape)
-        return np.hstack((A, B))
+        b = np.vstack((1.0, 0.5 * n.reshape((N, 1))))
+        a = np.zeros(b.shape)
+        ab = np.hstack((a, b))
+        return ab
 
 def jacobi_matrix(ab):
     """
-    Tri-diagonal Jacobi matrix of recurrence coeffiecents
+    Tri-diagonal Jacobi matrix of recurrence coefficients.
 
-    Arguments:
-        ab: Numpy array (Nx2) of recurrence coeffiecents
-    Output:
-        Numpy array ((N-1)x(N-1))
+    Parameters
+    ----------
+    ab : ndarray
+        N-by-2 array of recurrence coefficients
+    
+    Returns
+    -------
+    J : ndarray
+        (N-1)-by-(N-1) symmetric, tridiagonal Jacobi matrix associated with
+        the orthogonal polynomials.
+        
+    See Also
+    --------
+    utils.quadrature.r_hermite
+    utils.quadrature.gauss_hermite
+    
+    Notes
+    -----
+    This computation is inspired by Walter Gautschi's code at 
+    https://www.cs.purdue.edu/archives/2002/wxg/codes/OPQ.html. 
     """
 
     if len(ab.shape) != 2:
@@ -60,14 +94,28 @@ def jacobi_matrix(ab):
 
 def gh1d(N):
     """
-    1D Gaussian Hermite Quadrature
+    One-dimensional Gauss-Hermite quadrature rule.
 
-    Arguments:
-        N: integer, number of points
-    Output:
-        tuple:
-            Numpy array (Nx1), points
-            Numpy array (Nx1), weights
+    Parameters
+    ----------
+    N : int
+        Number of nodes in the quadrature rule
+    
+    Returns
+    -------
+    x : ndarray
+        N-by-1 array of quadrature nodes
+    w : ndarray
+        N-by-1 array of quadrature weights
+        
+    See Also
+    --------
+    utils.quadrature.gauss_hermite
+    
+    Notes
+    -----
+    This computation is inspired by Walter Gautschi's code at 
+    https://www.cs.purdue.edu/archives/2002/wxg/codes/OPQ.html. 
     """
 
     if N > 1:
@@ -84,21 +132,31 @@ def gh1d(N):
 
 def gauss_hermite(N):
     """
-    Multiple dimensional tensor product Gaussian Hermite Quadrature rule
+    Tensor product Gauss-Hermite quadrature rule.
 
-    Arguments:
-        N: array of integers, number of points in each dimension
-    Output:
-        tuple:
-            Numpy array (prod(N)xlen(N)), points
-            Numpy array (len(N)x1), weights
+    Parameters
+    ----------
+    N : list of int
+        Number of nodes in each dimension of the quadrature rule
+    
+    Returns
+    -------
+    x : ndarray
+        prod(N)-by-n array of quadrature nodes
+    w : ndarray
+        prod(N)-by-1 array of quadrature weights
+    
+    Notes
+    -----
+    This computation is inspired by Walter Gautschi's code at 
+    https://www.cs.purdue.edu/archives/2002/wxg/codes/OPQ.html. 
     """
 
     if type(N) is int:
         N = [N]
 
     if type(N) is not list:
-        raise TypeError('N must be a list, yo.')
+        raise TypeError('N must be a list.')
 
     if len(N) == 1:
         return gh1d(N[0])
