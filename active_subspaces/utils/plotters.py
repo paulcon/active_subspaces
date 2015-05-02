@@ -1,12 +1,30 @@
+"""Utilities for plotting quantities computed in active subspaces."""
+
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
-#from matplotlib.patches import PathPatch
 from scipy.spatial import ConvexHull, Delaunay, convex_hull_plot_2d, delaunay_plot_2d
 import os
-import pdb
 
 def plot_opts(savefigs=True, figtype='.eps'):
+    """
+    A few options for the plots.
+
+    Parameters
+    ----------
+    savefigs : bool, optional
+        Save figures into a separate figs director. (Default is True)
+    figtype : str, optional
+        A file extention for the type of image to save. (Default is '.eps')
+    
+    Returns
+    -------
+    opts : dict
+        A dictionary with the chosen options. The keys in the dictionary are
+        `figtype`, `savefigs`, and `font`. The `font` is a dictionary that 
+        sets the font properties of the figures.
+    """
+    
     # make figs directory
     if savefigs:
         if not os.path.isdir('figs'):
@@ -17,12 +35,35 @@ def plot_opts(savefigs=True, figtype='.eps'):
             'weight' : 'normal',
             'size' : 14}
     
-    return {'figtype' : figtype,
+    opts = {'figtype' : figtype,
             'savefigs' : savefigs,
             'myfont' : myfont}
+            
+    return opts
     
 def eigenvalues(e, e_br=None, out_label=None, opts=None):
+    """
+    Plot the eigenvalues for the active subspace analysis with optional 
+    bootstrap ranges.
 
+    Parameters
+    ----------
+    e : ndarray
+        `e` is an ndarray of shape k-by-1 that contains the estimated 
+        eigenvalues.
+    e_br : ndarray, optional
+        An ndarray with lower and upper bounds for the estimated eigenvalues. 
+        These are typically computed with a bootstrap. (Default is None)
+    out_label : str, optional
+        A label for the quantity of interest. (Default is None)
+    opts : dict, optional
+        A dictionary with some plot options. (Default is None)
+    
+    See Also
+    --------
+    utils.plotters.eigenvectors
+    utils.plotters.subspace_errors
+    """
     if opts == None:
         opts = plot_opts()
 
@@ -53,12 +94,24 @@ def eigenvalues(e, e_br=None, out_label=None, opts=None):
 
 def subspace_errors(sub_br ,out_label=None, opts=None):
     """
-    subspace_errors plots the bootstrap errors in the subspace estimation
+    Plot the estimated subspace errors for the active subspace analysis with  
+    bootstrap ranges.
 
-    Arguments:
-        sub_br: An array with three columns. The first is the lower
-                bootstrap bound. The second is the mean of the bootstrap
-                error. The third is the upper bootstrap bound. 
+    Parameters
+    ----------
+    sub_br : ndarray
+        `sub_br` is an ndarray of shape (k-1)-by-3 that contains the lower
+        bound, mean, and upper bound of the subspace errors for each dimension
+        of subspace. 
+    out_label : str, optional
+        A label for the quantity of interest. (Default is None)
+    opts : dict, optional
+        A dictionary with some plot options. (Default is None)
+    
+    See Also
+    --------
+    utils.plotters.eigenvectors
+    utils.plotters.eigenvalues
     """
     if opts == None:
         opts = plot_opts()
@@ -85,7 +138,36 @@ def subspace_errors(sub_br ,out_label=None, opts=None):
     plt.show()
 
 def eigenvectors(W, W_br=None, in_labels=None, out_label=None, opts=None):
+    """
+    Plot the estimated eigenvectors for the active subspace analysis with 
+    optional bootstrap ranges.
 
+    Parameters
+    ----------
+    W : ndarray
+        `W` is an ndarray of shape m-by-k that contains k of the estimated 
+        eigenvectors from the active subspace analysis.
+    W_br : ndarray, optional
+        `W_br` is an ndarray of shape m-by-(2*k) that contains estimated 
+        upper and lower bounds on the components of the eigenvectors. (Default
+        is None)
+    in_labels : list of str, optional
+        A list of labels for the simulation's inputs. (Default is None)
+    out_label : str, optional
+        A label for the quantity of interest. (Default is None)
+    opts : dict, optional
+        A dictionary with some plot options. (Default is None)
+    
+    See Also
+    --------
+    utils.plotters.subspace_errors
+    utils.plotters.eigenvalues
+    
+    Notes
+    -----
+    This function will plot at most the first four eigevectors in a four-subplot
+    figure. In other words, it only looks at the first four columns of `W`.
+    """
     if opts == None:
         opts = plot_opts()
 
@@ -251,7 +333,30 @@ def eigenvectors(W, W_br=None, in_labels=None, out_label=None, opts=None):
     plt.show()
 
 def sufficient_summary(y, f, out_label=None, opts=None):
+    """
+    Make a summary plot with the given predictors and responses. 
 
+    Parameters
+    ----------
+    y : ndarray
+        `y` is an ndarray of shape M-by-1 or M-by-2 that contains the values of
+        the predictors for the summary plot. 
+    f : ndarray
+        `f` is an ndarray of shape M-by-1 that contains the corresponding 
+        responses. 
+    out_label : str, optional
+        A label for the quantity of interest. (Default is None)
+    opts : dict, optional
+        A dictionary with some plot options. (Default is None)
+    
+    Notes
+    -----
+    If `y.shape[1]` is 1, then this function produces only the univariate
+    summary plot. If `y.shape[1]` is 2, then this function produces both the
+    univariate and the bivariate summary plot, where the latter is a scatter
+    plot with the first column of `y` on the horizontal axis, the second
+    column of `y` on the vertical axis, and the color corresponding to `f`.
+    """
     if opts == None:
         opts = plot_opts()
 
@@ -300,7 +405,38 @@ def sufficient_summary(y, f, out_label=None, opts=None):
     plt.show()
     
 def zonotope_2d_plot(vertices, design=None, y=None, f=None, out_label=None, opts=None):
+    """
+    A utility for plotting (m,2) zonotopes with associated designs and 
+    quadrature rules. 
+
+    Parameters
+    ----------
+    vertices : ndarray
+        `vertices` is an ndarray of shape M-by-2 that contains the vertices 
+        that define the zonotope. 
+    design : ndarray, optional
+        `design` is an ndarray of shape N-by-2 that contains a design-of-
+        experiments on the zonotope. The plot will contain the Delaunay 
+        triangulation of the points in `design` and `vertices`. (Default is 
+        None)
+    y : ndarray, optional
+        `y` is an ndarray of shape K-by-2 that contains points to be plotted 
+        inside the zonotope. If `y` is given, then `f` must be given, too.
+    f : ndarray, optional
+        `f` is an ndarray of shape K-by-1 that contains a color value for the
+        associated points in `y`. This is useful for plotting function values
+        or quadrature rules with the zonotope. If `f` is given, then `y` must
+        be given, too.
+    out_label : str, optional
+        A label for the quantity of interest. (Default is None)
+    opts : dict, optional
+        A dictionary with some plot options. (Default is None)
     
+    Notes
+    --------
+    This function makes use of the scipy.spatial routines for plotting the 
+    zonotopes.
+    """
     if opts == None:
         opts = plot_opts()
 

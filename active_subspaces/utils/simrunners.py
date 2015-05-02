@@ -48,15 +48,15 @@ class SimulationRunner():
         Parameters
         ----------
         X : ndarray
-            X contains all input points where one wishes to run the simulation.
-            If the simulation takes m inputs, then X must have shape M-by-m,
+            `X` contains all input points where one wishes to run the simulation.
+            If the simulation takes m inputs, then `X` must have shape M-by-m,
             where M is the number of simulations to run. 
             
         Returns
         -------
         F : ndarray
-            F contains the simulation output at each given input point. The
-            shape of f is M-by-1. 
+            `F` contains the simulation output at each given input point. The
+            shape of `F` is M-by-1. 
             
         Notes
         -----
@@ -123,15 +123,15 @@ class SimulationGradientRunner():
         Parameters
         ----------
         X : ndarray
-            X contains all input points where one wishes to run the simulation.
-            If the simulation takes m inputs, then X must have shape M-by-m,
+            `X` contains all input points where one wishes to run the simulation.
+            If the simulation takes m inputs, then `X` must have shape M-by-m,
             where M is the number of simulations to run. 
             
         Returns
         -------
         dF : ndarray
-            dF contains the gradient of the quantity of interest at each given 
-            input point. The shape of dF is M-by-m. 
+            `dF` contains the gradient of the quantity of interest at each given 
+            input point. The shape of `dF` is M-by-m. 
             
         Notes
         -----
