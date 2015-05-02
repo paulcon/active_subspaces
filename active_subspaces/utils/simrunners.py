@@ -1,57 +1,144 @@
-"""Runners for simulations"""
+"""Utilities for running several simulations at different inputs."""
 
 import numpy as np
 from utils import process_inputs
 
 class SimulationRunner():
     """
-    Description for SimulationRunner
+    A class for running several simulations at different input values.
+    
+    Attributes
+    ----------
+    fun : function
+        A function that runs the simulation for a fixed value of the input 
+        parameters, given as an ndarray. 
+        
+    See Also
+    --------
+    utils.simrunners.SimulationGradientRunner
+    
+    Notes
+    -----
+    The function fun should take an ndarray of size 1-by-m and return a float. 
+    This float is the quantity of interest from the simulation. Often, the 
+    function is a wrapper to a larger simulation code. 
     """
+    fun = None
 
     def __init__(self, fun):
         """
-        Arguments:
-            fun:
+        Initialize a SimulationRunner.
+        
+        Parameters
+        ----------
+        fun : function
+            A function that runs the simulation for a fixed value of the input 
+            parameters, given as an ndarray. This function returns the quantity
+            of interest from the model. Often, this function is a wrapper to a 
+            larger simulation code. 
         """
+        # TODO: check input for a valid simluation function
 
         self.fun = fun
 
     def run(self, X):
         """
-        Description of run.
-
-        Arguments:
-            X:
+        Run the simulation at several input values.
+        
+        Parameters
+        ----------
+        X : ndarray
+            X contains all input points where one wishes to run the simulation.
+            If the simulation takes m inputs, then X must have shape M-by-m,
+            where M is the number of simulations to run. 
+            
+        Returns
+        -------
+        F : ndarray
+            F contains the simulation output at each given input point. The
+            shape of f is M-by-1. 
+            
+        Notes
+        -----
+        In principle, the simulation calls can be executed independently and in
+        parallel. Right now this function uses a sequential for-loop. Future
+        development will take advantage of multicore architectures to 
+        parallelize this for-loop.
         """
 
         # right now this just wraps a sequential for-loop.
         # should be parallelized
 
         X, M, m = process_inputs(X)
-        f = np.zeros((M, 1))
+        F = np.zeros((M, 1))
         for i in range(M):
-            f[i] = self.fun(X[i,:].reshape((1,m)))
-        return f
+            F[i] = self.fun(X[i,:].reshape((1,m)))
+        return F
 
 class SimulationGradientRunner():
     """
-    Description for SimulationGradientRunner
+    A class for running several simulations at different input values that 
+    return the gradients of the quantity of interest.
+    
+    Attributes
+    ----------
+    dfun : function
+        A function that runs the simulation for a fixed value of the input 
+        parameters, given as an ndarray. It returns the gradient of the 
+        quantity of interest at the given input.
+        
+    See Also
+    --------
+    utils.simrunners.SimulationRunner
+    
+    Notes
+    -----
+    The function dfun should take an ndarray of size 1-by-m and return an
+    ndarray of shape 1-by-m. This ndarray is the gradient of the quantity of 
+    interest from the simulation. Often, the function is a wrapper to a larger 
+    simulation code. 
     """
+    dfun = None
 
     def __init__(self, dfun):
         """
-        Arguments:
-            dfun:
+        Initialize a SimulationGradientRunner.
+        
+        Parameters
+        ----------
+        dfun : function
+            A function that runs the simulation for a fixed value of the input 
+            parameters, given as an ndarray. It returns the gradient of the 
+            quantity of interest at the given input. 
         """
+        # TODO: check input for a valid simluation gradient function
 
         self.dfun = dfun
 
     def run(self, X):
         """
-        Description of run.
-
-        Arguments:
-            X:
+        Run the simulation at several input values and return the gradients of
+        the quantity of interest.
+        
+        Parameters
+        ----------
+        X : ndarray
+            X contains all input points where one wishes to run the simulation.
+            If the simulation takes m inputs, then X must have shape M-by-m,
+            where M is the number of simulations to run. 
+            
+        Returns
+        -------
+        dF : ndarray
+            dF contains the gradient of the quantity of interest at each given 
+            input point. The shape of dF is M-by-m. 
+            
+        Notes
+        -----
+        In principle, the simulation calls can be executed independently and in
+        parallel. Right now this function uses a sequential for-loop. Future
+        development will take advantage of multicore architectures to 
+        parallelize this for-loop.
         """
 
         # right now this just wraps a sequential for-loop.
