@@ -2,19 +2,19 @@ import numpy as np
 import utils.designs as dn
 from utils.simrunners import SimulationRunner
 from utils.utils import conditional_expectations
-from utils.response_surfaces import GaussianProcess
+from utils.response_surfaces import RadialBasisApproximation
 from domains import UnboundedActiveVariableDomain, BoundedActiveVariableDomain
 
 class ActiveSubspaceResponseSurface():
     def __init__(self, avmap, respsurf=None):
         if respsurf == None:
-            self.respsurf = GaussianProcess()
+            self.respsurf = RadialBasisApproximation()
         else:
             self.respsurf = respsurf
         self.avmap = avmap
     
     def train(self, Y, f, v=None):
-        if isinstance(self.respsurf, GaussianProcess):
+        if isinstance(self.respsurf, RadialBasisApproximation):
             evals = self.avmap.domain.subspaces.eigenvalues
             self.respsurf.train(Y, f, v=v, e=evals)
         else:

@@ -14,7 +14,8 @@ class Normalizer():
 
 class BoundedNormalizer(Normalizer):
     """
-    A class for normalizing bounded inputs.
+    A class for normalizing bounded inputs. Extends the abstract Normalizer
+    class.
 
     Attributes
     ----------
@@ -93,7 +94,8 @@ class BoundedNormalizer(Normalizer):
 
 class UnboundedNormalizer(Normalizer):
     """
-    A class for normalizing unbounded, Gaussian inputs to standard normals.
+    A class for normalizing unbounded, Gaussian inputs to standard normals. 
+    Extends the abstract Normalizer class.
 
     Attributes
     ----------

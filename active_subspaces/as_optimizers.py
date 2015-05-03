@@ -2,7 +2,7 @@ import numpy as np
 from domains import UnboundedActiveVariableDomain, BoundedActiveVariableDomain, \
                 ActiveVariableMap
 import scipy.optimize as scopt
-from utils.response_surfaces import PolynomialRegression
+from utils.response_surfaces import PolynomialApproximation
 from utils.qp_solver import QPSolver
 from utils.utils import process_inputs_outputs
 
@@ -20,7 +20,7 @@ class MinVariableMap(ActiveVariableMap):
         else:
             p = n+1
         Yp = np.dot(X, W[:,:p])
-        pr = PolynomialRegression(N=2)
+        pr = PolynomialApproximation(N=2)
         pr.train(Yp, f)
         br, Ar = pr.g, pr.H
 
