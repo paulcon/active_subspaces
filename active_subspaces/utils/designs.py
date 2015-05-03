@@ -1,3 +1,4 @@
+"""Utilities for constructing design-of-experiments."""
 import numpy as np
 import utils as ut
 from quadrature import gauss_hermite
@@ -5,11 +6,62 @@ from scipy.spatial import ConvexHull, distance_matrix
 from scipy.optimize import minimize
 
 def interval_design(a, b, N):
+    """
+    Equally spaced points on an interval.
+    
+    Parameters
+    ----------
+    a : float
+        `a` is the left endpoint of the interval.
+    b : float
+        `b` is the right endpoint of the interval.
+    N : int
+        `N` is the number of points in the design.
+        
+    Returns
+    -------
+    design : ndarray
+        `design` is an ndarray of shape N-by-1 that contains the design points 
+        in the interval. It does not contain the endpoints. 
+        
+    """
     y = np.linspace(a, b, N+2)
-    return ut.atleast_2d_col(y[1:-1])
+    design = ut.atleast_2d_col(y[1:-1])
+    return design
     
 def maximin_design(vert, N):
+    """
+    Multivariate maximin design constrained by a polytope.
     
+    Parameters
+    ----------
+    vert : ndarray
+        `vert` contains the vertices that define the m-dimensional polytope. 
+        The shape of `vert` is M-by-m, where M is the number of vertices.
+    N : int
+        `N` is the number of points in the design.
+        
+    Returns
+    -------
+    design : ndarray
+        `design` is an ndarray of shape N-by-m that contains the design points 
+        in the polytope. It does not contain the vertices.
+        
+    Notes
+    -----
+    The objective function used to find the design is the negative of the 
+    minimum distance between points in the design and the given vertices. The
+    routine uses the scipy.minimize function with the SLSQP method to minimize
+    the function. The constraints are given by the polytope defined by the
+    vertices. The scipy.spatial packages turns the vertices into a set of 
+    linear inequality constraints. 
+    
+    The optimization is nonlinear and nonconvex with many local minima. Any
+    reasonable local minima is likely to give a good design. However, to
+    increase robustness, we use three random starting points in the 
+    minimization and use the design with the lowest objective value. 
+        
+    """
     # objective function for maximin design
     def maximin_design_obj(y, vert=None):
         Ny, n = vert.shape
@@ -42,7 +94,24 @@ def maximin_design(vert, N):
             minres = res
     
     np.random.set_state(curr_state)
-    return minres.x.reshape((N, n))
+    design = minres.x.reshape((N, n))
+    return design
 
 def gauss_hermite_design(N):
-    return gauss_hermite(N)[0]
+    """
+    Tensor product Gauss-Hermite quadrature points. 
+    
+    Parameters
+    ----------
+    N : list of int
+        `N` is a list that contains the number of points per dimension in the 
+        tensor product design.
+        
+    Returns
+    -------
+    design : ndarray
+        `design` is an ndarray of shape N-by-m that contains the design points.
+        
+    """
+    design = gauss_hermite(N)[0]
+    return design
