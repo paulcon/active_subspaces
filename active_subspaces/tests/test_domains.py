@@ -7,6 +7,7 @@ import numpy as np
 import pdb
 
 class TestDomains(TestCase):
+    writeData = False
     
     def test_unbounded_active_variable_domain(self):
         data = helper.load_test_npz('test_spec_decomp_0.npz')
@@ -199,8 +200,9 @@ class TestDomains(TestCase):
         N = 10
         np.random.seed(42)
         Z = dom.rejection_sampling_z(N, y, W1, W2)
-            
-        np.savez('data/test_sampling_z_0_0',Z=Z)
+        
+        if self.writeData:
+            np.savez('data/test_sampling_z_0_0',Z=Z)
         data_test = helper.load_test_npz('test_sampling_z_0_0.npz')
         np.testing.assert_equal(Z, data_test['Z'])
         
@@ -219,8 +221,9 @@ class TestDomains(TestCase):
         N = 10
         np.random.seed(42)
         Z = dom.hit_and_run_z(N, y, W1, W2)
-            
-        #np.savez('data/test_sampling_z_0_1',Z=Z)
+        
+        if self.writeData:
+            np.savez('data/test_sampling_z_0_1',Z=Z)
         data_test = helper.load_test_npz('test_sampling_z_0_1.npz')
         np.testing.assert_equal(Z, data_test['Z'])
         
@@ -239,8 +242,9 @@ class TestDomains(TestCase):
         N = 10
         np.random.seed(42)
         Z = dom.random_walk_z(N, y, W1, W2)
-            
-        #np.savez('data/test_sampling_z_0_2',Z=Z)
+        
+        if self.writeData:
+            np.savez('data/test_sampling_z_0_2',Z=Z)
         data_test = helper.load_test_npz('test_sampling_z_0_2.npz')
         np.testing.assert_equal(Z, data_test['Z'])
         
@@ -260,8 +264,6 @@ class TestDomains(TestCase):
         np.random.seed(42)
         Z = dom.sample_z(N, y, W1, W2)
             
-        #np.savez('data/test_sampling_z_0_3',Z=Z)
-        # probably don't need to save this file. should wrap rejection_sampling_z
         data_test = helper.load_test_npz('test_sampling_z_0_0.npz')
         np.testing.assert_equal(Z, data_test['Z'])
         

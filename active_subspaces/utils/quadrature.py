@@ -30,7 +30,7 @@ def r_hermite(N):
     https://www.cs.purdue.edu/archives/2002/wxg/codes/OPQ.html. 
     """
 
-    if type(N) is not int:
+    if not isinstance(N, int):
         raise TypeError('N must be an int')
 
     if N <= 0:
