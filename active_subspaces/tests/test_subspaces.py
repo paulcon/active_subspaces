@@ -5,7 +5,8 @@ import helper
 import numpy as np
 
 class TestSubspaces(TestCase):
-
+    writeData = False
+    
     def test_spectral_decomposition_0(self):
         data = helper.load_test_npz('test_spec_decomp_0.npz')
         df0, e0, W0 = data['df'], data['e'], data['W']
@@ -30,6 +31,9 @@ class TestSubspaces(TestCase):
         df0, e0, W0 = data['df'], data['e'], data['W']
         np.random.seed(42)
         e_br, sub_br = ss.bootstrap_ranges(df0, e0, W0, n_boot=100)
+        
+        if self.writeData:
+            np.savez('data/test_spec_br_0', e_br=e_br, sub_br=sub_br)
         data_br = helper.load_test_npz('test_spec_br_0.npz')
         np.testing.assert_equal(e_br, data_br['e_br'])
         np.testing.assert_equal(sub_br, data_br['sub_br'])
@@ -39,13 +43,15 @@ class TestSubspaces(TestCase):
         df0, e0, W0 = data['df'], data['e'], data['W']
         np.random.seed(42)
         e_br, sub_br = ss.bootstrap_ranges(df0, e0, W0, n_boot=100)
+        
+        if self.writeData:
+            np.savez('data/test_spec_br_1', e_br=e_br, sub_br=sub_br)
         data_br = helper.load_test_npz('test_spec_br_1.npz')
         np.testing.assert_equal(e_br, data_br['e_br'])
         np.testing.assert_equal(sub_br, data_br['sub_br'])
         
     def test_subspaces_0(self):
         data = helper.load_test_npz('test_spec_decomp_0.npz')
-        data_br = helper.load_test_npz('test_spec_br_0.npz')
         df0, e0, W0 = data['df'], data['e'], data['W']
         
         sub = ss.Subspaces()
@@ -53,12 +59,13 @@ class TestSubspaces(TestCase):
         sub.compute(df0, n_boot=100)
         np.testing.assert_equal(sub.eigenvalues, e0)
         np.testing.assert_equal(sub.eigenvectors, W0)
+        
+        data_br = helper.load_test_npz('test_spec_br_0.npz')
         np.testing.assert_equal(sub.e_br, data_br['e_br'])
         np.testing.assert_equal(sub.sub_br, data_br['sub_br'])
         
     def test_subspaces_1(self):
         data = helper.load_test_npz('test_spec_decomp_1.npz')
-        data_br = helper.load_test_npz('test_spec_br_1.npz')
         df0, e0, W0 = data['df'], data['e'], data['W']
         
         sub = ss.Subspaces()
@@ -66,6 +73,8 @@ class TestSubspaces(TestCase):
         sub.compute(df0, n_boot=100)
         np.testing.assert_equal(sub.eigenvalues, e0)
         np.testing.assert_equal(sub.eigenvectors, W0)
+        
+        data_br = helper.load_test_npz('test_spec_br_1.npz')
         np.testing.assert_equal(sub.e_br, data_br['e_br'])
         np.testing.assert_equal(sub.sub_br, data_br['sub_br'])
         
