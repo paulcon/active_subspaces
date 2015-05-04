@@ -3,7 +3,7 @@ import unittest
 import active_subspaces.utils.plotters as plt
 import active_subspaces.subspaces as ss
 import active_subspaces.domains as dom
-from active_subspaces.response_surfaces import as_design
+from active_subspaces.response_surfaces import av_design
 from active_subspaces.integrals import av_quadrature_rule
 import numpy as np
 import matplotlib.pyplot as mplt
@@ -129,7 +129,7 @@ class TestPlotters(TestCase):
         np.random.seed(42)
         bavd = dom.BoundedActiveVariableDomain(sub)
         bavm = dom.BoundedActiveVariableMap(bavd)
-        Y = as_design(bavm, 8, NMC=1)[0]
+        Y = av_design(bavm, 8, NMC=1)[0]
         
         vertices = bavd.vertY
         plt.zonotope_2d_plot(vertices, design=Y)
@@ -145,7 +145,7 @@ class TestPlotters(TestCase):
         np.random.seed(42)
         bavd = dom.BoundedActiveVariableDomain(sub)
         bavm = dom.BoundedActiveVariableMap(bavd)
-        Y = as_design(bavm, 8, NMC=1)[0]
+        Y = av_design(bavm, 8, NMC=1)[0]
         
         vertices = bavd.vertY
         
@@ -166,7 +166,7 @@ class TestPlotters(TestCase):
         np.random.seed(42)
         bavd = dom.BoundedActiveVariableDomain(sub)
         bavm = dom.BoundedActiveVariableMap(bavd)
-        Y = as_design(bavm, 8, NMC=1)[0]
+        Y = av_design(bavm, 8, NMC=1)[0]
         
         vertices = bavd.vertY
         

@@ -9,7 +9,7 @@ import helper
 import numpy as np
 
 class TestASResponseSurfaces(TestCase):
-    writeData = True
+    writeData = False
     
     def quad_fun(self, x):
         A = np.array([[ 0.2406659045776698, -0.3159904335007421, -0.1746908591702878],

@@ -28,7 +28,7 @@ class BoundedNormalizer(Normalizer):
         
     See Also
     --------
-    utils.utils.UnboundedNormalizer
+    utils.misc.UnboundedNormalizer
     """
     lb, ub = None, None
 
@@ -108,7 +108,7 @@ class UnboundedNormalizer(Normalizer):
         
     See Also
     --------
-    utils.utils.BoundedNormalizer
+    utils.misc.BoundedNormalizer
     
     Notes
     -----
