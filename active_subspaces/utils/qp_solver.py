@@ -1,3 +1,4 @@
+"""Solvers for the linear and quadratic programs in active subspaces."""
 import numpy as np
 import warnings
 from scipy.optimize import linprog, minimize
@@ -15,7 +16,32 @@ solver_SCIPY = 'SCIPY'
 solver_GUROBI = 'GUROBI'
 
 class QPSolver():
+    """
+    A class for solving linear and quadratic programs.
+    
+    Attributes
+    ----------
+    solver : str
+        `solver` identifies which linear program software to use.
+    
+    Notes
+    -----
+    The class checks to see if Gurobi is present. If it is, it uses Gurobi to
+    solve the linear and quadratic programs. Otherwise, it uses scipy
+    implementations to solve the linear and quadratic programs.
+    """
+    solver = None
+    
     def __init__(self, solver='GUROBI'):
+        """
+        Initialize a QPSolver.
+        
+        Parameters
+        ----------
+        solver : str, optional
+            `solver` identifies which linear program software to use. Default is
+            'GUROBI'. Another option is 'SCIPY'. 
+        """
                 
         if solver==solver_GUROBI and HAS_GUROBI:
             self.solver = solver_GUROBI
@@ -28,98 +54,168 @@ class QPSolver():
 
     def linear_program_eq(self, c, A, b, lb, ub):
         """
-        Solves the equality constrained linear program
-        minimize_x  c^T x
+        Solves an equality constrained linear program with variable bounds.
+        
+        Parameters
+        ----------
+        c : ndarray
+            `c` is an ndarray of size m-by-1 for the linear objective function.
+        A : ndarray
+            `A` is an ndarray of size M-by-m that contains the coefficients
+            of the linear equality constraints.
+        b : ndarray
+            `b` is an ndarray of size M-by-1 that is the right hand side of the
+            equality constraints.
+        lb : ndarray
+            `lb` is an ndarray of size m-by-1 that contains the lower bounds
+            on the variables. 
+        ub : ndarray
+            `ub` is an ndarray of size m-by-1 that contains the upper bounds
+            on the variables. 
+                        
+        Returns
+        -------
+        x : ndarray
+            An ndarray of size m-by-1 that is the minimizer of the linear 
+            program.
+        
+        Notes
+        -----
+        This method returns the minimizer of the following linear program.
+        
+        minimize  c^T x
         subject to  A x = b
                     lb <= x <= ub
-
-        Arguments:
-            c:
-            A:
-            b:
-            lb:
-            ub:
-        Output:
-
         """
         if self.solver == solver_SCIPY:
             c = c.reshape((c.size,))
             b = b.reshape((b.size,))
-            return scipy_linear_program_eq(c, A, b, lb, ub)
+            return _scipy_linear_program_eq(c, A, b, lb, ub)
         elif self.solver == solver_GUROBI:
-            return gurobi_linear_program_eq(c, A, b, lb, ub)
+            return _gurobi_linear_program_eq(c, A, b, lb, ub)
         else:
             raise ValueError('QP solver %s not available' % self.solver)
             
     def linear_program_ineq(self, c, A, b):
         """
-        Solves the equality constrained linear program
-        minimize_x  c^T x
+        Solves an inequality constrained linear program.
+        
+        Parameters
+        ----------
+        c : ndarray
+            `c` is an ndarray of size m-by-1 for the linear objective function.
+        A : ndarray
+            `A` is an ndarray of size M-by-m that contains the coefficients
+            of the linear equality constraints.
+        b : ndarray
+            `b` is an ndarray of size M-by-1 that is the right hand side of the
+            equality constraints.
+                        
+        Returns
+        -------
+        x : ndarray
+            An ndarray of size m-by-1 that is the minimizer of the linear 
+            program.
+        
+        Notes
+        -----
+        This method returns the minimizer of the following linear program.
+        
+        minimize  c^T x
         subject to  A x >= b
-
-        Arguments:
-            c:
-            A:
-            b:
-            lb:
-            ub:
-        Output:
-
         """
+
         if self.solver == solver_SCIPY:
             c = c.reshape((c.size,))
             b = b.reshape((b.size,))
-            return scipy_linear_program_ineq(c, A, b)
+            return _scipy_linear_program_ineq(c, A, b)
         elif self.solver == solver_GUROBI:
-            return gurobi_linear_program_ineq(c, A, b)
+            return _gurobi_linear_program_ineq(c, A, b)
         else:
             raise ValueError('QP solver %s not available' % self.solver)
 
     def quadratic_program_bnd(self, c, Q, lb, ub):
         """
-        Solves the bound constrained quadratic program
-        minimize_x  c^T x + x^T Q x
+        Solves a quadratic program with variable bounds.
+        
+        Parameters
+        ----------
+        c : ndarray
+            `c` is an ndarray of size m-by-1 that contains the coefficients of
+            the linear term in the objective function.
+        Q : ndarray
+            `Q` is an ndarray of size m-by-m that contains the coefficients
+            of the quadratic term in the objective function.
+        lb : ndarray
+            `lb` is an ndarray of size m-by-1 that contains the lower bounds
+            on the variables. 
+        ub : ndarray
+            `ub` is an ndarray of size m-by-1 that contains the upper bounds
+            on the variables. 
+                        
+        Returns
+        -------
+        x : ndarray
+            An ndarray of size m-by-1 that is the minimizer of the quadratic 
+            program.
+        
+        Notes
+        -----
+        This method returns the minimizer of the following linear program.
+        
+        minimize  c^T x + x^T Q x
         subject to  lb <= x <= ub
-
-
-        Arguments:
-            c:
-            Q:
-            lb:
-            ub:
-        Output:
-
         """
+        
         if self.solver == solver_SCIPY:
-            return scipy_quadratic_program_bnd(c, Q, lb, ub)
+            return _scipy_quadratic_program_bnd(c, Q, lb, ub)
         elif self.solver == solver_GUROBI:
-            return gurobi_quadratic_program_bnd(c, Q, lb, ub)
+            return _gurobi_quadratic_program_bnd(c, Q, lb, ub)
         else:
             raise ValueError('QP solver %s not available' % self.solver)
 
     def quadratic_program_ineq(self, c, Q, A, b):
         """
-        Solves the linear inequality constrained quadratic program
-        minimize_x  c^T x + x^T Q x
+        Solves an inequality constrained quadratic program with variable bounds.
+        
+        Parameters
+        ----------
+        c : ndarray
+            `c` is an ndarray of size m-by-1 that contains the coefficients of
+            the linear term in the objective function.
+        Q : ndarray
+            `Q` is an ndarray of size m-by-m that contains the coefficients
+            of the quadratic term in the objective function.
+        A : ndarray
+            `A` is an ndarray of size M-by-m that contains the coefficients
+            of the linear equality constraints.
+        b : ndarray
+            `b` is an ndarray of size M-by-1 that is the right hand side of the
+            equality constraints.
+                        
+        Returns
+        -------
+        x : ndarray
+            An ndarray of size m-by-1 that is the minimizer of the quadratic 
+            program.
+        
+        Notes
+        -----
+        This method returns the minimizer of the following linear program.
+        
+        minimize  c^T x + x^T Q x
         subject to  A x >= b
-
-        Arguments:
-            c:
-            Q:
-            A:
-            b:
-        Output:
-
         """
+
         if self.solver == solver_SCIPY:
             b = b.reshape((b.size,))
-            return scipy_quadratic_program_ineq(c, Q, A, b)
+            return _scipy_quadratic_program_ineq(c, Q, A, b)
         elif self.solver == solver_GUROBI:
-            return gurobi_quadratic_program_ineq(c, Q, A, b)
+            return _gurobi_quadratic_program_ineq(c, Q, A, b)
         else:
             raise ValueError('QP solver %s not available' % self.solver)
 
-def scipy_linear_program_eq(c, A, b, lb, ub):
+def _scipy_linear_program_eq(c, A, b, lb, ub):
     
     # make bounds
     bounds = []
@@ -129,12 +225,12 @@ def scipy_linear_program_eq(c, A, b, lb, ub):
     res = linprog(c, A_eq=A, b_eq=b, bounds=bounds, options={"disp": False})
     return res.x.reshape((c.size,1))
     
-def scipy_linear_program_ineq(c, A, b):
+def _scipy_linear_program_ineq(c, A, b):
     
     res = linprog(c, A_ub=-A, b_ub=-b, options={"disp": False})
     return res.x.reshape((c.size,1))
 
-def scipy_quadratic_program_bnd(c, Q, lb, ub):
+def _scipy_quadratic_program_bnd(c, Q, lb, ub):
     
     # define the objective and gradient
     def fun(x):
@@ -160,7 +256,7 @@ def scipy_quadratic_program_bnd(c, Q, lb, ub):
         raise Exception('Scipy did not solve the QP. Blame Scipy.')
         return None
         
-def scipy_quadratic_program_ineq(c, Q, A, b):
+def _scipy_quadratic_program_ineq(c, Q, A, b):
     
     # define the objective and gradient
     def fun(x):
@@ -186,7 +282,7 @@ def scipy_quadratic_program_ineq(c, Q, A, b):
         raise Exception('Scipy did not solve the QP. Blame Scipy.')
         return None
 
-def gurobi_linear_program_eq(c, A, b, lb, ub):
+def _gurobi_linear_program_eq(c, A, b, lb, ub):
 
     m,n = A.shape
     model = gpy.Model()
@@ -222,7 +318,7 @@ def gurobi_linear_program_eq(c, A, b, lb, ub):
         return None
 
 
-def gurobi_linear_program_ineq(c, A, b):
+def _gurobi_linear_program_ineq(c, A, b):
 
     m,n = A.shape
     model = gpy.Model()
@@ -257,7 +353,7 @@ def gurobi_linear_program_ineq(c, A, b):
         raise Exception('Gurobi did not solve the LP. Blame Gurobi.')
         return None
 
-def gurobi_quadratic_program_bnd(c, Q, lb, ub):
+def _gurobi_quadratic_program_bnd(c, Q, lb, ub):
 
     n = Q.shape[0]
     model = gpy.Model()
@@ -289,7 +385,7 @@ def gurobi_quadratic_program_bnd(c, Q, lb, ub):
         raise Exception('Gurobi did not solve the QP. Blame Gurobi.')
         return None
 
-def gurobi_quadratic_program_ineq(c, Q, A, b):
+def _gurobi_quadratic_program_ineq(c, Q, A, b):
 
     m,n = A.shape
     model = gpy.Model()
