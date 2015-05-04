@@ -152,7 +152,7 @@ def gauss_hermite(N):
     https://www.cs.purdue.edu/archives/2002/wxg/codes/OPQ.html. 
     """
 
-    if type(N) is int:
+    if isinstance(N, int):
         N = [N]
 
     if type(N) is not list:

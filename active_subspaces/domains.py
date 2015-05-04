@@ -58,7 +58,7 @@ class ActiveVariableMap():
     def inverse(self, Y, N=1):
         # check inputs
         Y = process_inputs(Y)[0]
-        if type(N) is not int:
+        if not isinstance(N, int):
             raise TypeError('N must be an int') 
         
         Z = self.regularize_z(Y, N)

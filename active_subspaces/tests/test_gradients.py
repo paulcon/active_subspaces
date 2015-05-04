@@ -5,7 +5,8 @@ import numpy as np
 import active_subspaces.gradients as gr
 
 class TestGradients(TestCase):
-
+    writeData = False    
+    
     def test_local_linear_gradients(self):
         data = helper.load_test_npz('train_points_200_2.npz')
         X = data['X'].copy()
@@ -23,6 +24,8 @@ class TestGradients(TestCase):
         np.random.seed(1234)
         df = gr.local_linear_gradients(X, f)
         
+        if self.writeData:
+            np.savez('data/test_llm_gradients', df=df)
         data = helper.load_test_npz('test_llm_gradients.npz')
         np.testing.assert_equal(df, data['df'])        
 

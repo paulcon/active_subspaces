@@ -68,7 +68,7 @@ class ActiveSubspaceResponseSurface():
         
 def as_design(avmap, N, NMC=10):
     # interpret N as total number of points in the design
-    if type(N) is not int:
+    if not isinstance(N, int):
         raise Exception('N should be an integer.')
     
     m, n = avmap.domain.subspaces.W1.shape

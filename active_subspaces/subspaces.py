@@ -13,7 +13,7 @@ class Subspaces():
         if len(df.shape)!=2:
             raise Exception('df is not a 2d array.')
         
-        if type(n_boot) is not int:
+        if not isinstance(n_boot, int):
             raise Exception('n_boot must be an integer.')
         
         # compute eigenvalues and eigenvecs
