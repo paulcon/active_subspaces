@@ -3,8 +3,8 @@ import unittest
 import active_subspaces.utils.plotters as plt
 import active_subspaces.subspaces as ss
 import active_subspaces.domains as dom
-from active_subspaces.as_response_surfaces import as_design
-from active_subspaces.as_integrals import av_quadrature_rule
+from active_subspaces.response_surfaces import as_design
+from active_subspaces.integrals import av_quadrature_rule
 import numpy as np
 import matplotlib.pyplot as mplt
 import helper

@@ -1,6 +1,6 @@
 """Utilities for computing active and inactive subspaces."""
 import numpy as np
-from utils.utils import process_inputs
+from utils.misc import process_inputs
 
 class Subspaces():
     """

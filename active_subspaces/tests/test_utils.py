@@ -1,6 +1,6 @@
 from unittest import TestCase
 import unittest
-import active_subspaces.utils.utils as ut
+import active_subspaces.utils.misc as ut
 import numpy as np
 
 class TestUtils(TestCase):

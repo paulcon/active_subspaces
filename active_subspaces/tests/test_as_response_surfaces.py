@@ -1,6 +1,6 @@
 from unittest import TestCase
 import unittest
-import active_subspaces.as_response_surfaces as asm
+import active_subspaces.response_surfaces as asm
 import active_subspaces.subspaces as ss
 import active_subspaces.domains as dom
 import active_subspaces.utils.simrunners as srun
@@ -9,6 +9,8 @@ import helper
 import numpy as np
 
 class TestASResponseSurfaces(TestCase):
+    writeData = True
+    
     def quad_fun(self, x):
         A = np.array([[ 0.2406659045776698, -0.3159904335007421, -0.1746908591702878],
                     [-0.3159904335007421,  0.5532215729009683,  0.3777995408101305],
@@ -46,14 +48,16 @@ class TestASResponseSurfaces(TestCase):
         
         np.random.seed(43)
         XX = np.random.normal(size=(10, 3))
-        ff, dff, vff = asrs.predict(XX, compgrad=True, compvar=True)
-        #np.savez('data/test_rs_0_1',ff=ff,dff=dff,vff=vff)
+        ff, dff = asrs.predict(XX, compgrad=True)
+        
+        if self.writeData:
+            np.savez('data/test_rs_0_1',ff=ff,dff=dff)
         data_test = helper.load_test_npz('test_rs_0_1.npz')
         np.testing.assert_equal(ff, data_test['ff'])
         np.testing.assert_equal(asrs(XX), data_test['ff'])
         np.testing.assert_equal(dff, data_test['dff'])
         np.testing.assert_equal(asrs.gradient(XX), data_test['dff'])
-        np.testing.assert_equal(vff, data_test['vff'])
+        
         
         sr = srun.SimulationRunner(self.quad_fun)
         f_true = sr.run(XX)
@@ -74,21 +78,22 @@ class TestASResponseSurfaces(TestCase):
         
         avd = dom.UnboundedActiveVariableDomain(sub)
         avm = dom.UnboundedActiveVariableMap(avd)
-        pr = rs.PolynomialRegression()
+        pr = rs.PolynomialApproximation()
         asrs = asm.ActiveSubspaceResponseSurface(avm, respsurf=pr)
         asrs.train_with_data(X, f)
         
         np.random.seed(43)
         XX = np.random.normal(size=(10, 3))
-        ff, dff, vff = asrs.predict(XX, compgrad=True, compvar=True)
-        #np.savez('data/test_rs_0_2',ff=ff,dff=dff,vff=vff)
+        ff, dff = asrs.predict(XX, compgrad=True)
+        if self.writeData:
+            np.savez('data/test_rs_0_2',ff=ff,dff=dff)
         
         data_test = helper.load_test_npz('test_rs_0_2.npz')
         np.testing.assert_equal(ff, data_test['ff'])
         np.testing.assert_equal(asrs(XX), data_test['ff'])
         np.testing.assert_equal(dff, data_test['dff'])
         np.testing.assert_equal(asrs.gradient(XX), data_test['dff'])
-        np.testing.assert_equal(vff, data_test['vff'])
+        
         
         sr = srun.SimulationRunner(self.quad_fun)
         f_true = sr.run(XX)
@@ -114,14 +119,15 @@ class TestASResponseSurfaces(TestCase):
         
         np.random.seed(43)
         XX = np.random.uniform(-1.0,1.0,size=(10, 3))
-        ff, dff, vff = asrs.predict(XX, compgrad=True, compvar=True)
-        #np.savez('data/test_rs_1_0',ff=ff,dff=dff,vff=vff)
+        ff, dff = asrs.predict(XX, compgrad=True)
+        if self.writeData:
+            np.savez('data/test_rs_1_0',ff=ff,dff=dff)
         data_test = helper.load_test_npz('test_rs_1_0.npz')
         np.testing.assert_equal(ff, data_test['ff'])
         np.testing.assert_equal(asrs(XX), data_test['ff'])
         np.testing.assert_equal(dff, data_test['dff'])
         np.testing.assert_equal(asrs.gradient(XX), data_test['dff'])
-        np.testing.assert_equal(vff, data_test['vff'])
+        
 
         sr = srun.SimulationRunner(self.quad_fun)
         f_true = sr.run(XX)
@@ -142,21 +148,22 @@ class TestASResponseSurfaces(TestCase):
         
         avd = dom.BoundedActiveVariableDomain(sub)
         avm = dom.BoundedActiveVariableMap(avd)
-        pr = rs.PolynomialRegression()
+        pr = rs.PolynomialApproximation()
         asrs = asm.ActiveSubspaceResponseSurface(avm, pr)
         asrs.train_with_data(X, f)
         
         np.random.seed(43)
         XX = np.random.uniform(-1.0,1.0,size=(10, 3))
-        ff, dff, vff = asrs.predict(XX, compgrad=True, compvar=True)
-        #np.savez('data/test_rs_1_1',ff=ff,dff=dff,vff=vff)
+        ff, dff = asrs.predict(XX, compgrad=True)
+        if self.writeData:
+            np.savez('data/test_rs_1_1',ff=ff,dff=dff)
 
         data_test = helper.load_test_npz('test_rs_1_1.npz')
         np.testing.assert_equal(ff, data_test['ff'])
         np.testing.assert_equal(asrs(XX), data_test['ff'])
         np.testing.assert_equal(dff, data_test['dff'])
         np.testing.assert_equal(asrs.gradient(XX), data_test['dff'])
-        np.testing.assert_equal(vff, data_test['vff'])
+        
 
         sr = srun.SimulationRunner(self.quad_fun)
         f_true = sr.run(XX)
@@ -183,15 +190,16 @@ class TestASResponseSurfaces(TestCase):
         
         np.random.seed(43)
         XX = np.random.normal(size=(10, 3))
-        ff, dff, vff = asrs.predict(XX, compgrad=True, compvar=True)
-        #np.savez('data/test_rs_2_0',ff=ff,dff=dff,vff=vff)
+        ff, dff = asrs.predict(XX, compgrad=True)
+        if self.writeData:
+            np.savez('data/test_rs_2_0',ff=ff,dff=dff)
         
         data_test = helper.load_test_npz('test_rs_2_0.npz')
         np.testing.assert_equal(ff, data_test['ff'])
         np.testing.assert_equal(asrs(XX), data_test['ff'])
         np.testing.assert_equal(dff, data_test['dff'])
         np.testing.assert_equal(asrs.gradient(XX), data_test['dff'])
-        np.testing.assert_equal(vff, data_test['vff'])
+        
         
         sr = srun.SimulationRunner(self.quad_fun)
         f_true = sr.run(XX)
@@ -213,21 +221,22 @@ class TestASResponseSurfaces(TestCase):
         
         avd = dom.UnboundedActiveVariableDomain(sub)
         avm = dom.UnboundedActiveVariableMap(avd)
-        pr = rs.PolynomialRegression()
+        pr = rs.PolynomialApproximation()
         asrs = asm.ActiveSubspaceResponseSurface(avm, pr)
         asrs.train_with_data(X, f)
         
         np.random.seed(43)
         XX = np.random.normal(size=(10, 3))
-        ff, dff, vff = asrs.predict(XX, compgrad=True, compvar=True)
-        #np.savez('data/test_rs_2_1',ff=ff,dff=dff,vff=vff)
+        ff, dff = asrs.predict(XX, compgrad=True)
+        if self.writeData:
+            np.savez('data/test_rs_2_1',ff=ff,dff=dff)
         
         data_test = helper.load_test_npz('test_rs_2_1.npz')
         np.testing.assert_equal(ff, data_test['ff'])
         np.testing.assert_equal(asrs(XX), data_test['ff'])
         np.testing.assert_equal(dff, data_test['dff'])
         np.testing.assert_equal(asrs.gradient(XX), data_test['dff'])
-        np.testing.assert_equal(vff, data_test['vff'])
+        
         
         sr = srun.SimulationRunner(self.quad_fun)
         f_true = sr.run(XX)
@@ -254,15 +263,16 @@ class TestASResponseSurfaces(TestCase):
         
         np.random.seed(43)
         XX = np.random.normal(size=(10, 3))
-        ff, dff, vff = asrs.predict(XX, compgrad=True, compvar=True)
-        #np.savez('data/test_rs_3_0',ff=ff,dff=dff,vff=vff)
+        ff, dff = asrs.predict(XX, compgrad=True)
+        if self.writeData:
+            np.savez('data/test_rs_3_0',ff=ff,dff=dff)
         
         data_test = helper.load_test_npz('test_rs_3_0.npz')
         np.testing.assert_equal(ff, data_test['ff'])
         np.testing.assert_equal(asrs(XX), data_test['ff'])
         np.testing.assert_equal(dff, data_test['dff'])
         np.testing.assert_equal(asrs.gradient(XX), data_test['dff'])
-        np.testing.assert_equal(vff, data_test['vff'])
+        
         
         sr = srun.SimulationRunner(self.quad_fun)
         f_true = sr.run(XX)
@@ -284,21 +294,22 @@ class TestASResponseSurfaces(TestCase):
         
         avd = dom.BoundedActiveVariableDomain(sub)
         avm = dom.BoundedActiveVariableMap(avd)
-        pr = rs.PolynomialRegression()
+        pr = rs.PolynomialApproximation()
         asrs = asm.ActiveSubspaceResponseSurface(avm, pr)
         asrs.train_with_data(X, f)
         
         np.random.seed(43)
         XX = np.random.normal(size=(10, 3))
-        ff, dff, vff = asrs.predict(XX, compgrad=True, compvar=True)
-        #np.savez('data/test_rs_3_1',ff=ff,dff=dff,vff=vff)
+        ff, dff = asrs.predict(XX, compgrad=True)
+        if self.writeData:
+            np.savez('data/test_rs_3_1',ff=ff,dff=dff)
         
         data_test = helper.load_test_npz('test_rs_3_1.npz')
         np.testing.assert_equal(ff, data_test['ff'])
         np.testing.assert_equal(asrs(XX), data_test['ff'])
         np.testing.assert_equal(dff, data_test['dff'])
         np.testing.assert_equal(asrs.gradient(XX), data_test['dff'])
-        np.testing.assert_equal(vff, data_test['vff'])
+        
         
         sr = srun.SimulationRunner(self.quad_fun)
         f_true = sr.run(XX)
@@ -325,14 +336,15 @@ class TestASResponseSurfaces(TestCase):
         asrs.train_with_interface(self.quad_fun, 10)
         
         XX = np.random.normal(size=(10, 3))
-        ff, dff, vff = asrs.predict(XX, compgrad=True, compvar=True)
-        #np.savez('data/test_rs_4_0',ff=ff,dff=dff,vff=vff)
+        ff, dff = asrs.predict(XX, compgrad=True)
+        if self.writeData:
+            np.savez('data/test_rs_4_0',ff=ff,dff=dff)
         data_test = helper.load_test_npz('test_rs_4_0.npz')
         np.testing.assert_equal(ff, data_test['ff'])
         np.testing.assert_equal(asrs(XX), data_test['ff'])
         np.testing.assert_equal(dff, data_test['dff'])
         np.testing.assert_equal(asrs.gradient(XX), data_test['dff'])
-        np.testing.assert_equal(vff, data_test['vff'])
+        
         
         sr = srun.SimulationRunner(self.quad_fun)
         f_true = sr.run(XX)
@@ -359,14 +371,15 @@ class TestASResponseSurfaces(TestCase):
         asrs.train_with_interface(self.quad_fun, 10)
         
         XX = np.random.normal(size=(10, 3))
-        ff, dff, vff = asrs.predict(XX, compgrad=True, compvar=True)
-        #np.savez('data/test_rs_4_1',ff=ff,dff=dff,vff=vff)
+        ff, dff = asrs.predict(XX, compgrad=True)
+        if self.writeData:
+            np.savez('data/test_rs_4_1',ff=ff,dff=dff)
         data_test = helper.load_test_npz('test_rs_4_1.npz')
         np.testing.assert_equal(ff, data_test['ff'])
         np.testing.assert_equal(asrs(XX), data_test['ff'])
         np.testing.assert_equal(dff, data_test['dff'])
         np.testing.assert_equal(asrs.gradient(XX), data_test['dff'])
-        np.testing.assert_equal(vff, data_test['vff'])
+        
         
         sr = srun.SimulationRunner(self.quad_fun)
         f_true = sr.run(XX)
@@ -393,14 +406,15 @@ class TestASResponseSurfaces(TestCase):
         asrs.train_with_interface(self.quad_fun, 10)
         
         XX = np.random.uniform(-1.0,1.0,size=(10, 3))
-        ff, dff, vff = asrs.predict(XX, compgrad=True, compvar=True)
-        #np.savez('data/test_rs_5_0',ff=ff,dff=dff,vff=vff)
+        ff, dff = asrs.predict(XX, compgrad=True)
+        if self.writeData:
+            np.savez('data/test_rs_5_0',ff=ff,dff=dff)
         data_test = helper.load_test_npz('test_rs_5_0.npz')
         np.testing.assert_equal(ff, data_test['ff'])
         np.testing.assert_equal(asrs(XX), data_test['ff'])
         np.testing.assert_equal(dff, data_test['dff'])
         np.testing.assert_equal(asrs.gradient(XX), data_test['dff'])
-        np.testing.assert_equal(vff, data_test['vff'])
+        
         
         sr = srun.SimulationRunner(self.quad_fun)
         f_true = sr.run(XX)
@@ -421,21 +435,22 @@ class TestASResponseSurfaces(TestCase):
         
         avd = dom.BoundedActiveVariableDomain(sub)
         avm = dom.BoundedActiveVariableMap(avd)
-        pr = rs.PolynomialRegression()
+        pr = rs.PolynomialApproximation()
         asrs = asm.ActiveSubspaceResponseSurface(avm, pr)
         
         np.random.seed(43)
         asrs.train_with_interface(self.quad_fun, 10)
         
         XX = np.random.uniform(-1.0,1.0,size=(10, 3))
-        ff, dff, vff = asrs.predict(XX, compgrad=True, compvar=True)
-        #np.savez('data/test_rs_5_1',ff=ff,dff=dff,vff=vff)
+        ff, dff = asrs.predict(XX, compgrad=True)
+        if self.writeData:
+            np.savez('data/test_rs_5_1',ff=ff,dff=dff)
         data_test = helper.load_test_npz('test_rs_5_1.npz')
         np.testing.assert_equal(ff, data_test['ff'])
         np.testing.assert_equal(asrs(XX), data_test['ff'])
         np.testing.assert_equal(dff, data_test['dff'])
         np.testing.assert_equal(asrs.gradient(XX), data_test['dff'])
-        np.testing.assert_equal(vff, data_test['vff'])
+        
         
         sr = srun.SimulationRunner(self.quad_fun)
         f_true = sr.run(XX)
@@ -463,14 +478,15 @@ class TestASResponseSurfaces(TestCase):
         asrs.train_with_interface(self.quad_fun, 10)
         
         XX = np.random.normal(size=(10, 3))
-        ff, dff, vff = asrs.predict(XX, compgrad=True, compvar=True)
-        #np.savez('data/test_rs_6_0',ff=ff,dff=dff,vff=vff)
+        ff, dff = asrs.predict(XX, compgrad=True)
+        if self.writeData:
+            np.savez('data/test_rs_6_0',ff=ff,dff=dff)
         data_test = helper.load_test_npz('test_rs_6_0.npz')
         np.testing.assert_equal(ff, data_test['ff'])
         np.testing.assert_equal(asrs(XX), data_test['ff'])
         np.testing.assert_equal(dff, data_test['dff'])
         np.testing.assert_equal(asrs.gradient(XX), data_test['dff'])
-        np.testing.assert_equal(vff, data_test['vff'])
+        
         
         sr = srun.SimulationRunner(self.quad_fun)
         f_true = sr.run(XX)
@@ -492,21 +508,22 @@ class TestASResponseSurfaces(TestCase):
         
         avd = dom.UnboundedActiveVariableDomain(sub)
         avm = dom.UnboundedActiveVariableMap(avd)
-        pr = rs.PolynomialRegression()
+        pr = rs.PolynomialApproximation()
         asrs = asm.ActiveSubspaceResponseSurface(avm, pr)
         
         np.random.seed(43)
         asrs.train_with_interface(self.quad_fun, 10)
         
         XX = np.random.normal(size=(10, 3))
-        ff, dff, vff = asrs.predict(XX, compgrad=True, compvar=True)
-        #np.savez('data/test_rs_6_1',ff=ff,dff=dff,vff=vff)
+        ff, dff = asrs.predict(XX, compgrad=True)
+        if self.writeData:
+            np.savez('data/test_rs_6_1',ff=ff,dff=dff)
         data_test = helper.load_test_npz('test_rs_6_1.npz')
         np.testing.assert_equal(ff, data_test['ff'])
         np.testing.assert_equal(asrs(XX), data_test['ff'])
         np.testing.assert_equal(dff, data_test['dff'])
         np.testing.assert_equal(asrs.gradient(XX), data_test['dff'])
-        np.testing.assert_equal(vff, data_test['vff'])
+        
         
         sr = srun.SimulationRunner(self.quad_fun)
         f_true = sr.run(XX)
@@ -534,14 +551,15 @@ class TestASResponseSurfaces(TestCase):
         asrs.train_with_interface(self.quad_fun, 10)
         
         XX = np.random.uniform(-1.0,1.0,size=(10, 3))
-        ff, dff, vff = asrs.predict(XX, compgrad=True, compvar=True)
-        #np.savez('data/test_rs_7_0',ff=ff,dff=dff,vff=vff)
+        ff, dff = asrs.predict(XX, compgrad=True)
+        if self.writeData:
+            np.savez('data/test_rs_7_0',ff=ff,dff=dff)
         data_test = helper.load_test_npz('test_rs_7_0.npz')
         np.testing.assert_equal(ff, data_test['ff'])
         np.testing.assert_equal(asrs(XX), data_test['ff'])
         np.testing.assert_equal(dff, data_test['dff'])
         np.testing.assert_equal(asrs.gradient(XX), data_test['dff'])
-        np.testing.assert_equal(vff, data_test['vff'])
+        
         
         sr = srun.SimulationRunner(self.quad_fun)
         f_true = sr.run(XX)
@@ -563,21 +581,22 @@ class TestASResponseSurfaces(TestCase):
         
         avd = dom.BoundedActiveVariableDomain(sub)
         avm = dom.BoundedActiveVariableMap(avd)
-        pr = rs.PolynomialRegression()
+        pr = rs.PolynomialApproximation()
         asrs = asm.ActiveSubspaceResponseSurface(avm, pr)
         
         np.random.seed(43)
         asrs.train_with_interface(self.quad_fun, 10)
         
         XX = np.random.uniform(-1.0,1.0,size=(10, 3))
-        ff, dff, vff = asrs.predict(XX, compgrad=True, compvar=True)
-        #np.savez('data/test_rs_7_1',ff=ff,dff=dff,vff=vff)
+        ff, dff = asrs.predict(XX, compgrad=True)
+        if self.writeData:
+            np.savez('data/test_rs_7_1',ff=ff,dff=dff)
         data_test = helper.load_test_npz('test_rs_7_1.npz')
         np.testing.assert_equal(ff, data_test['ff'])
         np.testing.assert_equal(asrs(XX), data_test['ff'])
         np.testing.assert_equal(dff, data_test['dff'])
         np.testing.assert_equal(asrs.gradient(XX), data_test['dff'])
-        np.testing.assert_equal(vff, data_test['vff'])
+        
         
         sr = srun.SimulationRunner(self.quad_fun)
         f_true = sr.run(XX)

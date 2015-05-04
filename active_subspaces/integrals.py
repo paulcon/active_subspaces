@@ -1,12 +1,12 @@
-"""Description of as_integrals"""
+"""Description of integrals"""
 
 import numpy as np
 import utils.quadrature as gq
-from utils.utils import conditional_expectations
+from utils.misc import conditional_expectations
 from utils.designs import maximin_design
 from utils.simrunners import SimulationRunner
 from domains import UnboundedActiveVariableDomain, BoundedActiveVariableDomain
-from as_response_surfaces import ActiveSubspaceResponseSurface
+from response_surfaces import ActiveSubspaceResponseSurface
 from scipy.spatial import Delaunay
 
 def integrate(fun, avmap, N, NMC=10):

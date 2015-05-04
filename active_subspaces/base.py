@@ -1,10 +1,10 @@
 import numpy as np
-from utils.utils import process_inputs_outputs
+from utils.misc import process_inputs_outputs
 from utils.simrunners import SimulationRunner, SimulationGradientRunner
 from utils.plotters import eigenvalues, subspace_errors, eigenvectors, sufficient_summary
-from as_response_surfaces import ActiveSubspaceResponseSurface
-from as_integrals import integrate, av_integrate
-from as_optimizers import minimize
+from response_surfaces import ActiveSubspaceResponseSurface
+from integrals import integrate, av_integrate
+from optimizers import minimize
 from subspaces import Subspaces
 from gradients import local_linear_gradients, finite_difference_gradients
 from domains import UnboundedActiveVariableDomain, BoundedActiveVariableDomain, \
@@ -105,10 +105,10 @@ class ActiveSubspaceReducedModel():
         Y = np.dot(self.X, ss.eigenvectors[:,:2])
         sufficient_summary(Y, self.f)
 
-    def predict(self, X, compvar=False, compgrad=False):
+    def predict(self, X, compgrad=False):
         if X.shape[1] != self.m:
             raise Exception('The dimension of the points is {:d} but should be {:d}.'.format(X.shape[1], self.m))
-        return self.av_respsurf.predict(X, compgrad=compgrad, compvar=compvar)
+        return self.av_respsurf.predict(X, compgrad=compgrad)
 
     def average(self, N):
         if self.fun_run is not None:

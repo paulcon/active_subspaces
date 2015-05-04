@@ -44,21 +44,21 @@ class ActiveSubspaceResponseSurface():
         Ef, Vf = conditional_expectations(f, ind)
         self.train(Y, Ef, v=Vf)
         
-    def predict_av(self, Y, compgrad=False, compvar=False):
-        return self.respsurf.predict(Y, compgrad, compvar)
+    def predict_av(self, Y, compgrad=False):
+        return self.respsurf.predict(Y, compgrad)
         
     def gradient_av(self, Y):
-        return self.respsurf.predict(Y, compgrad=True, compvar=False)[1]
+        return self.respsurf.predict(Y, compgrad=True)[1]
         
-    def predict(self, X, compgrad=False, compvar=False):
+    def predict(self, X, compgrad=False):
         Y = self.avmap.forward(X)[0]
-        f, dfdy, v = self.predict_av(Y, compgrad, compvar)
+        f, dfdy = self.predict_av(Y, compgrad)
         if compgrad:
             W1 = self.avmap.domain.subspaces.W1
             dfdx = np.dot(dfdy, W1.T)
         else:
             dfdx = None
-        return f, dfdx, v
+        return f, dfdx
         
     def gradient(self, X):
         return self.predict(X, compgrad=True)[1]

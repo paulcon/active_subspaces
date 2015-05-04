@@ -1,13 +1,16 @@
 from unittest import TestCase
 import unittest
-import active_subspaces.as_response_surfaces as asm
-import active_subspaces.as_integrals as asi
+import active_subspaces.response_surfaces as asm
+import active_subspaces.integrals as asi
 import active_subspaces.subspaces as ss
 import active_subspaces.domains as dom
 import helper
 import numpy as np
 
 class TestASIntegrals(TestCase):
+    
+    writeData = False
+    
     def quad_fun(self, x):
         A = np.array([[ 0.2406659045776698, -0.3159904335007421, -0.1746908591702878],
                     [-0.3159904335007421,  0.5532215729009683,  0.3777995408101305],
@@ -35,7 +38,8 @@ class TestASIntegrals(TestCase):
         
         np.random.seed(43)
         I = asi.av_integrate(asrs.respsurf, avm, 10)
-        #np.savez('data/test_int_0_1',I=I)
+        if self.writeData:
+            np.savez('data/test_int_0_1',I=I)
         data_test = helper.load_test_npz('test_int_0_1.npz')
         np.testing.assert_equal(I, data_test['I'])
         
@@ -56,7 +60,8 @@ class TestASIntegrals(TestCase):
         
         np.random.seed(43)
         I = asi.av_integrate(asrs.respsurf, avm, 10)
-        #np.savez('data/test_int_0_2',I=I)
+        if self.writeData:
+            np.savez('data/test_int_0_2',I=I)
         data_test = helper.load_test_npz('test_int_0_2.npz')
         np.testing.assert_equal(I, data_test['I'])
         
@@ -78,7 +83,8 @@ class TestASIntegrals(TestCase):
         
         np.random.seed(43)
         I = asi.av_integrate(asrs.respsurf, avm, 10)
-        #np.savez('data/test_int_0_3',I=I)
+        if self.writeData:
+            np.savez('data/test_int_0_3',I=I)
         data_test = helper.load_test_npz('test_int_0_3.npz')
         np.testing.assert_equal(I, data_test['I'])
         
@@ -100,7 +106,8 @@ class TestASIntegrals(TestCase):
         
         np.random.seed(43)
         I = asi.av_integrate(asrs.respsurf, avm, 10)
-        #np.savez('data/test_int_0_4',I=I)
+        if self.writeData:
+            np.savez('data/test_int_0_4',I=I)
         data_test = helper.load_test_npz('test_int_0_4.npz')
         np.testing.assert_equal(I, data_test['I'])
         
@@ -119,7 +126,8 @@ class TestASIntegrals(TestCase):
         
         np.random.seed(43)
         mu, lb, ub = asi.integrate(self.quad_fun, avm, 10)
-        #np.savez('data/test_int_1_1',mu=mu,lb=lb,ub=ub)
+        if self.writeData:
+            np.savez('data/test_int_1_1',mu=mu,lb=lb,ub=ub)
         data_test = helper.load_test_npz('test_int_1_1.npz')
         np.testing.assert_equal(mu, data_test['mu'])
         np.testing.assert_equal(lb, data_test['lb'])
@@ -140,7 +148,8 @@ class TestASIntegrals(TestCase):
         
         np.random.seed(43)
         mu, lb, ub = asi.integrate(self.quad_fun, avm, 10)
-        #np.savez('data/test_int_1_2',mu=mu,lb=lb,ub=ub)
+        if self.writeData:
+            np.savez('data/test_int_1_2',mu=mu,lb=lb,ub=ub)
         data_test = helper.load_test_npz('test_int_1_2.npz')
         np.testing.assert_equal(mu, data_test['mu'])
         np.testing.assert_equal(lb, data_test['lb'])
@@ -162,7 +171,8 @@ class TestASIntegrals(TestCase):
         
         np.random.seed(43)
         mu, lb, ub = asi.integrate(self.quad_fun, avm, 10)
-        #np.savez('data/test_int_1_3',mu=mu,lb=lb,ub=ub)
+        if self.writeData:
+            np.savez('data/test_int_1_3',mu=mu,lb=lb,ub=ub)
         data_test = helper.load_test_npz('test_int_1_3.npz')
         np.testing.assert_equal(mu, data_test['mu'])
         np.testing.assert_equal(lb, data_test['lb'])
@@ -184,7 +194,8 @@ class TestASIntegrals(TestCase):
         
         np.random.seed(43)
         mu, lb, ub = asi.integrate(self.quad_fun, avm, 10)
-        #np.savez('data/test_int_1_4',mu=mu,lb=lb,ub=ub)
+        if self.writeData:
+            np.savez('data/test_int_1_4',mu=mu,lb=lb,ub=ub)
         data_test = helper.load_test_npz('test_int_1_4.npz')
         np.testing.assert_equal(mu, data_test['mu'])
         np.testing.assert_equal(lb, data_test['lb'])

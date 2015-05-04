@@ -1,7 +1,7 @@
 from unittest import TestCase
 import unittest
-import active_subspaces.as_response_surfaces as asm
-import active_subspaces.as_optimizers as aso
+import active_subspaces.response_surfaces as asm
+import active_subspaces.optimizers as aso
 import active_subspaces.subspaces as ss
 import active_subspaces.domains as dom
 import active_subspaces.base as base
@@ -9,6 +9,8 @@ import helper
 import numpy as np
 
 class TestBase(TestCase):
+    writeData = False
+    
     def quad_fun(self, x):
         A = np.array([[ 0.2406659045776698, -0.3159904335007421, -0.1746908591702878],
                     [-0.3159904335007421,  0.5532215729009683,  0.3777995408101305],
@@ -33,8 +35,8 @@ class TestBase(TestCase):
         avg = model.average(20)[0]
         prob, pl, pu = model.probability(0.0, 1.0)
         fstar, xstar = model.minimum()
-
-        #np.savez('data/test_base_0_0',avg=avg, prob=prob, pl=pl, pu=pu, xstar=xstar, fstar=fstar)
+        if self.writeData:
+            np.savez('data/test_base_0_0',avg=avg, prob=prob, pl=pl, pu=pu, xstar=xstar, fstar=fstar)
         data_test = helper.load_test_npz('test_base_0_0.npz')
         np.testing.assert_equal(avg, data_test['avg'])
         np.testing.assert_equal(prob, data_test['prob'])
@@ -61,7 +63,8 @@ class TestBase(TestCase):
         prob, pl, pu = model.probability(0.0, 1.0)
         fstar, xstar = model.minimum()
 
-        #np.savez('data/test_base_0_1',avg=avg, prob=prob, pl=pl, pu=pu, xstar=xstar, fstar=fstar)
+        if self.writeData:
+            np.savez('data/test_base_0_1',avg=avg, prob=prob, pl=pl, pu=pu, xstar=xstar, fstar=fstar)
         data_test = helper.load_test_npz('test_base_0_1.npz')
         np.testing.assert_equal(avg, data_test['avg'])
         np.testing.assert_equal(prob, data_test['prob'])
@@ -88,7 +91,8 @@ class TestBase(TestCase):
         prob, pl, pu = model.probability(0.0, 1.0)
         fstar, xstar = model.minimum()
 
-        #np.savez('data/test_base_0_2',avg=avg, prob=prob, pl=pl, pu=pu, xstar=xstar, fstar=fstar)
+        if self.writeData:
+            np.savez('data/test_base_0_2',avg=avg, prob=prob, pl=pl, pu=pu, xstar=xstar, fstar=fstar)
         data_test = helper.load_test_npz('test_base_0_2.npz')
         np.testing.assert_equal(avg, data_test['avg'])
         np.testing.assert_equal(prob, data_test['prob'])
@@ -115,7 +119,8 @@ class TestBase(TestCase):
         prob, pl, pu = model.probability(0.0, 1.0)
         fstar, xstar = model.minimum()
 
-        #np.savez('data/test_base_0_3',avg=avg, prob=prob, pl=pl, pu=pu, xstar=xstar, fstar=fstar)
+        if self.writeData:
+            np.savez('data/test_base_0_3',avg=avg, prob=prob, pl=pl, pu=pu, xstar=xstar, fstar=fstar)
         data_test = helper.load_test_npz('test_base_0_3.npz')
         np.testing.assert_equal(avg, data_test['avg'])
         np.testing.assert_equal(prob, data_test['prob'])
@@ -169,7 +174,8 @@ class TestBase(TestCase):
         prob, pl, pu = model.probability(0.0, 1.0)
         fstar, xstar = model.minimum()
 
-        #np.savez('data/test_base_1_0',avg=avg, prob=prob, pl=pl, pu=pu, xstar=xstar, fstar=fstar)
+        if self.writeData:
+            np.savez('data/test_base_1_0',avg=avg, prob=prob, pl=pl, pu=pu, xstar=xstar, fstar=fstar)
         data_test = helper.load_test_npz('test_base_1_0.npz')
         np.testing.assert_equal(avg, data_test['avg'])
         np.testing.assert_equal(prob, data_test['prob'])
@@ -196,7 +202,8 @@ class TestBase(TestCase):
         prob, pl, pu = model.probability(0.0, 1.0)
         fstar, xstar = model.minimum()
 
-        #np.savez('data/test_base_1_1',avg=avg, prob=prob, pl=pl, pu=pu, xstar=xstar, fstar=fstar)
+        if self.writeData:
+            np.savez('data/test_base_1_1',avg=avg, prob=prob, pl=pl, pu=pu, xstar=xstar, fstar=fstar)
         data_test = helper.load_test_npz('test_base_1_1.npz')
         np.testing.assert_equal(avg, data_test['avg'])
         np.testing.assert_equal(prob, data_test['prob'])
@@ -223,7 +230,8 @@ class TestBase(TestCase):
         prob, pl, pu = model.probability(0.0, 1.0)
         fstar, xstar = model.minimum()
 
-        #np.savez('data/test_base_1_2',avg=avg, prob=prob, pl=pl, pu=pu, xstar=xstar, fstar=fstar)
+        if self.writeData:
+            np.savez('data/test_base_1_2',avg=avg, prob=prob, pl=pl, pu=pu, xstar=xstar, fstar=fstar)
         data_test = helper.load_test_npz('test_base_1_2.npz')
         np.testing.assert_equal(avg, data_test['avg'])
         np.testing.assert_equal(prob, data_test['prob'])
@@ -250,7 +258,8 @@ class TestBase(TestCase):
         prob, pl, pu = model.probability(0.0, 1.0)
         fstar, xstar = model.minimum()
 
-        #np.savez('data/test_base_1_3',avg=avg, prob=prob, pl=pl, pu=pu, xstar=xstar, fstar=fstar)
+        if self.writeData:
+            np.savez('data/test_base_1_3',avg=avg, prob=prob, pl=pl, pu=pu, xstar=xstar, fstar=fstar)
         data_test = helper.load_test_npz('test_base_1_3.npz')
         np.testing.assert_equal(avg, data_test['avg'])
         np.testing.assert_equal(prob, data_test['prob'])

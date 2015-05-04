@@ -1,7 +1,7 @@
 """Utilities for building the domains and maps for active variables."""
 import numpy as np
 import warnings
-from utils.utils import process_inputs, BoundedNormalizer
+from utils.misc import process_inputs, BoundedNormalizer
 from scipy.spatial import ConvexHull
 from utils.qp_solver import QPSolver
 from subspaces import Subspaces

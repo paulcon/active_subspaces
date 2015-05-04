@@ -4,7 +4,7 @@ from domains import UnboundedActiveVariableDomain, BoundedActiveVariableDomain, 
 import scipy.optimize as scopt
 from utils.response_surfaces import PolynomialApproximation
 from utils.qp_solver import QPSolver
-from utils.utils import process_inputs_outputs
+from utils.misc import process_inputs_outputs
 
 class MinVariableMap(ActiveVariableMap):
     def train(self, X, f):
