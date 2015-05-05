@@ -1,6 +1,6 @@
 """Utilities for constructing design-of-experiments."""
 import numpy as np
-import utils as ut
+import misc as mi
 from quadrature import gauss_hermite
 from scipy.spatial import ConvexHull, distance_matrix
 from scipy.optimize import minimize
@@ -26,7 +26,7 @@ def interval_design(a, b, N):
         
     """
     y = np.linspace(a, b, N+2)
-    design = ut.atleast_2d_col(y[1:-1])
+    design = mi.atleast_2d_col(y[1:-1])
     return design
     
 def maximin_design(vert, N):
