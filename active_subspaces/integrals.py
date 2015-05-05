@@ -1,4 +1,4 @@
-"""Utilities for exploiting active subspaces when computing integrals."""
+"""Utilities for exploiting active subspaces when estimating integrals."""
 
 import numpy as np
 import utils.quadrature as gq
