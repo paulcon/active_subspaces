@@ -1,3 +1,4 @@
+"""Utilities for exploiting active subspaces when optimizing."""
 import numpy as np
 from domains import UnboundedActiveVariableDomain, BoundedActiveVariableDomain, \
                 ActiveVariableMap
@@ -7,7 +8,37 @@ from utils.qp_solver import QPSolver
 from utils.misc import process_inputs_outputs
 
 class MinVariableMap(ActiveVariableMap):
+    """
+    This subclass is an domains.ActiveVariableMap specifically for optimization.
+    
+    See Also
+    --------
+    optimizers.BoundedMinVariableMap
+    optimizers.UnboundedMinVariableMap
+    
+    Notes
+    -----
+    This class's train function fits a global quadratic surrogate model to the 
+    n+2 active variables---two more than the dimension of the active subspace. 
+    This quadratic surrogate is used to map points in the space of active
+    variables back to the simulation parameter space for minimization.
+    """
+    
     def train(self, X, f):
+        """
+        Train the global quadratic for the regularization.
+        
+        Parameters
+        ----------
+        X : ndarray
+            `X` is an ndarray of input points used to train a global quadratic
+            used in the `regularize_z` function.
+        f : ndarray
+            `f` is an ndarray of simulation outputs used to train a global
+            quadratic in the `regularize_z` function. 
+            
+        """
+        
         X, f, M, m = process_inputs_outputs(X, f)
         
         W1, W2 = self.domain.subspaces.W1, self.domain.subspaces.W2
@@ -27,14 +58,48 @@ class MinVariableMap(ActiveVariableMap):
         # get coefficients
         b = np.dot(W[:,:p], br)
         A = np.dot(W[:,:p], np.dot(Ar, W[:,:p].T))
-
-        self.bz = np.dot(W2.T, b)
-        self.zAy = np.dot(W2.T, np.dot(A, W1))
-        self.zAz = np.dot(W2.T, np.dot(A, W2)) + 0.01*np.eye(m-n)
+        
+        # some private attributes used in the regularize_z function
+        self._bz = np.dot(W2.T, b)
+        self._zAy = np.dot(W2.T, np.dot(A, W1))
+        self._zAz = np.dot(W2.T, np.dot(A, W2)) + 0.01*np.eye(m-n)
 
 class BoundedMinVariableMap(MinVariableMap):
+    """
+    This subclass is a MinVariableMap for bounded simulation inputs.
+    
+    See Also
+    --------
+    optimizers.MinVariableMap
+    optimizers.UnboundedMinVariableMap
+    """
 
     def regularize_z(self, Y, N=1):
+        """
+        Train the global quadratic for the regularization.
+        
+        Parameters
+        ----------
+        Y : ndarray
+            `Y` is an ndarray of shape N-by-n of points in the space of active
+            variables.
+        N : int
+            `N` is merely there satisfy the interface of `regularize_z`. It 
+            should not be anything other than 1.
+            
+        Returns
+        -------
+        Z : ndarray
+            `Z` is an ndarray of shape N-by-(m-n)-by-1 that contains a value of
+            the inactive variables for each value of the inactive variables.
+        
+        Notes
+        -----
+        In contrast to the `regularize_z` in BoundedActiveVariableMap and
+        UnboundedActiveVariableMap, this implementation of `regularize_z` uses
+        a quadratic program to find a single value of the inactive variables
+        for each value of the active variables. 
+        """
         if N != 1:
             raise Exception('MinVariableMap needs N=1.')
         
@@ -46,18 +111,52 @@ class BoundedMinVariableMap(MinVariableMap):
         Zlist = []
         A_ineq = np.vstack((W2, -W2))
         for y in Y:
-            c = self.bz.reshape((m-n, 1)) + np.dot(self.zAy, y).reshape((m-n, 1))
+            c = self._bz.reshape((m-n, 1)) + np.dot(self._zAy, y).reshape((m-n, 1))
             b_ineq = np.vstack((
                 -1-np.dot(W1, y).reshape((m, 1)),
                 -1+np.dot(W1, y).reshape((m, 1))
                 ))
-            z = qps.quadratic_program_ineq(c, self.zAz, A_ineq, b_ineq)
+            z = qps.quadratic_program_ineq(c, self._zAz, A_ineq, b_ineq)
             Zlist.append(z)
-        return np.array(Zlist).reshape((NY, m-n, N))
+        Z = np.array(Zlist).reshape((NY, m-n, N))
+        return Z
 
 class UnboundedMinVariableMap(MinVariableMap):
+    """
+    This subclass is a MinVariableMap for unbounded simulation inputs.
+    
+    See Also
+    --------
+    optimizers.MinVariableMap
+    optimizers.BoundedMinVariableMap
+    """
 
     def regularize_z(self, Y, N=1):
+        """
+        Train the global quadratic for the regularization.
+        
+        Parameters
+        ----------
+        Y : ndarray
+            `Y` is an ndarray of shape N-by-n of points in the space of active
+            variables.
+        N : int
+            `N` is merely there satisfy the interface of `regularize_z`. It 
+            should not be anything other than 1.
+            
+        Returns
+        -------
+        Z : ndarray
+            `Z` is an ndarray of shape N-by-(m-n)-by-1 that contains a value of
+            the inactive variables for each value of the inactive variables.
+        
+        Notes
+        -----
+        In contrast to the `regularize_z` in BoundedActiveVariableMap and
+        UnboundedActiveVariableMap, this implementation of `regularize_z` uses
+        a quadratic program to find a single value of the inactive variables
+        for each value of the active variables. 
+        """
         if N != 1:
             raise Exception('MinVariableMap needs N=1.')
             
@@ -66,57 +165,168 @@ class UnboundedMinVariableMap(MinVariableMap):
 
         Zlist = []
         for y in Y:
-            c = self.bz.reshape((m-n, 1)) + np.dot(self.zAy, y).reshape((m-n, 1))
-            z = np.linalg.solve(self.zAz, c)
+            c = self._bz.reshape((m-n, 1)) + np.dot(self._zAy, y).reshape((m-n, 1))
+            z = np.linalg.solve(self._zAz, c)
             Zlist.append(z)
         return np.array(Zlist).reshape((NY, m-n, N))
 
-def minimize(avrs, X, f):
+def minimize(asrs, X, f):
+    """
+    Minimize a response surface constructed with the aid of the active subspace.
+    
+    Parameters
+    ----------
+    asrs : ActiveSubspaceResponseSurface
+        `asrs` is a trained response_surfaces.ActiveSubspaceResponseSurface.
+    X : ndarray
+        `X` is an ndarray of input points used to train the MinVariableMap.
+    f : ndarray
+        `f` is an ndarray of simulation outputs used to train the 
+        MinVariableMap.
+        
+    Returns
+    -------
+    xstar : ndarray
+        `xstar` is the estimated minimizer of the function modeled by the 
+        ActiveSubspaceResponseSurface `asrs`.
+    fstar : float
+        `fstar` is the estimated minimum of the function modeled by `asrs`.
+   
+    Notes
+    -----
+    This function has two stages. First it uses the scipy.optimize package to
+    minimize the response surface of the active variables. Then it trains
+    a MinVariableMap with the given input/output pairs, which it uses to map
+    the minimizer back to the space of simulation inputs. 
+    
+    This is very heuristic. But hey, so is all of global optimization. 
+    """
     X, f, M, m = process_inputs_outputs(X, f)
+    
+    # ActiveVariableDomain
+    avdom = asrs.avmap.domain
     
     # wrappers
     def avfun(y):
-        f = avrs.predict_av(y.reshape((1,y.size)))[0]
+        f = asrs.predict_av(y.reshape((1,y.size)))[0]
         return f[0,0]
     def avdfun(y):
-        df = avrs.gradient_av(y.reshape((1,y.size)))
+        df = asrs.gradient_av(y.reshape((1,y.size)))
         return df.reshape((y.size,))
     
-    if isinstance(avrs.avmap.domain, UnboundedActiveVariableDomain):
-        mvm = UnboundedMinVariableMap(avrs.avmap.domain)
-    elif isinstance(avrs.avmap.domain, BoundedActiveVariableDomain):
-        mvm = BoundedMinVariableMap(avrs.avmap.domain)        
+    if isinstance(avdom, UnboundedActiveVariableDomain):
+        mvm = UnboundedMinVariableMap(avdom)
+    elif isinstance(avdom, BoundedActiveVariableDomain):
+        mvm = BoundedMinVariableMap(avdom)        
     else:
         raise Exception('There is a problem with the avmap.domain.')
         
-    ystar, fstar = av_minimize(avfun, mvm, avdfun=avdfun)
+    ystar, fstar = av_minimize(avfun, avdom, avdfun=avdfun)
     mvm.train(X, f)
     xstar = mvm.inverse(ystar)[0]
     return xstar, fstar
 
-def av_minimize(avfun, avmap, avdfun=None):
+def av_minimize(avfun, avdom, avdfun=None):
+    """
+    Minimize a response surface on the active variables.
     
-    if isinstance(avmap.domain, UnboundedActiveVariableDomain):
-        ystar, fstar = unbounded_minimize(avfun, avmap, avdfun)
+    Parameters
+    ----------
+    avfun : function
+        `avfun` is a function of the active variables.
+    avdom : ActiveVariableDomain
+        `avdom` contains information about the domain of `avfun`.
+    avdfun : function, optional
+        `avdfun` returns the gradient of `avfun`. (Default is None)
         
-    elif isinstance(avmap.domain, BoundedActiveVariableDomain):
-        n = avmap.domain.subspaces.W1.shape[1]
+    Returns
+    -------
+    ystar : ndarray
+        `ystar` is the estimated minimizer of `avfun`.
+    fstar : float
+        `fstar` is the estimated minimum of `avfun`.
+    
+    See Also
+    --------
+    optimizers.interval_minimize
+    optimizers.zonotope_minimize
+    optimizers.unbounded_minimize
+    """
+    if isinstance(avdom, UnboundedActiveVariableDomain):
+        ystar, fstar = unbounded_minimize(avfun, avdom, avdfun)
+        
+    elif isinstance(avdom, BoundedActiveVariableDomain):
+        n = avdom.subspaces.W1.shape[1]
         if n==1:
-            ystar, fstar = interval_minimize(avfun, avmap)
+            ystar, fstar = interval_minimize(avfun, avdom)
         else:
-            ystar, fstar = zonotope_minimize(avfun, avmap, avdfun)
+            ystar, fstar = zonotope_minimize(avfun, avdom, avdfun)
     else:
-        raise Exception('There is a problem with the avmap.domain.')
+        raise Exception('There is a problem with the avdom.')
     
     return ystar.reshape((1,ystar.size)), fstar
 
-def interval_minimize(avfun, avmap):
-    yl, yu = avmap.domain.vertY[0,0], avmap.domain.vertY[1,0]
-    result = scopt.fminbound(avfun, yl, yu, xtol=1e-9, maxfun=1e4, full_output=1)
-    return np.array([[result[0]]]), result[1]
+def interval_minimize(avfun, avdom):
+    """
+    Minimize a response surface defined on an interval.
     
-def zonotope_minimize(avfun, avmap, avdfun):
-    n = avmap.domain.subspaces.W1.shape[1]
+    Parameters
+    ----------
+    avfun : function
+        `avfun` is a function of the active variables.
+    avdom : ActiveVariableDomain
+        `avdom` contains information about the domain of `avfun`.
+        
+    Returns
+    -------
+    ystar : ndarray
+        `ystar` is the estimated minimizer of `avfun`.
+    fstar : float
+        `fstar` is the estimated minimum of `avfun`.
+    
+    See Also
+    --------
+    optimizers.av_minimize
+    
+    Notes
+    -----
+    This function wraps the scipy.optimize function fminbound.
+    """
+    yl, yu = avdom.vertY[0,0], avdom.vertY[1,0]
+    result = scopt.fminbound(avfun, yl, yu, xtol=1e-9, maxfun=1e4, full_output=1)
+    ystar, fstar = np.array([[result[0]]]), result[1]
+    return ystar, fstar
+    
+def zonotope_minimize(avfun, avdom, avdfun):
+    """
+    Minimize a response surface defined on a zonotope.
+    
+    Parameters
+    ----------
+    avfun : function
+        `avfun` is a function of the active variables.
+    avdom : ActiveVariableDomain
+        `avdom` contains information about the domain of `avfun`.
+    avdfun : function
+        `avdfun` returns the gradient of `avfun`.
+        
+    Returns
+    -------
+    ystar : ndarray
+        `ystar` is the estimated minimizer of `avfun`.
+    fstar : float
+        `fstar` is the estimated minimum of `avfun`.
+    
+    See Also
+    --------
+    optimizers.av_minimize
+    
+    Notes
+    -----
+    This function wraps the scipy.optimize implementation of SLSQP with linear
+    inequality constraints derived from the zonotope.
+    """
+    n = avdom.subspaces.W1.shape[1]
     opts = {'disp':False, 'maxiter':1e4, 'ftol':1e-9}
     
     # a bit of globalization
@@ -126,7 +336,7 @@ def zonotope_minimize(avfun, avmap, avdfun):
     minres = []
     for i in range(10):
         y0 = np.random.normal(size=(1, n))
-        cons = avmap.domain.constraints
+        cons = avdom.constraints
         result = scopt.minimize(avfun, y0, constraints=cons, method='SLSQP', \
                             jac=avdfun, options=opts)
         if result.fun < minf:
@@ -134,10 +344,39 @@ def zonotope_minimize(avfun, avmap, avdfun):
             minres = result
             
     np.random.set_state(curr_state)
-    return minres.x, minres.fun
+    ystar, fstar = minres.x, minres.fun
+    return ystar, fstar
     
-def unbounded_minimize(avfun, avmap, avdfun):
-    n = avmap.domain.subspaces.W1.shape[1]
+def unbounded_minimize(avfun, avdom, avdfun):
+    """
+    Minimize a response surface defined on an unbounded domain.
+    
+    Parameters
+    ----------
+    avfun : function
+        `avfun` is a function of the active variables.
+    avdom : ActiveVariableDomain
+        `avdom` contains information about the domain of `avfun`.
+    avdfun : function
+        `avdfun` returns the gradient of `avfun`.
+        
+    Returns
+    -------
+    ystar : ndarray
+        `ystar` is the estimated minimizer of `avfun`.
+    fstar : float
+        `fstar` is the estimated minimum of `avfun`.
+    
+    See Also
+    --------
+    optimizers.av_minimize
+    
+    Notes
+    -----
+    If the gradient `avdfun` is None, this function wraps the scipy.optimize
+    implementation of SLSQP. Otherwise, it wraps BFGS.
+    """
+    n = avdom.subspaces.W1.shape[1]
     opts = {'disp':False, 'maxiter':1e4}
     
     if avdfun == None:
@@ -157,4 +396,5 @@ def unbounded_minimize(avfun, avmap, avdfun):
             minf = result.fun
             minres = result
     np.random.set_state(curr_state)
-    return minres.x, minres.fun
+    ystar, fstar = minres.x, minres.fun
+    return ystar, fstar
