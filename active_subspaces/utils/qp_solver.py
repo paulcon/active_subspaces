@@ -223,12 +223,26 @@ def _scipy_linear_program_eq(c, A, b, lb, ub):
         bounds.append((lb[i,0],ub[i,0]))
 
     res = linprog(c, A_eq=A, b_eq=b, bounds=bounds, options={"disp": False})
-    return res.x.reshape((c.size,1))
+    if res.success:
+        xstar = res.x
+        if isinstance(xstar, float):
+            xstar = np.array([[xstar]])
+        return xstar.reshape((c.size,1))
+    else:
+        raise Exception('Scipy did not solve the LP. Blame Scipy.')
+        return None
     
 def _scipy_linear_program_ineq(c, A, b):
     
     res = linprog(c, A_ub=-A, b_ub=-b, options={"disp": False})
-    return res.x.reshape((c.size,1))
+    if res.success:
+        xstar = res.x
+        if isinstance(xstar, float):
+            xstar = np.array([[xstar]])
+        return xstar.reshape((c.size,1))
+    else:
+        raise Exception('Scipy did not solve the LP. Blame Scipy.')
+        return None
 
 def _scipy_quadratic_program_bnd(c, Q, lb, ub):
     
@@ -251,9 +265,12 @@ def _scipy_quadratic_program_bnd(c, Q, lb, ub):
                     bounds=bounds, options={"disp": False})
                     
     if res.success:
-        return res.x.reshape(c.shape)
+        xstar = res.x
+        if isinstance(xstar, float):
+            xstar = np.array([[xstar]])
+        return xstar.reshape((c.size,1))
     else:
-        raise Exception('Scipy did not solve the QP. Blame Scipy.')
+        raise Exception('Scipy did not solve the LP. Blame Scipy.')
         return None
         
 def _scipy_quadratic_program_ineq(c, Q, A, b):
@@ -277,9 +294,12 @@ def _scipy_quadratic_program_ineq(c, Q, A, b):
                     constraints=cons, options={"disp": False})
                     
     if res.success:
-        return res.x.reshape(c.shape)
+        xstar = res.x
+        if isinstance(xstar, float):
+            xstar = np.array([[xstar]])
+        return xstar.reshape((c.size,1))
     else:
-        raise Exception('Scipy did not solve the QP. Blame Scipy.')
+        raise Exception('Scipy did not solve the LP. Blame Scipy.')
         return None
 
 def _gurobi_linear_program_eq(c, A, b, lb, ub):
