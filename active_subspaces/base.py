@@ -121,8 +121,15 @@ class ActiveSubspaceReducedModel():
         inputs have been properly transformed to a standard Gaussian.
         
         """
-        self.m = m
-        self.bounded_inputs = bounded_inputs
+        if not isinstance(m, int):
+            raise TypeError('m must be an integer.')
+        else:
+            self.m = m
+            
+        if not isinstance(bounded_inputs, bool):
+            raise TypeError('bounded_inputs must be a boolean.')
+        else:
+            self.bounded_inputs = bounded_inputs
 
     def build_from_data(self, X, f, df=None, avdim=None):
         """
@@ -168,18 +175,26 @@ class ActiveSubspaceReducedModel():
             if np.any(X) > 10.0 or np.any(X) < -10.0:
                 raise Exception('There is a very good chance that your \
                     unbounded inputs are not properly scaled.')
-        
         self.X, self.f, self.m = X, f, m
         
-        # if gradients aren't available, estimate them from data
-        if df is None:
+        if df is not None:
+            df, M_df, m_df = process_inputs(df)
+            if m_df != m:
+                raise ValueError('The dimension of the gradients should be \
+                                the same as the dimension of the inputs.')
+        else:
+            # if gradients aren't available, estimate them from data
             df = local_linear_gradients(X, f)
         
+                
         # compute the active subspace
         ss = Subspaces()
         ss.compute(df)
         if avdim is not None:
-            ss.partition(avdim)
+            if not isinstance(avdim, int):
+                raise TypeError('avdim should be an integer.')
+            else:
+                ss.partition(avdim)
         self.n = ss.W1.shape[1]
         print 'The dimension of the active subspace is {:d}.'.format(self.n)
         
@@ -231,6 +246,17 @@ class ActiveSubspaceReducedModel():
         design of experiments on the space of active variables. This design
         uses about 5 points per dimension of the active subspace.
         """
+        if not hasattr(fun, '__call__'):
+            raise TypeError('fun should be a callable function.')
+            
+        if dfun is not None:
+            if not hasattr(dfun, '__call__'):
+                raise TypeError('dfun should be a callable function.')
+            
+        if avdim is not None:
+            if not isinstance(avdim, int):
+                raise TypeError('avdim should be an integer')
+        
         m = self.m
 
         # number of gradient samples
@@ -354,11 +380,14 @@ class ActiveSubspaceReducedModel():
         confuse the user with things that look and smell like error bars but
         aren't actually error bars. 
         """
+        if not isinstance(compgrad, bool):
+            raise TypeError('compgrad should be a boolean')
+        
         X, M, m = process_inputs(X)
         
-        if X.shape[1] != self.m:
+        if m != self.m:
             raise Exception('The dimension of the points is {:d} but should \
-                be {:d}.'.format(X.shape[1], self.m))
+                be {:d}.'.format(m, self.m))
         f, df = self.as_respsurf.predict(X, compgrad=compgrad)
         return f, df
 
@@ -407,6 +436,9 @@ class ActiveSubspaceReducedModel():
         """
         if not isinstance(N, int):
             raise TypeError('N should be an integer.')
+            
+        if N < 1:
+            raise ValueError('N should positive')
         
         if self.fun is not None:
             mu, lb, ub = integrate(self.fun, self.as_respsurf.avmap, N)
@@ -452,6 +484,18 @@ class ActiveSubspaceReducedModel():
         probabiliy, and it includes central limit theorem-based 99% confidence
         bounds. 
         """
+        if not isinstance(lb, float):
+            if isinstance(lb, int):
+                lb = float(lb)
+            else:
+                raise TypeError('lb should be a float')
+        
+        if not isinstance(ub, float):
+            if isinstance(ub, int):
+                ub = float(ub)
+            else:
+                raise TypeError('ub should be a float')
+        
         M = 10000
         if self.bounded_inputs:
             X = np.random.uniform(-1.0,1.0,size=(M,self.m))
