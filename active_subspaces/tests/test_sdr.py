@@ -25,7 +25,7 @@ class TestSDR(TestCase):
         if self.writeData:
             np.savez('data/test_sdr_0_1',w=w)
         data_test = helper.load_test_npz('test_sdr_0_1.npz')
-        np.testing.assert_equal(w, data_test['w'])
+        np.testing.assert_almost_equal(w, data_test['w'])
         
     def test_quadratic_model_check(self):
         
@@ -38,8 +38,8 @@ class TestSDR(TestCase):
         if self.writeData:
             np.savez('data/test_sdr_0_2',e=e, W=W)
         data_test = helper.load_test_npz('test_sdr_0_2.npz')
-        np.testing.assert_equal(e, data_test['e']) 
-        np.testing.assert_equal(W, data_test['W']) 
+        np.testing.assert_almost_equal(e, data_test['e']) 
+        np.testing.assert_almost_equal(W, data_test['W']) 
 
 if __name__ == '__main__':
     unittest.main()

@@ -13,7 +13,7 @@ class TestResponseSurfaces(TestCase):
         if self.writeData:
             np.savez('data/test_full_index_set_7_3.npz', I=I)
         data = helper.load_test_npz('test_full_index_set_7_3.npz')
-        np.testing.assert_equal(I, data['I'])
+        np.testing.assert_almost_equal(I, data['I'])
      
     def test_polynomial_bases(self):
         data = helper.load_test_npz('test_points_10_2.npz')
@@ -23,8 +23,8 @@ class TestResponseSurfaces(TestCase):
         if self.writeData:
             np.savez('data/test_poly_bases_3.npz', B=B, I=I)
         data = helper.load_test_npz('test_poly_bases_3.npz')
-        np.testing.assert_equal(B, data['B'])
-        np.testing.assert_equal(I, data['I'])
+        np.testing.assert_almost_equal(B, data['B'])
+        np.testing.assert_almost_equal(I, data['I'])
  
     def test_grad_polynomial_bases(self):
         data = helper.load_test_npz('test_points_10_2.npz')
@@ -33,7 +33,7 @@ class TestResponseSurfaces(TestCase):
         if self.writeData:
             np.savez('data/test_grad_poly_bases_3.npz', dB=dB)
         data = helper.load_test_npz('test_grad_poly_bases_3.npz')
-        np.testing.assert_equal(dB, data['dB'])    
+        np.testing.assert_almost_equal(dB, data['dB'])    
      
     def test_grad_polynomial_bases_fd(self):
         data = helper.load_test_npz('test_points_10_2.npz')
@@ -66,7 +66,7 @@ class TestResponseSurfaces(TestCase):
         if self.writeData:
             np.savez('data/test_exp_cov.npz', C=C)
         data = helper.load_test_npz('test_exp_cov.npz')
-        np.testing.assert_equal(C, data['C'])
+        np.testing.assert_almost_equal(C, data['C'])
     
      
     def test_grad_exponential_squared_fd(self):
@@ -101,7 +101,7 @@ class TestResponseSurfaces(TestCase):
         if self.writeData:
             np.savez('data/test_grad_exp_cov.npz', dC=dC)
         data = helper.load_test_npz('test_grad_exp_cov.npz')
-        np.testing.assert_equal(dC, data['dC'])
+        np.testing.assert_almost_equal(dC, data['dC'])
     
      
     def test_exact_polynomial_approximation_1d(self):
@@ -467,8 +467,8 @@ class TestResponseSurfaces(TestCase):
             np.savez('data/test_rbf_0.npz', f=f, df=df)
         
         data = helper.load_test_npz('test_rbf_0.npz')
-        np.testing.assert_equal(f, data['f'])
-        np.testing.assert_equal(df, data['df'])
+        np.testing.assert_almost_equal(f, data['f'])
+        np.testing.assert_almost_equal(df, data['df'])
         
         v = 0.0001*np.ones(f_train.shape)
         gp.train(X_train, f_train.reshape((f_train.size,1)), e=e, v=v)
@@ -477,8 +477,8 @@ class TestResponseSurfaces(TestCase):
             np.savez('data/test_rbf_1.npz', f=f, df=df)
         
         data = helper.load_test_npz('test_rbf_1.npz')
-        np.testing.assert_equal(f, data['f'])
-        np.testing.assert_equal(df, data['df'])
+        np.testing.assert_almost_equal(f, data['f'])
+        np.testing.assert_almost_equal(df, data['df'])
         
         
 if __name__ == '__main__':

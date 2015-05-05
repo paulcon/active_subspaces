@@ -38,12 +38,12 @@ class TestBase(TestCase):
         if self.writeData:
             np.savez('data/test_base_0_0',avg=avg, prob=prob, pl=pl, pu=pu, xstar=xstar, fstar=fstar)
         data_test = helper.load_test_npz('test_base_0_0.npz')
-        np.testing.assert_equal(avg, data_test['avg'])
-        np.testing.assert_equal(prob, data_test['prob'])
-        np.testing.assert_equal(pl, data_test['pl'])
-        np.testing.assert_equal(pu, data_test['pu'])
-        np.testing.assert_equal(xstar, data_test['xstar'])
-        np.testing.assert_equal(fstar, data_test['fstar'])
+        np.testing.assert_almost_equal(avg, data_test['avg'])
+        np.testing.assert_almost_equal(prob, data_test['prob'])
+        np.testing.assert_almost_equal(pl, data_test['pl'])
+        np.testing.assert_almost_equal(pu, data_test['pu'])
+        np.testing.assert_almost_equal(xstar, data_test['xstar'])
+        np.testing.assert_almost_equal(fstar, data_test['fstar'])
                 
         print '\n'
         print 'ubnd avg: {:6.4f}'.format(avg)
@@ -66,12 +66,12 @@ class TestBase(TestCase):
         if self.writeData:
             np.savez('data/test_base_0_1',avg=avg, prob=prob, pl=pl, pu=pu, xstar=xstar, fstar=fstar)
         data_test = helper.load_test_npz('test_base_0_1.npz')
-        np.testing.assert_equal(avg, data_test['avg'])
-        np.testing.assert_equal(prob, data_test['prob'])
-        np.testing.assert_equal(pl, data_test['pl'])
-        np.testing.assert_equal(pu, data_test['pu'])
-        np.testing.assert_equal(xstar, data_test['xstar'])
-        np.testing.assert_equal(fstar, data_test['fstar'])
+        np.testing.assert_almost_equal(avg, data_test['avg'])
+        np.testing.assert_almost_equal(prob, data_test['prob'])
+        np.testing.assert_almost_equal(pl, data_test['pl'])
+        np.testing.assert_almost_equal(pu, data_test['pu'])
+        np.testing.assert_almost_equal(xstar, data_test['xstar'])
+        np.testing.assert_almost_equal(fstar, data_test['fstar'])
                 
         print '\n'
         print 'ubnd avg: {:6.4f}'.format(avg)
@@ -94,12 +94,12 @@ class TestBase(TestCase):
         if self.writeData:
             np.savez('data/test_base_0_2',avg=avg, prob=prob, pl=pl, pu=pu, xstar=xstar, fstar=fstar)
         data_test = helper.load_test_npz('test_base_0_2.npz')
-        np.testing.assert_equal(avg, data_test['avg'])
-        np.testing.assert_equal(prob, data_test['prob'])
-        np.testing.assert_equal(pl, data_test['pl'])
-        np.testing.assert_equal(pu, data_test['pu'])
-        np.testing.assert_equal(xstar, data_test['xstar'])
-        np.testing.assert_equal(fstar, data_test['fstar'])
+        np.testing.assert_almost_equal(avg, data_test['avg'])
+        np.testing.assert_almost_equal(prob, data_test['prob'])
+        np.testing.assert_almost_equal(pl, data_test['pl'])
+        np.testing.assert_almost_equal(pu, data_test['pu'])
+        np.testing.assert_almost_equal(xstar, data_test['xstar'])
+        np.testing.assert_almost_equal(fstar, data_test['fstar'])
                 
         print '\n'
         print 'ubnd avg: {:6.4f}'.format(avg)
@@ -122,12 +122,12 @@ class TestBase(TestCase):
         if self.writeData:
             np.savez('data/test_base_0_3',avg=avg, prob=prob, pl=pl, pu=pu, xstar=xstar, fstar=fstar)
         data_test = helper.load_test_npz('test_base_0_3.npz')
-        np.testing.assert_equal(avg, data_test['avg'])
-        np.testing.assert_equal(prob, data_test['prob'])
-        np.testing.assert_equal(pl, data_test['pl'])
-        np.testing.assert_equal(pu, data_test['pu'])
-        np.testing.assert_equal(xstar, data_test['xstar'])
-        np.testing.assert_equal(fstar, data_test['fstar'])
+        np.testing.assert_almost_equal(avg, data_test['avg'])
+        np.testing.assert_almost_equal(prob, data_test['prob'])
+        np.testing.assert_almost_equal(pl, data_test['pl'])
+        np.testing.assert_almost_equal(pu, data_test['pu'])
+        np.testing.assert_almost_equal(xstar, data_test['xstar'])
+        np.testing.assert_almost_equal(fstar, data_test['fstar'])
                 
         print '\n'
         print 'ubnd avg: {:6.4f}'.format(avg)
@@ -177,12 +177,12 @@ class TestBase(TestCase):
         if self.writeData:
             np.savez('data/test_base_1_0',avg=avg, prob=prob, pl=pl, pu=pu, xstar=xstar, fstar=fstar)
         data_test = helper.load_test_npz('test_base_1_0.npz')
-        np.testing.assert_equal(avg, data_test['avg'])
-        np.testing.assert_equal(prob, data_test['prob'])
-        np.testing.assert_equal(pl, data_test['pl'])
-        np.testing.assert_equal(pu, data_test['pu'])
-        np.testing.assert_equal(xstar, data_test['xstar'])
-        np.testing.assert_equal(fstar, data_test['fstar'])
+        np.testing.assert_almost_equal(avg, data_test['avg'])
+        np.testing.assert_almost_equal(prob, data_test['prob'])
+        np.testing.assert_almost_equal(pl, data_test['pl'])
+        np.testing.assert_almost_equal(pu, data_test['pu'])
+        np.testing.assert_almost_equal(xstar, data_test['xstar'])
+        np.testing.assert_almost_equal(fstar, data_test['fstar'])
                 
         print '\n'
         print 'ubnd avg: {:6.4f}'.format(avg)
@@ -205,12 +205,12 @@ class TestBase(TestCase):
         if self.writeData:
             np.savez('data/test_base_1_1',avg=avg, prob=prob, pl=pl, pu=pu, xstar=xstar, fstar=fstar)
         data_test = helper.load_test_npz('test_base_1_1.npz')
-        np.testing.assert_equal(avg, data_test['avg'])
-        np.testing.assert_equal(prob, data_test['prob'])
-        np.testing.assert_equal(pl, data_test['pl'])
-        np.testing.assert_equal(pu, data_test['pu'])
-        np.testing.assert_equal(xstar, data_test['xstar'])
-        np.testing.assert_equal(fstar, data_test['fstar'])
+        np.testing.assert_almost_equal(avg, data_test['avg'])
+        np.testing.assert_almost_equal(prob, data_test['prob'])
+        np.testing.assert_almost_equal(pl, data_test['pl'])
+        np.testing.assert_almost_equal(pu, data_test['pu'])
+        np.testing.assert_almost_equal(xstar, data_test['xstar'])
+        np.testing.assert_almost_equal(fstar, data_test['fstar'])
                 
         print '\n'
         print 'ubnd avg: {:6.4f}'.format(avg)
@@ -233,12 +233,12 @@ class TestBase(TestCase):
         if self.writeData:
             np.savez('data/test_base_1_2',avg=avg, prob=prob, pl=pl, pu=pu, xstar=xstar, fstar=fstar)
         data_test = helper.load_test_npz('test_base_1_2.npz')
-        np.testing.assert_equal(avg, data_test['avg'])
-        np.testing.assert_equal(prob, data_test['prob'])
-        np.testing.assert_equal(pl, data_test['pl'])
-        np.testing.assert_equal(pu, data_test['pu'])
-        np.testing.assert_equal(xstar, data_test['xstar'])
-        np.testing.assert_equal(fstar, data_test['fstar'])
+        np.testing.assert_almost_equal(avg, data_test['avg'])
+        np.testing.assert_almost_equal(prob, data_test['prob'])
+        np.testing.assert_almost_equal(pl, data_test['pl'])
+        np.testing.assert_almost_equal(pu, data_test['pu'])
+        np.testing.assert_almost_equal(xstar, data_test['xstar'])
+        np.testing.assert_almost_equal(fstar, data_test['fstar'])
                 
         print '\n'
         print 'ubnd avg: {:6.4f}'.format(avg)
@@ -261,12 +261,12 @@ class TestBase(TestCase):
         if self.writeData:
             np.savez('data/test_base_1_3',avg=avg, prob=prob, pl=pl, pu=pu, xstar=xstar, fstar=fstar)
         data_test = helper.load_test_npz('test_base_1_3.npz')
-        np.testing.assert_equal(avg, data_test['avg'])
-        np.testing.assert_equal(prob, data_test['prob'])
-        np.testing.assert_equal(pl, data_test['pl'])
-        np.testing.assert_equal(pu, data_test['pu'])
-        np.testing.assert_equal(xstar, data_test['xstar'])
-        np.testing.assert_equal(fstar, data_test['fstar'])
+        np.testing.assert_almost_equal(avg, data_test['avg'])
+        np.testing.assert_almost_equal(prob, data_test['prob'])
+        np.testing.assert_almost_equal(pl, data_test['pl'])
+        np.testing.assert_almost_equal(pu, data_test['pu'])
+        np.testing.assert_almost_equal(xstar, data_test['xstar'])
+        np.testing.assert_almost_equal(fstar, data_test['fstar'])
                 
         print '\n'
         print 'ubnd avg: {:6.4f}'.format(avg)

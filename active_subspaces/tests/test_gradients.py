@@ -27,7 +27,7 @@ class TestGradients(TestCase):
         if self.writeData:
             np.savez('data/test_llm_gradients', df=df)
         data = helper.load_test_npz('test_llm_gradients.npz')
-        np.testing.assert_equal(df, data['df'])        
+        np.testing.assert_almost_equal(df, data['df'])        
 
     def test_finite_difference_gradients(self):
         def myfun(x):

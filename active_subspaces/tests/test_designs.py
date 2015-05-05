@@ -8,7 +8,7 @@ class TestDesigns(TestCase):
     def test_interval_design(self):
         y = dn.interval_design(-1.0, 1.0, 3)
         ytrue = np.array([[-0.5], [0.], [0.5]])
-        np.testing.assert_equal(y, ytrue)
+        np.testing.assert_almost_equal(y, ytrue)
     
     def test_maximin_design(self):
         vert = np.array([[-1.0,-1.0], [1.0,-1.0], [-1.0,1.0], [1.0,1.0]])
@@ -29,17 +29,17 @@ class TestDesigns(TestCase):
         vert = np.array([[-1.0,-1.0], [1.0,-1.0], [-1.0,1.0], [1.0,1.0]])
         Y1 = dn.maximin_design(vert, 10)
         Y2 = dn.maximin_design(vert, 10)
-        np.testing.assert_equal(Y1, Y2)
+        np.testing.assert_almost_equal(Y1, Y2)
         
     def test_gauss_hermite_design_1(self):
         Y = dn.gauss_hermite_design([1])
         Ytrue = np.array([[0.0]])
-        np.testing.assert_equal(Y, Ytrue)
+        np.testing.assert_almost_equal(Y, Ytrue)
         
     def test_gauss_hermite_design_2(self):
         Y = dn.gauss_hermite_design([1,1])
         Ytrue = np.array([[0.0, 0.0]])
-        np.testing.assert_equal(Y, Ytrue)
+        np.testing.assert_almost_equal(Y, Ytrue)
     
 if __name__ == '__main__':
     unittest.main()

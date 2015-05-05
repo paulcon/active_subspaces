@@ -53,10 +53,10 @@ class TestASResponseSurfaces(TestCase):
         if self.writeData:
             np.savez('data/test_rs_0_1',ff=ff,dff=dff)
         data_test = helper.load_test_npz('test_rs_0_1.npz')
-        np.testing.assert_equal(ff, data_test['ff'])
-        np.testing.assert_equal(asrs(XX), data_test['ff'])
-        np.testing.assert_equal(dff, data_test['dff'])
-        np.testing.assert_equal(asrs.gradient(XX), data_test['dff'])
+        np.testing.assert_almost_equal(ff, data_test['ff'])
+        np.testing.assert_almost_equal(asrs(XX), data_test['ff'])
+        np.testing.assert_almost_equal(dff, data_test['dff'])
+        np.testing.assert_almost_equal(asrs.gradient(XX), data_test['dff'])
         
         
         sr = srun.SimulationRunner(self.quad_fun)
@@ -89,10 +89,10 @@ class TestASResponseSurfaces(TestCase):
             np.savez('data/test_rs_0_2',ff=ff,dff=dff)
         
         data_test = helper.load_test_npz('test_rs_0_2.npz')
-        np.testing.assert_equal(ff, data_test['ff'])
-        np.testing.assert_equal(asrs(XX), data_test['ff'])
-        np.testing.assert_equal(dff, data_test['dff'])
-        np.testing.assert_equal(asrs.gradient(XX), data_test['dff'])
+        np.testing.assert_almost_equal(ff, data_test['ff'])
+        np.testing.assert_almost_equal(asrs(XX), data_test['ff'])
+        np.testing.assert_almost_equal(dff, data_test['dff'])
+        np.testing.assert_almost_equal(asrs.gradient(XX), data_test['dff'])
         
         
         sr = srun.SimulationRunner(self.quad_fun)
@@ -123,10 +123,10 @@ class TestASResponseSurfaces(TestCase):
         if self.writeData:
             np.savez('data/test_rs_1_0',ff=ff,dff=dff)
         data_test = helper.load_test_npz('test_rs_1_0.npz')
-        np.testing.assert_equal(ff, data_test['ff'])
-        np.testing.assert_equal(asrs(XX), data_test['ff'])
-        np.testing.assert_equal(dff, data_test['dff'])
-        np.testing.assert_equal(asrs.gradient(XX), data_test['dff'])
+        np.testing.assert_almost_equal(ff, data_test['ff'])
+        np.testing.assert_almost_equal(asrs(XX), data_test['ff'])
+        np.testing.assert_almost_equal(dff, data_test['dff'])
+        np.testing.assert_almost_equal(asrs.gradient(XX), data_test['dff'])
         
 
         sr = srun.SimulationRunner(self.quad_fun)
@@ -159,10 +159,10 @@ class TestASResponseSurfaces(TestCase):
             np.savez('data/test_rs_1_1',ff=ff,dff=dff)
 
         data_test = helper.load_test_npz('test_rs_1_1.npz')
-        np.testing.assert_equal(ff, data_test['ff'])
-        np.testing.assert_equal(asrs(XX), data_test['ff'])
-        np.testing.assert_equal(dff, data_test['dff'])
-        np.testing.assert_equal(asrs.gradient(XX), data_test['dff'])
+        np.testing.assert_almost_equal(ff, data_test['ff'])
+        np.testing.assert_almost_equal(asrs(XX), data_test['ff'])
+        np.testing.assert_almost_equal(dff, data_test['dff'])
+        np.testing.assert_almost_equal(asrs.gradient(XX), data_test['dff'])
         
 
         sr = srun.SimulationRunner(self.quad_fun)
@@ -195,10 +195,10 @@ class TestASResponseSurfaces(TestCase):
             np.savez('data/test_rs_2_0',ff=ff,dff=dff)
         
         data_test = helper.load_test_npz('test_rs_2_0.npz')
-        np.testing.assert_equal(ff, data_test['ff'])
-        np.testing.assert_equal(asrs(XX), data_test['ff'])
-        np.testing.assert_equal(dff, data_test['dff'])
-        np.testing.assert_equal(asrs.gradient(XX), data_test['dff'])
+        np.testing.assert_almost_equal(ff, data_test['ff'])
+        np.testing.assert_almost_equal(asrs(XX), data_test['ff'])
+        np.testing.assert_almost_equal(dff, data_test['dff'])
+        np.testing.assert_almost_equal(asrs.gradient(XX), data_test['dff'])
         
         
         sr = srun.SimulationRunner(self.quad_fun)
@@ -232,10 +232,10 @@ class TestASResponseSurfaces(TestCase):
             np.savez('data/test_rs_2_1',ff=ff,dff=dff)
         
         data_test = helper.load_test_npz('test_rs_2_1.npz')
-        np.testing.assert_equal(ff, data_test['ff'])
-        np.testing.assert_equal(asrs(XX), data_test['ff'])
-        np.testing.assert_equal(dff, data_test['dff'])
-        np.testing.assert_equal(asrs.gradient(XX), data_test['dff'])
+        np.testing.assert_almost_equal(ff, data_test['ff'])
+        np.testing.assert_almost_equal(asrs(XX), data_test['ff'])
+        np.testing.assert_almost_equal(dff, data_test['dff'])
+        np.testing.assert_almost_equal(asrs.gradient(XX), data_test['dff'])
         
         
         sr = srun.SimulationRunner(self.quad_fun)
@@ -268,10 +268,10 @@ class TestASResponseSurfaces(TestCase):
             np.savez('data/test_rs_3_0',ff=ff,dff=dff)
         
         data_test = helper.load_test_npz('test_rs_3_0.npz')
-        np.testing.assert_equal(ff, data_test['ff'])
-        np.testing.assert_equal(asrs(XX), data_test['ff'])
-        np.testing.assert_equal(dff, data_test['dff'])
-        np.testing.assert_equal(asrs.gradient(XX), data_test['dff'])
+        np.testing.assert_almost_equal(ff, data_test['ff'])
+        np.testing.assert_almost_equal(asrs(XX), data_test['ff'])
+        np.testing.assert_almost_equal(dff, data_test['dff'])
+        np.testing.assert_almost_equal(asrs.gradient(XX), data_test['dff'])
         
         
         sr = srun.SimulationRunner(self.quad_fun)
@@ -305,10 +305,10 @@ class TestASResponseSurfaces(TestCase):
             np.savez('data/test_rs_3_1',ff=ff,dff=dff)
         
         data_test = helper.load_test_npz('test_rs_3_1.npz')
-        np.testing.assert_equal(ff, data_test['ff'])
-        np.testing.assert_equal(asrs(XX), data_test['ff'])
-        np.testing.assert_equal(dff, data_test['dff'])
-        np.testing.assert_equal(asrs.gradient(XX), data_test['dff'])
+        np.testing.assert_almost_equal(ff, data_test['ff'])
+        np.testing.assert_almost_equal(asrs(XX), data_test['ff'])
+        np.testing.assert_almost_equal(dff, data_test['dff'])
+        np.testing.assert_almost_equal(asrs.gradient(XX), data_test['dff'])
         
         
         sr = srun.SimulationRunner(self.quad_fun)
@@ -340,10 +340,10 @@ class TestASResponseSurfaces(TestCase):
         if self.writeData:
             np.savez('data/test_rs_4_0',ff=ff,dff=dff)
         data_test = helper.load_test_npz('test_rs_4_0.npz')
-        np.testing.assert_equal(ff, data_test['ff'])
-        np.testing.assert_equal(asrs(XX), data_test['ff'])
-        np.testing.assert_equal(dff, data_test['dff'])
-        np.testing.assert_equal(asrs.gradient(XX), data_test['dff'])
+        np.testing.assert_almost_equal(ff, data_test['ff'])
+        np.testing.assert_almost_equal(asrs(XX), data_test['ff'])
+        np.testing.assert_almost_equal(dff, data_test['dff'])
+        np.testing.assert_almost_equal(asrs.gradient(XX), data_test['dff'])
         
         
         sr = srun.SimulationRunner(self.quad_fun)
@@ -375,10 +375,10 @@ class TestASResponseSurfaces(TestCase):
         if self.writeData:
             np.savez('data/test_rs_4_1',ff=ff,dff=dff)
         data_test = helper.load_test_npz('test_rs_4_1.npz')
-        np.testing.assert_equal(ff, data_test['ff'])
-        np.testing.assert_equal(asrs(XX), data_test['ff'])
-        np.testing.assert_equal(dff, data_test['dff'])
-        np.testing.assert_equal(asrs.gradient(XX), data_test['dff'])
+        np.testing.assert_almost_equal(ff, data_test['ff'])
+        np.testing.assert_almost_equal(asrs(XX), data_test['ff'])
+        np.testing.assert_almost_equal(dff, data_test['dff'])
+        np.testing.assert_almost_equal(asrs.gradient(XX), data_test['dff'])
         
         
         sr = srun.SimulationRunner(self.quad_fun)
@@ -410,10 +410,10 @@ class TestASResponseSurfaces(TestCase):
         if self.writeData:
             np.savez('data/test_rs_5_0',ff=ff,dff=dff)
         data_test = helper.load_test_npz('test_rs_5_0.npz')
-        np.testing.assert_equal(ff, data_test['ff'])
-        np.testing.assert_equal(asrs(XX), data_test['ff'])
-        np.testing.assert_equal(dff, data_test['dff'])
-        np.testing.assert_equal(asrs.gradient(XX), data_test['dff'])
+        np.testing.assert_almost_equal(ff, data_test['ff'])
+        np.testing.assert_almost_equal(asrs(XX), data_test['ff'])
+        np.testing.assert_almost_equal(dff, data_test['dff'])
+        np.testing.assert_almost_equal(asrs.gradient(XX), data_test['dff'])
         
         
         sr = srun.SimulationRunner(self.quad_fun)
@@ -446,10 +446,10 @@ class TestASResponseSurfaces(TestCase):
         if self.writeData:
             np.savez('data/test_rs_5_1',ff=ff,dff=dff)
         data_test = helper.load_test_npz('test_rs_5_1.npz')
-        np.testing.assert_equal(ff, data_test['ff'])
-        np.testing.assert_equal(asrs(XX), data_test['ff'])
-        np.testing.assert_equal(dff, data_test['dff'])
-        np.testing.assert_equal(asrs.gradient(XX), data_test['dff'])
+        np.testing.assert_almost_equal(ff, data_test['ff'])
+        np.testing.assert_almost_equal(asrs(XX), data_test['ff'])
+        np.testing.assert_almost_equal(dff, data_test['dff'])
+        np.testing.assert_almost_equal(asrs.gradient(XX), data_test['dff'])
         
         
         sr = srun.SimulationRunner(self.quad_fun)
@@ -482,10 +482,10 @@ class TestASResponseSurfaces(TestCase):
         if self.writeData:
             np.savez('data/test_rs_6_0',ff=ff,dff=dff)
         data_test = helper.load_test_npz('test_rs_6_0.npz')
-        np.testing.assert_equal(ff, data_test['ff'])
-        np.testing.assert_equal(asrs(XX), data_test['ff'])
-        np.testing.assert_equal(dff, data_test['dff'])
-        np.testing.assert_equal(asrs.gradient(XX), data_test['dff'])
+        np.testing.assert_almost_equal(ff, data_test['ff'])
+        np.testing.assert_almost_equal(asrs(XX), data_test['ff'])
+        np.testing.assert_almost_equal(dff, data_test['dff'])
+        np.testing.assert_almost_equal(asrs.gradient(XX), data_test['dff'])
         
         
         sr = srun.SimulationRunner(self.quad_fun)
@@ -519,10 +519,10 @@ class TestASResponseSurfaces(TestCase):
         if self.writeData:
             np.savez('data/test_rs_6_1',ff=ff,dff=dff)
         data_test = helper.load_test_npz('test_rs_6_1.npz')
-        np.testing.assert_equal(ff, data_test['ff'])
-        np.testing.assert_equal(asrs(XX), data_test['ff'])
-        np.testing.assert_equal(dff, data_test['dff'])
-        np.testing.assert_equal(asrs.gradient(XX), data_test['dff'])
+        np.testing.assert_almost_equal(ff, data_test['ff'])
+        np.testing.assert_almost_equal(asrs(XX), data_test['ff'])
+        np.testing.assert_almost_equal(dff, data_test['dff'])
+        np.testing.assert_almost_equal(asrs.gradient(XX), data_test['dff'])
         
         
         sr = srun.SimulationRunner(self.quad_fun)
@@ -555,10 +555,10 @@ class TestASResponseSurfaces(TestCase):
         if self.writeData:
             np.savez('data/test_rs_7_0',ff=ff,dff=dff)
         data_test = helper.load_test_npz('test_rs_7_0.npz')
-        np.testing.assert_equal(ff, data_test['ff'])
-        np.testing.assert_equal(asrs(XX), data_test['ff'])
-        np.testing.assert_equal(dff, data_test['dff'])
-        np.testing.assert_equal(asrs.gradient(XX), data_test['dff'])
+        np.testing.assert_almost_equal(ff, data_test['ff'])
+        np.testing.assert_almost_equal(asrs(XX), data_test['ff'])
+        np.testing.assert_almost_equal(dff, data_test['dff'])
+        np.testing.assert_almost_equal(asrs.gradient(XX), data_test['dff'])
         
         
         sr = srun.SimulationRunner(self.quad_fun)
@@ -592,10 +592,10 @@ class TestASResponseSurfaces(TestCase):
         if self.writeData:
             np.savez('data/test_rs_7_1',ff=ff,dff=dff)
         data_test = helper.load_test_npz('test_rs_7_1.npz')
-        np.testing.assert_equal(ff, data_test['ff'])
-        np.testing.assert_equal(asrs(XX), data_test['ff'])
-        np.testing.assert_equal(dff, data_test['dff'])
-        np.testing.assert_equal(asrs.gradient(XX), data_test['dff'])
+        np.testing.assert_almost_equal(ff, data_test['ff'])
+        np.testing.assert_almost_equal(asrs(XX), data_test['ff'])
+        np.testing.assert_almost_equal(dff, data_test['dff'])
+        np.testing.assert_almost_equal(asrs.gradient(XX), data_test['dff'])
         
         
         sr = srun.SimulationRunner(self.quad_fun)

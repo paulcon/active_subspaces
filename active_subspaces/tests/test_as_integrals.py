@@ -41,7 +41,7 @@ class TestASIntegrals(TestCase):
         if self.writeData:
             np.savez('data/test_int_0_1',I=I)
         data_test = helper.load_test_npz('test_int_0_1.npz')
-        np.testing.assert_equal(I, data_test['I'])
+        np.testing.assert_almost_equal(I, data_test['I'])
         
         print '\n'
         print 'rs ubnd: {:6.4f}'.format(I)
@@ -63,7 +63,7 @@ class TestASIntegrals(TestCase):
         if self.writeData:
             np.savez('data/test_int_0_2',I=I)
         data_test = helper.load_test_npz('test_int_0_2.npz')
-        np.testing.assert_equal(I, data_test['I'])
+        np.testing.assert_almost_equal(I, data_test['I'])
         
         print '\n'
         print 'rs bnd: {:6.4f}'.format(I)
@@ -86,7 +86,7 @@ class TestASIntegrals(TestCase):
         if self.writeData:
             np.savez('data/test_int_0_3',I=I)
         data_test = helper.load_test_npz('test_int_0_3.npz')
-        np.testing.assert_equal(I, data_test['I'])
+        np.testing.assert_almost_equal(I, data_test['I'])
         
         print '\n'
         print 'rs ubnd 2d: {:6.4f}'.format(I)
@@ -109,7 +109,7 @@ class TestASIntegrals(TestCase):
         if self.writeData:
             np.savez('data/test_int_0_4',I=I)
         data_test = helper.load_test_npz('test_int_0_4.npz')
-        np.testing.assert_equal(I, data_test['I'])
+        np.testing.assert_almost_equal(I, data_test['I'])
         
         print '\n'
         print 'rs bnd 2d: {:6.4f}'.format(I)
@@ -129,9 +129,9 @@ class TestASIntegrals(TestCase):
         if self.writeData:
             np.savez('data/test_int_1_1',mu=mu,lb=lb,ub=ub)
         data_test = helper.load_test_npz('test_int_1_1.npz')
-        np.testing.assert_equal(mu, data_test['mu'])
-        np.testing.assert_equal(lb, data_test['lb'])
-        np.testing.assert_equal(ub, data_test['ub'])
+        np.testing.assert_almost_equal(mu, data_test['mu'])
+        np.testing.assert_almost_equal(lb, data_test['lb'])
+        np.testing.assert_almost_equal(ub, data_test['ub'])
         
         print '\n'
         print 'fun ubnd: {:6.4f}, {:6.4f}, {:6.4f}'.format(lb,mu,ub)
@@ -151,9 +151,9 @@ class TestASIntegrals(TestCase):
         if self.writeData:
             np.savez('data/test_int_1_2',mu=mu,lb=lb,ub=ub)
         data_test = helper.load_test_npz('test_int_1_2.npz')
-        np.testing.assert_equal(mu, data_test['mu'])
-        np.testing.assert_equal(lb, data_test['lb'])
-        np.testing.assert_equal(ub, data_test['ub'])
+        np.testing.assert_almost_equal(mu, data_test['mu'])
+        np.testing.assert_almost_equal(lb, data_test['lb'])
+        np.testing.assert_almost_equal(ub, data_test['ub'])
         
         print '\n'
         print 'fun bnd: {:6.4f}, {:6.4f}, {:6.4f}'.format(lb,mu,ub)
@@ -174,9 +174,9 @@ class TestASIntegrals(TestCase):
         if self.writeData:
             np.savez('data/test_int_1_3',mu=mu,lb=lb,ub=ub)
         data_test = helper.load_test_npz('test_int_1_3.npz')
-        np.testing.assert_equal(mu, data_test['mu'])
-        np.testing.assert_equal(lb, data_test['lb'])
-        np.testing.assert_equal(ub, data_test['ub'])
+        np.testing.assert_almost_equal(mu, data_test['mu'])
+        np.testing.assert_almost_equal(lb, data_test['lb'])
+        np.testing.assert_almost_equal(ub, data_test['ub'])
         
         print '\n'
         print 'fun 2d ubnd: {:6.4f}, {:6.4f}, {:6.4f}'.format(lb,mu,ub)
@@ -197,9 +197,9 @@ class TestASIntegrals(TestCase):
         if self.writeData:
             np.savez('data/test_int_1_4',mu=mu,lb=lb,ub=ub)
         data_test = helper.load_test_npz('test_int_1_4.npz')
-        np.testing.assert_equal(mu, data_test['mu'])
-        np.testing.assert_equal(lb, data_test['lb'])
-        np.testing.assert_equal(ub, data_test['ub'])
+        np.testing.assert_almost_equal(mu, data_test['mu'])
+        np.testing.assert_almost_equal(lb, data_test['lb'])
+        np.testing.assert_almost_equal(ub, data_test['ub'])
         
         print '\n'
         print 'fun bnd 2d: {:6.4f}, {:6.4f}, {:6.4f}'.format(lb,mu,ub)

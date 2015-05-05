@@ -40,8 +40,8 @@ class TestASOptimizers(TestCase):
         if self.writeData:
             np.savez('data/test_opt_0_1',xstar=xstar, fstar=fstar)
         data_test = helper.load_test_npz('test_opt_0_1.npz')
-        np.testing.assert_equal(xstar, data_test['xstar'])
-        np.testing.assert_equal(fstar, data_test['fstar'])
+        np.testing.assert_almost_equal(xstar, data_test['xstar'])
+        np.testing.assert_almost_equal(fstar, data_test['fstar'])
                 
         print '\n'
         print 'ubnd min: {:6.4f}'.format(fstar)
@@ -64,8 +64,8 @@ class TestASOptimizers(TestCase):
         if self.writeData:
             np.savez('data/test_opt_0_2',xstar=xstar, fstar=fstar)
         data_test = helper.load_test_npz('test_opt_0_2.npz')
-        np.testing.assert_equal(xstar, data_test['xstar'])
-        np.testing.assert_equal(fstar, data_test['fstar'])
+        np.testing.assert_almost_equal(xstar, data_test['xstar'])
+        np.testing.assert_almost_equal(fstar, data_test['fstar'])
                 
         print '\n'
         print 'bnd min: {:6.4f}'.format(fstar)
@@ -89,8 +89,8 @@ class TestASOptimizers(TestCase):
         if self.writeData:
             np.savez('data/test_opt_0_3',xstar=xstar, fstar=fstar)
         data_test = helper.load_test_npz('test_opt_0_3.npz')
-        np.testing.assert_equal(xstar, data_test['xstar'])
-        np.testing.assert_equal(fstar, data_test['fstar'])
+        np.testing.assert_almost_equal(xstar, data_test['xstar'])
+        np.testing.assert_almost_equal(fstar, data_test['fstar'])
                 
         print '\n'
         print 'ubnd 2d min: {:6.4f}'.format(fstar)
@@ -114,8 +114,8 @@ class TestASOptimizers(TestCase):
         if self.writeData:
             np.savez('data/test_opt_0_4',xstar=xstar, fstar=fstar)
         data_test = helper.load_test_npz('test_opt_0_4.npz')
-        np.testing.assert_equal(xstar, data_test['xstar'])
-        np.testing.assert_equal(fstar, data_test['fstar'])
+        np.testing.assert_almost_equal(xstar, data_test['xstar'])
+        np.testing.assert_almost_equal(fstar, data_test['fstar'])
                 
         print '\n'
         print 'bnd 2d min: {:6.4f}'.format(fstar)

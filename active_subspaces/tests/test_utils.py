@@ -39,16 +39,16 @@ class TestUtils(TestCase):
     def test_process_inputs(self):
         X0 = np.random.uniform(-1.0,1.0,size=(10,3))
         X,M,m = ut.process_inputs(X0)
-        np.testing.assert_equal(X, X0)
-        np.testing.assert_equal(M, 10)
-        np.testing.assert_equal(m, 3)
+        np.testing.assert_almost_equal(X, X0)
+        np.testing.assert_almost_equal(M, 10)
+        np.testing.assert_almost_equal(m, 3)
 
     def test_conditional_expectations(self):
         f = np.array([0.2,0.2,1.0,2.0]).reshape((4,1))
         ind = np.array([0,0,1,1]).reshape((4,1))
         E, V = ut.conditional_expectations(f, ind)
-        np.testing.assert_equal(E,np.array([[0.2],[1.5]]))
-        np.testing.assert_equal(V,np.array([[0.0],[0.25]]))
+        np.testing.assert_almost_equal(E,np.array([[0.2],[1.5]]))
+        np.testing.assert_almost_equal(V,np.array([[0.0],[0.25]]))
         
 
 if __name__ == '__main__':

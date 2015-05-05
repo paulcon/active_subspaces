@@ -17,12 +17,12 @@ class TestDomains(TestCase):
         sub.compute(df0)
         
         uavd = dom.UnboundedActiveVariableDomain(sub)
-        np.testing.assert_equal(uavd.vertY, None)
-        np.testing.assert_equal(uavd.vertX, None)
-        np.testing.assert_equal(uavd.convhull, None)
-        np.testing.assert_equal(uavd.constraints, None)
-        np.testing.assert_equal(uavd.n, sub.W1.shape[1])
-        np.testing.assert_equal(uavd.m, sub.W1.shape[0])
+        np.testing.assert_almost_equal(uavd.vertY, None)
+        np.testing.assert_almost_equal(uavd.vertX, None)
+        np.testing.assert_almost_equal(uavd.convhull, None)
+        np.testing.assert_almost_equal(uavd.constraints, None)
+        np.testing.assert_almost_equal(uavd.n, sub.W1.shape[1])
+        np.testing.assert_almost_equal(uavd.m, sub.W1.shape[0])
         
     def test_bounded_active_variable_domain_0(self):
         data = helper.load_test_npz('test_spec_decomp_0.npz')
@@ -35,10 +35,10 @@ class TestDomains(TestCase):
         bavd = dom.BoundedActiveVariableDomain(sub)
 
         np.testing.assert_almost_equal(bavd.vertY, np.dot(bavd.vertX, sub.W1))
-        np.testing.assert_equal(bavd.vertY, data_bavd['vertY'])
-        np.testing.assert_equal(bavd.vertX, data_bavd['vertX'])
-        np.testing.assert_equal(bavd.n, sub.W1.shape[1])
-        np.testing.assert_equal(bavd.m, sub.W1.shape[0])
+        np.testing.assert_almost_equal(bavd.vertY, data_bavd['vertY'])
+        np.testing.assert_almost_equal(bavd.vertX, data_bavd['vertX'])
+        np.testing.assert_almost_equal(bavd.n, sub.W1.shape[1])
+        np.testing.assert_almost_equal(bavd.m, sub.W1.shape[0])
         
     def test_bounded_active_variable_domain_1(self):
         data = helper.load_test_npz('test_spec_decomp_1.npz')
@@ -52,10 +52,10 @@ class TestDomains(TestCase):
         bavd = dom.BoundedActiveVariableDomain(sub)
         
         np.testing.assert_almost_equal(bavd.vertY, np.dot(bavd.vertX, sub.W1))
-        np.testing.assert_equal(bavd.vertY, data_bavd['vertY'])
-        np.testing.assert_equal(bavd.vertX, data_bavd['vertX'])
-        np.testing.assert_equal(bavd.n, sub.W1.shape[1])
-        np.testing.assert_equal(bavd.m, sub.W1.shape[0])
+        np.testing.assert_almost_equal(bavd.vertY, data_bavd['vertY'])
+        np.testing.assert_almost_equal(bavd.vertX, data_bavd['vertX'])
+        np.testing.assert_almost_equal(bavd.n, sub.W1.shape[1])
+        np.testing.assert_almost_equal(bavd.m, sub.W1.shape[0])
         
     def test_unbounded_active_variable_map_0(self):
         data = helper.load_test_npz('test_spec_decomp_0.npz')
@@ -204,7 +204,7 @@ class TestDomains(TestCase):
         if self.writeData:
             np.savez('data/test_sampling_z_0_0',Z=Z)
         data_test = helper.load_test_npz('test_sampling_z_0_0.npz')
-        np.testing.assert_equal(Z, data_test['Z'])
+        np.testing.assert_almost_equal(Z, data_test['Z'])
         
     def test_hit_and_run_z(self):
         data = helper.load_test_npz('test_spec_decomp_1.npz')
@@ -225,7 +225,7 @@ class TestDomains(TestCase):
         if self.writeData:
             np.savez('data/test_sampling_z_0_1',Z=Z)
         data_test = helper.load_test_npz('test_sampling_z_0_1.npz')
-        np.testing.assert_equal(Z, data_test['Z'])
+        np.testing.assert_almost_equal(Z, data_test['Z'])
         
     def test_random_walk_z(self):
         data = helper.load_test_npz('test_spec_decomp_1.npz')
@@ -246,7 +246,7 @@ class TestDomains(TestCase):
         if self.writeData:
             np.savez('data/test_sampling_z_0_2',Z=Z)
         data_test = helper.load_test_npz('test_sampling_z_0_2.npz')
-        np.testing.assert_equal(Z, data_test['Z'])
+        np.testing.assert_almost_equal(Z, data_test['Z'])
         
     def test_sample_z(self):
         data = helper.load_test_npz('test_spec_decomp_1.npz')
@@ -265,7 +265,7 @@ class TestDomains(TestCase):
         Z = dom.sample_z(N, y, W1, W2)
             
         data_test = helper.load_test_npz('test_sampling_z_0_0.npz')
-        np.testing.assert_equal(Z, data_test['Z'])
+        np.testing.assert_almost_equal(Z, data_test['Z'])
         
 
 if __name__ == '__main__':
