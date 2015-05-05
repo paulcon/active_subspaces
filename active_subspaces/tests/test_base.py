@@ -168,7 +168,7 @@ class TestBase(TestCase):
         
         np.random.seed(43)
         model = base.ActiveSubspaceReducedModel(3, False)
-        model.build_from_interface(self.quad_fun)
+        model.build_from_interface(self.quad_fun, avdim=1)
         
         avg = model.average(20)[0]
         prob, pl, pu = model.probability(0.0, 1.0)
@@ -196,7 +196,7 @@ class TestBase(TestCase):
         
         np.random.seed(43)
         model = base.ActiveSubspaceReducedModel(3, True)
-        model.build_from_interface(self.quad_fun)
+        model.build_from_interface(self.quad_fun, avdim=1)
         
         avg = model.average(20)[0]
         prob, pl, pu = model.probability(0.0, 1.0)
