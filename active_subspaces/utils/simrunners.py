@@ -1,7 +1,7 @@
 """Utilities for running several simulations at different inputs."""
 
 import numpy as np
-from utils import process_inputs
+from misc import process_inputs
 
 class SimulationRunner():
     """
