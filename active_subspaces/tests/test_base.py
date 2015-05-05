@@ -29,7 +29,7 @@ class TestBase(TestCase):
         X, f, df = data['X'], data['f'], data['df']
         
         np.random.seed(43)
-        model = base.ActiveSubspaceReducedModel()
+        model = base.ActiveSubspaceReducedModel(3, False)
         model.build_from_data(X, f, df=df)
         
         avg = model.average(20)[0]
@@ -56,8 +56,8 @@ class TestBase(TestCase):
         X, f, df = data['X'], data['f'], data['df']
         
         np.random.seed(43)
-        model = base.ActiveSubspaceReducedModel()
-        model.build_from_data(X, f, df=df, bounded_inputs=True)
+        model = base.ActiveSubspaceReducedModel(3, True)
+        model.build_from_data(X, f, df=df)
         
         avg = model.average(20)[0]
         prob, pl, pu = model.probability(0.0, 1.0)
@@ -84,7 +84,7 @@ class TestBase(TestCase):
         X, f, df = data['X'], data['f'], data['df']
         
         np.random.seed(43)
-        model = base.ActiveSubspaceReducedModel()
+        model = base.ActiveSubspaceReducedModel(3, False)
         model.build_from_data(X, f, df=df, avdim=2)
         
         avg = model.average(20)[0]
@@ -112,8 +112,8 @@ class TestBase(TestCase):
         X, f, df = data['X'], data['f'], data['df']
         
         np.random.seed(43)
-        model = base.ActiveSubspaceReducedModel()
-        model.build_from_data(X, f, df=df, avdim=2, bounded_inputs=True)
+        model = base.ActiveSubspaceReducedModel(3, True)
+        model.build_from_data(X, f, df=df, avdim=2)
         
         avg = model.average(20)[0]
         prob, pl, pu = model.probability(0.0, 1.0)
@@ -140,7 +140,7 @@ class TestBase(TestCase):
         X, f, df = data['X'], data['f'], data['df']
         
         np.random.seed(43)
-        model = base.ActiveSubspaceReducedModel()
+        model = base.ActiveSubspaceReducedModel(3, False)
         model.build_from_data(X, f, df=df)
         
         model.diagnostics()
@@ -150,14 +150,14 @@ class TestBase(TestCase):
         X, f, df = data['X'], data['f'], data['df']
         
         np.random.seed(43)
-        modelN = base.ActiveSubspaceReducedModel()
+        modelN = base.ActiveSubspaceReducedModel(3, False)
         modelN.build_from_data(X, f, df=df)
         
         XN = np.random.normal(size=X.shape)
         modelN.predict(XN)
         
-        modelU = base.ActiveSubspaceReducedModel()
-        modelU.build_from_data(X, f, df=df, bounded_inputs=True)
+        modelU = base.ActiveSubspaceReducedModel(3, True)
+        modelU.build_from_data(X, f, df=df)
         
         XU = np.random.uniform(-1.0, 1.0, size=X.shape)
         modelU.predict(XU)
@@ -167,8 +167,8 @@ class TestBase(TestCase):
         X, f, df = data['X'], data['f'], data['df']
         
         np.random.seed(43)
-        model = base.ActiveSubspaceReducedModel()
-        model.build_from_interface(X.shape[1], self.quad_fun)
+        model = base.ActiveSubspaceReducedModel(3, False)
+        model.build_from_interface(self.quad_fun)
         
         avg = model.average(20)[0]
         prob, pl, pu = model.probability(0.0, 1.0)
@@ -195,8 +195,8 @@ class TestBase(TestCase):
         X, f, df = data['X'], data['f'], data['df']
         
         np.random.seed(43)
-        model = base.ActiveSubspaceReducedModel()
-        model.build_from_interface(X.shape[1], self.quad_fun, bounded_inputs=True)
+        model = base.ActiveSubspaceReducedModel(3, True)
+        model.build_from_interface(self.quad_fun)
         
         avg = model.average(20)[0]
         prob, pl, pu = model.probability(0.0, 1.0)
@@ -223,8 +223,8 @@ class TestBase(TestCase):
         X, f, df = data['X'], data['f'], data['df']
         
         np.random.seed(43)
-        model = base.ActiveSubspaceReducedModel()
-        model.build_from_interface(X.shape[1], self.quad_fun, avdim=2)
+        model = base.ActiveSubspaceReducedModel(3, False)
+        model.build_from_interface(self.quad_fun, avdim=2)
         
         avg = model.average(20)[0]
         prob, pl, pu = model.probability(0.0, 1.0)
@@ -251,8 +251,8 @@ class TestBase(TestCase):
         X, f, df = data['X'], data['f'], data['df']
         
         np.random.seed(43)
-        model = base.ActiveSubspaceReducedModel()
-        model.build_from_interface(X.shape[1], self.quad_fun, avdim=2, bounded_inputs=True)
+        model = base.ActiveSubspaceReducedModel(3, True)
+        model.build_from_interface(self.quad_fun, avdim=2)
         
         avg = model.average(20)[0]
         prob, pl, pu = model.probability(0.0, 1.0)
