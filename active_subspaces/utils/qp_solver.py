@@ -226,7 +226,7 @@ def _scipy_linear_program_eq(c, A, b, lb, ub):
     if res.success:
         return res.x.reshape((c.size,1))
     else:
-        np.savez('bad_scipy_lp_eq_{:0.10d}'.format(np.random.randint(int(1e9))), 
+        np.savez('bad_scipy_lp_eq_{:010d}'.format(np.random.randint(int(1e9))), 
                 c=c, A=A, b=b, lb=lb, ub=ub, res=res)
         raise Exception('Scipy did not solve the LP. Blame Scipy.')
         return None
@@ -238,7 +238,7 @@ def _scipy_linear_program_ineq(c, A, b):
     if res.success:
         return res.x.reshape((c.size,1))
     else:
-        np.savez('bad_scipy_lp_ineq_{:0.10d}'.format(np.random.randint(int(1e9))), 
+        np.savez('bad_scipy_lp_ineq_{:010d}'.format(np.random.randint(int(1e9))), 
                 c=c, A=A, b=b, res=res)
         raise Exception('Scipy did not solve the LP. Blame Scipy.')
         return None
@@ -269,7 +269,7 @@ def _scipy_quadratic_program_bnd(c, Q, lb, ub):
             xstar = np.array([[xstar]])
         return xstar.reshape((c.size,1))
     else:
-        np.savez('bad_scipy_qp_bnd_{:0.10d}'.format(np.random.randint(int(1e9))), 
+        np.savez('bad_scipy_qp_bnd_{:010d}'.format(np.random.randint(int(1e9))), 
                 c=c, Q=Q, lb=lb, ub=ub, res=res)
         raise Exception('Scipy did not solve the LP. Blame Scipy.')
         return None
@@ -300,7 +300,7 @@ def _scipy_quadratic_program_ineq(c, Q, A, b):
             xstar = np.array([[xstar]])
         return xstar.reshape((c.size,1))
     else:
-        np.savez('bad_scipy_qp_ineq_{:0.10d}'.format(np.random.randint(int(1e9))), 
+        np.savez('bad_scipy_qp_ineq_{:010d}'.format(np.random.randint(int(1e9))), 
                 c=c, Q=Q, A=A, b=b, res=res)
         raise Exception('Scipy did not solve the LP. Blame Scipy.')
         return None
@@ -337,7 +337,7 @@ def _gurobi_linear_program_eq(c, A, b, lb, ub):
     if model.status == gpy.GRB.OPTIMAL:
         return np.array(model.getAttr('x', vars)).reshape((n,1))
     else:
-        np.savez('bad_gurobi_lp_eq_{:0.10d}'.format(np.random.randint(int(1e9))), 
+        np.savez('bad_gurobi_lp_eq_{:010d}'.format(np.random.randint(int(1e9))), 
                 c=c, A=A, b=b, lb=lb, ub=ub, model=model)
         raise Exception('Gurobi did not solve the LP. Blame Gurobi.')
         return None
@@ -375,7 +375,7 @@ def _gurobi_linear_program_ineq(c, A, b):
     if model.status == gpy.GRB.OPTIMAL:
         return np.array(model.getAttr('x', vars)).reshape((n,1))
     else:
-        np.savez('bad_gurobi_lp_ineq_{:0.10d}'.format(np.random.randint(int(1e9))), 
+        np.savez('bad_gurobi_lp_ineq_{:010d}'.format(np.random.randint(int(1e9))), 
                 c=c, A=A, b=b, model=model)
         raise Exception('Gurobi did not solve the LP. Blame Gurobi.')
         return None
@@ -409,7 +409,7 @@ def _gurobi_quadratic_program_bnd(c, Q, lb, ub):
     if model.status == gpy.GRB.OPTIMAL:
         return np.array(model.getAttr('x', vars)).reshape((n,1))
     else:
-        np.savez('bad_gurobi_qp_bnd_{:0.10d}'.format(np.random.randint(int(1e9))), 
+        np.savez('bad_gurobi_qp_bnd_{:010d}'.format(np.random.randint(int(1e9))), 
                 c=c, Q=Q, lb=lb, ub=ub, model=model)
         raise Exception('Gurobi did not solve the QP. Blame Gurobi.')
         return None
@@ -450,7 +450,7 @@ def _gurobi_quadratic_program_ineq(c, Q, A, b):
     if model.status == gpy.GRB.OPTIMAL:
         return np.array(model.getAttr('x', vars)).reshape((n,1))
     else:
-        np.savez('bad_gurobi_qp_ineq_{:0.10d}'.format(np.random.randint(int(1e9))), 
+        np.savez('bad_gurobi_qp_ineq_{:010d}'.format(np.random.randint(int(1e9))), 
                 c=c, Q=Q, A=A, b=b, model=model)
         raise Exception('Gurobi did not solve the QP. Blame Gurobi.')
         return None
