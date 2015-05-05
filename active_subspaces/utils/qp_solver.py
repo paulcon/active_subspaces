@@ -88,8 +88,6 @@ class QPSolver():
                     lb <= x <= ub
         """
         if self.solver == solver_SCIPY:
-            c = c.reshape((c.size,))
-            b = b.reshape((b.size,))
             return _scipy_linear_program_eq(c, A, b, lb, ub)
         elif self.solver == solver_GUROBI:
             return _gurobi_linear_program_eq(c, A, b, lb, ub)
@@ -126,8 +124,6 @@ class QPSolver():
         """
 
         if self.solver == solver_SCIPY:
-            c = c.reshape((c.size,))
-            b = b.reshape((b.size,))
             return _scipy_linear_program_ineq(c, A, b)
         elif self.solver == solver_GUROBI:
             return _gurobi_linear_program_ineq(c, A, b)
@@ -208,7 +204,6 @@ class QPSolver():
         """
 
         if self.solver == solver_SCIPY:
-            b = b.reshape((b.size,))
             return _scipy_quadratic_program_ineq(c, Q, A, b)
         elif self.solver == solver_GUROBI:
             return _gurobi_quadratic_program_ineq(c, Q, A, b)
@@ -217,10 +212,13 @@ class QPSolver():
 
 def _scipy_linear_program_eq(c, A, b, lb, ub):
     
+    c = c.reshape((c.size,))
+    b = b.reshape((b.size,))
+
     # make bounds
     bounds = []
     for i in range(lb.size):
-        bounds.append((lb[i,0],ub[i,0]))
+        bounds.append((lb[i,0], ub[i,0]))
 
     res = linprog(c, A_eq=A, b_eq=b, bounds=bounds, options={"disp": False})
     if res.success:
@@ -233,8 +231,16 @@ def _scipy_linear_program_eq(c, A, b, lb, ub):
     
 def _scipy_linear_program_ineq(c, A, b):
     
+    c = c.reshape((c.size,))
+    b = b.reshape((b.size,))
+    
+    # make unbounded bounds
+    bounds = []
+    for i in range(c.size):
+        bounds.append((None, None))
+    
     A_ub, b_ub = -A, -b 
-    res = linprog(c, A_ub=A_ub, b_ub=b_ub, options={"disp": False})
+    res = linprog(c, A_ub=A_ub, b_ub=b_ub, bounds=bounds, options={"disp": False})
     if res.success:
         return res.x.reshape((c.size,1))
     else:
@@ -275,6 +281,8 @@ def _scipy_quadratic_program_bnd(c, Q, lb, ub):
         return None
         
 def _scipy_quadratic_program_ineq(c, Q, A, b):
+
+    b = b.reshape((b.size,))
     
     # define the objective and gradient
     def fun(x):
