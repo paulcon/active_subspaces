@@ -4,7 +4,7 @@ Library.
 """
 
 import numpy as np
-import utils as ut
+import misc as mi
 
 def r_hermite(N):
     """Recurence coefficients for the Hermite orthogonal polynomials. 
@@ -170,4 +170,4 @@ def gauss_hermite(N):
             xU = np.kron(np.ones((x.shape[0],1)), xi)
             x = np.hstack((xL, xU))
             w = np.kron(w.copy(), wi)
-        return np.atleast_2d(x[:,1:]), ut.atleast_2d_col(w)
+        return np.atleast_2d(x[:,1:]), mi.atleast_2d_col(w)
