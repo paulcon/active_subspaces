@@ -12,6 +12,14 @@ class ResponseSurface():
     ----------
     N : int
         Maximum degree of global polynomial in the response surface.
+    Rsqr : float
+        The R-squared coefficient for the response surface. 
+    X : ndarray
+        `X` is an ndarray of training points for the response surface. The shape
+        is M-by-m, where m is the number of dimensions. 
+    f : ndarray
+        `f` is an ndarray of function values used to train the response surface.
+        The shape of `f` is M-by-1.
         
     See Also
     --------
@@ -19,6 +27,8 @@ class ResponseSurface():
     utils.response_surfaces.RadialBasisApproximation
     """
     N = None
+    Rsqr = None
+    X, f = None, None
     
     def __init__(self, N=2):
         self.N = N
@@ -42,16 +52,6 @@ class PolynomialApproximation(ResponseSurface):
     
     Attributes
     ----------
-    N : int
-        Maximum degree of global polynomial in the response surface.
-    Rsqr : float
-        The R-squared coefficient for the model. 
-    X : ndarray
-        `X` is an ndarray of training points for the polynomial approximation.
-        The shape is M-by-m, where m is the number of dimensions. 
-    f : ndarray
-        `f` is an ndarray of function values used to train the polynomial
-        approximation. The shape of `f` is M-by-1.
     poly_weights : ndarray
         `poly_weights` is an ndarray of coefficients for the polynomial 
         approximation in the monomial basis.
@@ -71,8 +71,6 @@ class PolynomialApproximation(ResponseSurface):
     All attributes besides the degree `N` are set when the class's `train` 
     method is called.
     """
-    Rsqr = None
-    X, f = None, None
     poly_weights = None
     g, H = None, None
     
@@ -175,16 +173,6 @@ class RadialBasisApproximation(ResponseSurface):
     
     Attributes
     ----------
-    N : int
-        Maximum degree of global polynomial in the response surface.
-    Rsqr : float
-        The R-squared coefficient for the model. 
-    X : ndarray
-        `X` is an ndarray of training points for the polynomial approximation.
-        The shape is M-by-m, where m is the number of dimensions. 
-    f : ndarray
-        `f` is an ndarray of function values used to train the polynomial
-        approximation. The shape of `f` is M-by-1.
     radial_weights : ndarray
         `radial_weights` is an ndarray of coefficients radial basis functions
         in the model. 
@@ -207,8 +195,6 @@ class RadialBasisApproximation(ResponseSurface):
     All attributes besides the degree `N` are set when the class's `train` 
     method is called.
     """
-    Rsqr = None
-    X, f = None, None
     K, ell = None, None
     radial_weights, poly_weights = None, None
     

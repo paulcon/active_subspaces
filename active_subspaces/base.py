@@ -47,10 +47,12 @@ class ActiveSubspaceReducedModel():
         take an ndarray of shape 1-by-m (e.g., a row of `X`), and it should 
         return the gradient of the quantity of interest as an ndarray of shape
         1-by-m. 
-    as_respsurf : ResponseSurface
-        `as_respsurf` is a utils.response_surfaces.ResponseSurface. It is 
-        initialized and trained while building the model. Once trained, it can
-        be used as a cheap surrogate for the simulation code. 
+    as_respsurf : ActiveSubspaceResponseSurface
+        `as_respsurf` is a response_surfaces.ActiveSubspacesResponseSurface. It 
+        is initialized and trained while building the model. Once trained, it 
+        can be used as a cheap surrogate for the simulation code. 
+    Rsqr : float
+        The R-squared coefficient for the response surface. 
     
     Notes
     -----
@@ -71,12 +73,20 @@ class ActiveSubspaceReducedModel():
     Once the model is built and the response surface is trained, one can use
     the methods to estimate the average, probabilities, and the minimum of the
     simulation quantity of interest as a function of the simulation inputs. 
+    
+    If the model is built from given input/output pairs, then `Rsqr` is the 
+    R-squared coefficient from the response surface on the active variables. If 
+    the model is built from a given interface, the R-squared coefficient is 
+    computed from the output samples computed along with the gradients while
+    estimating the active subspace. This is a big advantage of building the
+    response surface with an interface.
     """
     bounded_inputs = None
     X, f = None, None
     m, n = None, None
     fun, dfun = None, None
     as_respsurf = None 
+    Rsqr = None
     
     def __init__(self, m, bounded_inputs):
         """
@@ -209,6 +219,9 @@ class ActiveSubspaceReducedModel():
         # build the response surface
         asrs = ActiveSubspaceResponseSurface(avmap)
         asrs.train_with_data(X, f)
+        
+        # set the R-squared coefficient
+        self.Rsqr = asrs.respsurf.Rsqr
         self.as_respsurf = asrs
         
     def build_from_interface(self, fun, dfun=None, avdim=None):
@@ -299,6 +312,11 @@ class ActiveSubspaceReducedModel():
         # build the response surface
         asrs = ActiveSubspaceResponseSurface(avmap)
         asrs.train_with_interface(fun, int(np.power(5,self.n)))
+        
+        # compute testing error as an R-squared
+        self.Rsqr = 1.0 - ( np.linalg.norm(asrs.predict(X)[0] - f)**2 \
+                            / np.var(f) )
+        
         self.as_respsurf = asrs
 
     def diagnostics(self):
