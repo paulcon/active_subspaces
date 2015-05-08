@@ -11,6 +11,7 @@ from subspaces import Subspaces
 from gradients import local_linear_gradients, finite_difference_gradients
 from domains import UnboundedActiveVariableDomain, BoundedActiveVariableDomain, \
                     UnboundedActiveVariableMap, BoundedActiveVariableMap
+import time
 
 class ActiveSubspaceReducedModel():
     """
@@ -292,10 +293,11 @@ class ActiveSubspaceReducedModel():
             dfun = SimulationGradientRunner(dfun)
             df = dfun.run(X)
             self.dfun = dfun
-
+        
         # compute the active subspace
         ss = Subspaces()
         ss.compute(df)
+        
         if avdim is not None:
             ss.partition(avdim)
         self.n = ss.W1.shape[1]
@@ -308,7 +310,7 @@ class ActiveSubspaceReducedModel():
         else:
             avdom = UnboundedActiveVariableDomain(ss)
             avmap = UnboundedActiveVariableMap(avdom)
-            
+                        
         # build the response surface
         asrs = ActiveSubspaceResponseSurface(avmap)
         asrs.train_with_interface(fun, int(np.power(5,self.n)))

@@ -4,6 +4,7 @@ import misc as mi
 from quadrature import gauss_hermite
 from scipy.spatial import ConvexHull, distance_matrix
 from scipy.optimize import minimize
+import pdb
 
 def interval_design(a, b, N):
     """
@@ -62,15 +63,6 @@ def maximin_design(vert, N):
     minimization and use the design with the lowest objective value. 
         
     """
-    # objective function for maximin design
-    def maximin_design_obj(y, vert=None):
-        Ny, n = vert.shape
-        N = y.size / n
-        Y = y.reshape((N, n))
-        D0 = distance_matrix(Y, Y) + 1e4*np.eye(N)
-        D1 = distance_matrix(Y, vert)
-        return -np.amin(np.hstack((D0.flatten(), D1.flatten())))
-    
     n = vert.shape[1]
     C = ConvexHull(vert)
     A = np.kron(np.eye(N), C.equations[:,:n])
@@ -87,8 +79,8 @@ def maximin_design(vert, N):
     minres = []
     for i in range(3):
         y0 = np.random.normal(size=(N, n))
-        res = minimize(maximin_design_obj, y0, args=(vert, ), constraints=cons,
-                        method='SLSQP', options={'disp':False, 'maxiter':1e9, 'ftol':1e-12})
+        res = minimize(_maximin_design_obj, y0, args=(vert, ), jac=_maximin_design_grad, constraints=cons,
+                        method='SLSQP', options={'disp':True, 'maxiter':1e2, 'ftol':1e-4})
         if res.fun < minf:
             minf = res.fun
             minres = res
@@ -115,3 +107,85 @@ def gauss_hermite_design(N):
     """
     design = gauss_hermite(N)[0]
     return design
+    
+def _maximin_design_obj(y, vert=None):
+    """
+    Objective function for the maximin design optimization.
+    
+    Parameters
+    ----------
+    y : ndarray
+        `y` contains the coordinates of the points in the design. If there are N
+        points in n dimensions then `y` is shape ((Nn, )).
+    vert : ndarray
+        `vert` contains the fixed vertices defining the zonotope. 
+        
+    Notes
+    -----
+    This function returns the minimum squared distance between all points in
+    the design and between points and vertices.
+    """
+    Ny, n = vert.shape
+    N = y.size / n
+    Y = y.reshape((N, n))
+    
+    # get minimum distance among points
+    D0 = distance_matrix(Y, Y) + 1e5*np.eye(N)
+    d0 = np.power(D0.flatten(), 2)
+    d0star = np.amin(d0)
+    
+    # get minimum distance between points and vertices
+    D1 = distance_matrix(Y, vert)
+    d1 = np.power(D1.flatten(), 2)
+    d1star = np.amin(d1)
+    dstar = np.amin([d0star, d1star])
+    return -dstar
+    
+def _maximin_design_grad(y, vert=None):
+    """
+    Gradient of objective function for the maximin design optimization.
+    
+    Parameters
+    ----------
+    y : ndarray
+        `y` contains the coordinates of the points in the design. If there are N
+        points in n dimensions then `y` is shape ((Nn, )).
+    vert : ndarray
+        `vert` contains the fixed vertices defining the zonotope. 
+        
+    """
+    Ny, n = vert.shape
+    v = vert.reshape((Ny*n, ))
+    
+    N = y.size / n
+    Y = y.reshape((N, n))
+    
+    # get minimum distance among points
+    D0 = distance_matrix(Y, Y) + 1e5*np.eye(N)
+    d0 = np.power(D0.flatten(), 2)
+    d0star, k0star = np.amin(d0), np.argmin(d0)
+    
+    # get minimum distance between points and vertices
+    D1 = distance_matrix(Y, vert)
+    d1 = np.power(D1.flatten(), 2)
+    d1star, k1star = np.amin(d1), np.argmin(d1)
+    
+    g = np.zeros((N*n, ))
+    if d0star < d1star:
+        dstar, kstar = d0star, k0star
+        istar = kstar/N
+        jstar = np.mod(kstar, N)
+        
+        for k in range(n):
+            g[istar*n + k] = 2*(y[istar*n + k] - y[jstar*n + k])
+            g[jstar*n + k] = 2*(y[jstar*n + k] - y[istar*n + k])
+        
+    else:
+        dstar, kstar = d1star, k1star
+        istar = kstar/Ny
+        jstar = np.mod(kstar, Ny)
+        
+        for k in range(n):
+            g[istar*n + k] = 2*(y[istar*n + k] - v[jstar*n + k])
+    
+    return -g

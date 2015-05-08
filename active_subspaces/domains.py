@@ -122,11 +122,7 @@ class BoundedActiveVariableDomain(ActiveVariableDomain):
             convhull = None
             constraints = None
         else:
-	    Y, X = zonotope_vertices(W1)
-	    numverts = nzv(m,n)[0]
-	    if Y.shape[0] != numverts:
-	        warnings.warn('Number of zonotope vertices should be {:d} but is {:d}'.format((numverts,Y.shape[0])))
-	    
+	    Y, X = zonotope_vertices(W1)	    
             convhull = ConvexHull(Y)
             A = convhull.equations[:,:n]
             b = convhull.equations[:,n]
@@ -419,7 +415,7 @@ def interval_endpoints(W1):
     X = np.vstack((xl.reshape((1, m)), xu.reshape((1, m))))
     return Y, X
 
-def zonotope_vertices(W1, NY=10000):
+def zonotope_vertices(W1):
     """
     Compute the vertices of the zonotope.
     
@@ -428,8 +424,6 @@ def zonotope_vertices(W1, NY=10000):
     W1 : ndarray
         `W1` is an ndarray of shape m-by-n that contains the eigenvector bases
         of the n-dimensional active subspace.
-    NY : int
-        `NY` is the number of samples used to compute the zonotope vertices.
         
     Returns
     -------
@@ -440,14 +434,14 @@ def zonotope_vertices(W1, NY=10000):
         `X` is an ndarray of shape nzv-by-m that contains the corners of the 
         m-dimensional hypercube that map to the zonotope vertices.
     """
-    if not isinstance(NY, int):
-        raise TypeError('NY should be an integer.')
     
     m, n = W1.shape
+    totalverts = int(nzv(m,n)[0])
     
     Xlist = []
-    nzv = 0
-    for i in range(NY):
+    maxcount = int(1e9)
+    count, numverts = 0, 0
+    while numverts < totalverts:
         y = np.random.normal(size=(n))
         x = np.sign(np.dot(y, W1.transpose()))
         addx = True
@@ -457,9 +451,13 @@ def zonotope_vertices(W1, NY=10000):
                 break
         if addx:
             Xlist.append(x)
-            nzv += 1
-    X = np.array(Xlist).reshape((nzv, m))
-    Y = np.dot(X, W1).reshape((nzv, n))
+            numverts += 1
+        count += 1
+        if count > maxcount:
+            warnings.warn('After a billion tries, I cannot find all the zonotope vertices.')
+            break
+    X = np.array(Xlist).reshape((numverts, m))
+    Y = np.dot(X, W1).reshape((numverts, n))
     return Y, X
 
 def sample_z(N, y, W1, W2):
@@ -504,7 +502,8 @@ def sample_z(N, y, W1, W2):
     run" method for sampling from the polytope. 
     
     If that doesn't work, it returns an array with `N` copies of a feasible
-    point computed with a linear program solver. 
+    point computed as the Chebyshev center of the polytope. Thanks to David
+    Gleich for showing me Chebyshev centers. 
     
     """
     if not isinstance(N, int):
@@ -527,13 +526,18 @@ def hit_and_run_z(N, y, W1, W2):
     """
     m, n = W1.shape
     
-    # get an initial feasible point
+    # get an initial feasible point using the Chebyshev center. huge props to 
+    # David Gleich for showing me the Chebyshev center.
+    s = np.dot(W1, y).reshape((m, 1))
+    normW2 = np.sqrt( np.sum( np.power(W2, 2), axis=1 ) ).reshape((m,1))
+    A = np.hstack(( np.vstack((W2, -W2.copy())), np.vstack((normW2, normW2.copy())) ))
+    b = np.vstack((1-s, 1+s)).reshape((2*m, 1))
+    c = np.zeros((m-n+1,1))
+    c[-1] = -1.0
+    
     qps = QPSolver()
-    lb = -np.ones((m,1))
-    ub = np.ones((m,1))
-    c = np.zeros((m,1))
-    x0 = qps.linear_program_eq(c, W1.T, y.reshape((n,1)), lb, ub)
-    z0 = np.dot(W2.T, x0).reshape((m-n, 1))
+    zc = qps.linear_program_ineq(c, -A, -b)
+    z0 = zc[:-1].reshape((m-n, 1))
     
     # define the polytope A >= b
     s = np.dot(W1, y).reshape((m, 1))
@@ -577,14 +581,14 @@ def hit_and_run_z(N, y, W1, W2):
         z1 = z0 + eps1*d
         Z[i,:] = z1.reshape((m-n, ))
         
-        # update temp vars
-        z0, eps0 = z1, eps1
+        # update temp var
+        z0 = z1.copy()
         
     return Z
 
 def rejection_sampling_z(N, y, W1, W2):
     """
-    A rejetion sampling method for sampling the inactive variables from a 
+    A rejection sampling method for sampling the inactive variables from a 
     polytope.
     
     See Also
