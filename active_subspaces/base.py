@@ -467,7 +467,7 @@ class ActiveSubspaceReducedModel():
             lb, ub = None, None
         return mu, lb, ub
 
-    def probability(self, lb, ub):
+    def probability(self, lb, ub, M=10000):
         """
         Estimate the probably that the quantity of interest is within a given
         range.
@@ -478,6 +478,9 @@ class ActiveSubspaceReducedModel():
             `lb` is the lower bound on the interval.
         ub : float
             `ub` is the upper bound on the interval.
+        M : int, optional
+            `M` is the number of samples of the response surface. (Default is
+            10000)
         
         Returns
         -------
@@ -516,7 +519,6 @@ class ActiveSubspaceReducedModel():
             else:
                 raise TypeError('ub should be a float')
         
-        M = 10000
         if self.bounded_inputs:
             X = np.random.uniform(-1.0,1.0,size=(M,self.m))
         else:

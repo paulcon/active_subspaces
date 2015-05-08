@@ -1,6 +1,6 @@
 """Solvers for the linear and quadratic programs in active subspaces."""
 import numpy as np
-import warnings
+import logging
 from scipy.optimize import linprog, minimize
 
 # checking to see if system has gurobi
@@ -48,7 +48,8 @@ class QPSolver():
         elif solver=='SCIPY':
             self.solver = solver_SCIPY
         else:
-            warnings.warn('QP solver %s is not available. Using scipy optimization package.' % solver)
+            logging.info('QP solver {} is not available. Using scipy \
+                        optimization package.'.format(solver))
             self.solver = solver_SCIPY
             
 
@@ -87,12 +88,14 @@ class QPSolver():
         subject to  A x = b
                     lb <= x <= ub
         """
+        logging.info('Linear program with {:d} variables and {:d} equality \
+                constraints using {}'.format(A.shape[1], A.shape[0], self.solver))
         if self.solver == solver_SCIPY:
             return _scipy_linear_program_eq(c, A, b, lb, ub)
         elif self.solver == solver_GUROBI:
             return _gurobi_linear_program_eq(c, A, b, lb, ub)
         else:
-            raise ValueError('QP solver %s not available' % self.solver)
+            raise ValueError('QP solver {} not available'.format(self.solver))
             
     def linear_program_ineq(self, c, A, b):
         """
@@ -122,13 +125,14 @@ class QPSolver():
         minimize  c^T x
         subject to  A x >= b
         """
-
+        logging.info('Linear program with {:d} variables and {:d} inequality \
+                constraints using {}'.format(A.shape[1], A.shape[0], self.solver))
         if self.solver == solver_SCIPY:
             return _scipy_linear_program_ineq(c, A, b)
         elif self.solver == solver_GUROBI:
             return _gurobi_linear_program_ineq(c, A, b)
         else:
-            raise ValueError('QP solver %s not available' % self.solver)
+            raise ValueError('QP solver {} not available'.format(self.solver))
 
     def quadratic_program_bnd(self, c, Q, lb, ub):
         """
@@ -162,13 +166,14 @@ class QPSolver():
         minimize  c^T x + x^T Q x
         subject to  lb <= x <= ub
         """
-        
+        logging.info('Quadratic program with {:d} variables using \
+                    {}'.format(Q.shape[0], self.solver))
         if self.solver == solver_SCIPY:
             return _scipy_quadratic_program_bnd(c, Q, lb, ub)
         elif self.solver == solver_GUROBI:
             return _gurobi_quadratic_program_bnd(c, Q, lb, ub)
         else:
-            raise ValueError('QP solver %s not available' % self.solver)
+            raise ValueError('QP solver {} not available'.format(self.solver))
 
     def quadratic_program_ineq(self, c, Q, A, b):
         """
@@ -202,13 +207,14 @@ class QPSolver():
         minimize  c^T x + x^T Q x
         subject to  A x >= b
         """
-
+        logging.info('Quadratic program with {:d} variables and {:d} inequality \
+                constraints using {}'.format(A.shape[1], A.shape[0], self.solver))
         if self.solver == solver_SCIPY:
             return _scipy_quadratic_program_ineq(c, Q, A, b)
         elif self.solver == solver_GUROBI:
             return _gurobi_quadratic_program_ineq(c, Q, A, b)
         else:
-            raise ValueError('QP solver %s not available' % self.solver)
+            raise ValueError('QP solver {} not available'.format(self.solver))
 
 def _scipy_linear_program_eq(c, A, b, lb, ub):
     
@@ -360,7 +366,8 @@ def _gurobi_linear_program_ineq(c, A, b):
     # Add variables to model
     vars = []
     for j in range(n):
-        vars.append(model.addVar(lb=-gpy.GRB.INFINITY, ub=gpy.GRB.INFINITY, vtype=gpy.GRB.CONTINUOUS))
+        vars.append(model.addVar(lb=-gpy.GRB.INFINITY, 
+                    ub=gpy.GRB.INFINITY, vtype=gpy.GRB.CONTINUOUS))
     model.update()
 
     # Populate linear constraints
@@ -431,7 +438,8 @@ def _gurobi_quadratic_program_ineq(c, Q, A, b):
     # Add variables to model
     vars = []
     for j in range(n):
-        vars.append(model.addVar(lb=-gpy.GRB.INFINITY, ub=gpy.GRB.INFINITY, vtype=gpy.GRB.CONTINUOUS))
+        vars.append(model.addVar(lb=-gpy.GRB.INFINITY, 
+                    ub=gpy.GRB.INFINITY, vtype=gpy.GRB.CONTINUOUS))
     model.update()
 
     # Populate linear constraints

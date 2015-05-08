@@ -5,6 +5,8 @@ Library.
 
 import numpy as np
 import misc as mi
+import logging
+
 
 def r_hermite(N):
     """Recurence coefficients for the Hermite orthogonal polynomials. 
@@ -151,15 +153,18 @@ def gauss_hermite(N):
     This computation is inspired by Walter Gautschi's code at 
     https://www.cs.purdue.edu/archives/2002/wxg/codes/OPQ.html. 
     """
-
+    
     if isinstance(N, int):
         N = [N]
 
     if type(N) is not list:
         raise TypeError('N must be a list.')
-
+    
+    Npts = int(np.prod(np.array(N)))
+    logging.info('Making a tensor product Gauss-Hermite rule with {:d} points in {:d} dimensions.'.format(Npts, len(N)))
+    
     if len(N) == 1:
-        return gh1d(N[0])
+        x, w = gh1d(N[0])
     else:
         x = np.array([[1.0]])
         w = np.array([[1.0]])
@@ -170,4 +175,6 @@ def gauss_hermite(N):
             xU = np.kron(np.ones((x.shape[0],1)), xi)
             x = np.hstack((xL, xU))
             w = np.kron(w.copy(), wi)
-        return np.atleast_2d(x[:,1:]), mi.atleast_2d_col(w)
+        x, w = np.atleast_2d(x[:,1:]), mi.atleast_2d_col(w)
+    
+    return x, w

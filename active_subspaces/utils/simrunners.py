@@ -1,6 +1,8 @@
 """Utilities for running several simulations at different inputs."""
 
 import numpy as np
+import logging
+import time
 from misc import process_inputs
 
 class SimulationRunner():
@@ -37,7 +39,8 @@ class SimulationRunner():
             of interest from the model. Often, this function is a wrapper to a 
             larger simulation code. 
         """
-        # TODO: check input for a valid simluation function
+        if not hasattr(fun, '__call__'):
+            raise TypeError('fun should be a callable function.')
 
         self.fun = fun
 
@@ -71,8 +74,14 @@ class SimulationRunner():
 
         X, M, m = process_inputs(X)
         F = np.zeros((M, 1))
+        
+        start = time.time()
         for i in range(M):
             F[i] = self.fun(X[i,:].reshape((1,m)))
+            logging.info('Completed {:d} of {:d} function evaluations.'.format(i, M))
+        end = time.time() - start
+        logging.info('Completed {:d} function evaluations in {:4.2f} seconds.'.format(M, end))
+            
         return F
 
 class SimulationGradientRunner():
@@ -111,7 +120,8 @@ class SimulationGradientRunner():
             parameters, given as an ndarray. It returns the gradient of the 
             quantity of interest at the given input. 
         """
-        # TODO: check input for a valid simluation gradient function
+        if not hasattr(dfun, '__call__'):
+            raise TypeError('fun should be a callable function.')
 
         self.dfun = dfun
 
@@ -146,7 +156,13 @@ class SimulationGradientRunner():
 
         X, M, m = process_inputs(X)
         dF = np.zeros((M, m))
+        
+        start = time.time()
         for i in range(M):
             df = self.dfun(X[i,:].reshape((1,m)))
             dF[i,:] = df.reshape((1,m))
+            logging.info('Completed {:d} of {:d} gradient evaluations.'.format(i, M))
+        end = time.time() - start
+        logging.info('Completed {:d} gradient evaluations in {:4.2f} seconds.'.format(M, end))
+            
         return dF
