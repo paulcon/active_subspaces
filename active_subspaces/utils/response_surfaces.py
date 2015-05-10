@@ -1,5 +1,6 @@
 """Utilities for building response surface approximations."""
 import numpy as np
+import logging
 from scipy.optimize import fminbound
 from scipy.misc import comb
 from misc import process_inputs, process_inputs_outputs
@@ -97,7 +98,9 @@ class PolynomialApproximation(ResponseSurface):
         # check that there are enough points to train the polynomial
         if M < comb(self.N + m, m):
             raise Exception('Not enough points to fit response surface of order {:d}'.format(self.N))
-         
+        
+        logging.getLogger('PAUL').info('Training a degree {:d} polynomial in {:d} dims with {:d} points.'.format(self.N, m, M))
+        
         B, indices = polynomial_bases(X,  self.N)
         p = B.shape[1]
         Q, R = np.linalg.qr(B)
@@ -150,6 +153,8 @@ class PolynomialApproximation(ResponseSurface):
             approximation. The shape of `df` is M-by-m.
         """
         X, M, m = process_inputs(X)
+        
+        logging.getLogger('PAUL').info('Evaluating the polynomial surface at {:d} points.'.format(M))
         
         B = polynomial_bases(X, self.N)[0]
         f = np.dot(B, self.poly_weights).reshape((M, 1))
@@ -242,6 +247,8 @@ class RadialBasisApproximation(ResponseSurface):
         if M < comb(self.N + m, m):
             raise Exception('Not enough points to fit response surface of order {:d}'.format(self.N))
         
+        logging.getLogger('PAUL').info('Training an RBF surface with degree {:d} polynomial in {:d} dims with {:d} points.'.format(self.N, m, M))
+        
         # use maximum likelihood to tune parameters
         g = fminbound(rbf_objective, 1e-6, 10.0, args=(X, f, v, self.N, e, ))
         
@@ -309,7 +316,9 @@ class RadialBasisApproximation(ResponseSurface):
         process people. 
         """
         X, M, m = process_inputs(X)
-
+        
+        logging.getLogger('PAUL').info('Evaluating the RBF surface at {:d} points.'.format(M))
+        
         #
         K = exponential_squared(X, self.X, 1.0, self.ell)
         B = polynomial_bases(X, self.N)[0]
