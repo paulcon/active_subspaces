@@ -37,7 +37,7 @@ class TestASIntegrals(TestCase):
         asrs.train_with_data(X, f)
         
         np.random.seed(43)
-        I = asi.av_integrate(asrs.respsurf, avm, 10)
+        I = asi.av_integrate(asrs, avm, 10)
         if self.writeData:
             np.savez('data/test_int_0_1',I=I)
         data_test = helper.load_test_npz('test_int_0_1.npz')
@@ -59,7 +59,7 @@ class TestASIntegrals(TestCase):
         asrs.train_with_data(X, f)
         
         np.random.seed(43)
-        I = asi.av_integrate(asrs.respsurf, avm, 10)
+        I = asi.av_integrate(asrs, avm, 10)
         if self.writeData:
             np.savez('data/test_int_0_2',I=I)
         data_test = helper.load_test_npz('test_int_0_2.npz')
@@ -82,7 +82,7 @@ class TestASIntegrals(TestCase):
         asrs.train_with_data(X, f)
         
         np.random.seed(43)
-        I = asi.av_integrate(asrs.respsurf, avm, 10)
+        I = asi.av_integrate(asrs, avm, 10)
         if self.writeData:
             np.savez('data/test_int_0_3',I=I)
         data_test = helper.load_test_npz('test_int_0_3.npz')
@@ -105,7 +105,7 @@ class TestASIntegrals(TestCase):
         asrs.train_with_data(X, f)
         
         np.random.seed(43)
-        I = asi.av_integrate(asrs.respsurf, avm, 10)
+        I = asi.av_integrate(asrs, avm, 10)
         if self.writeData:
             np.savez('data/test_int_0_4',I=I)
         data_test = helper.load_test_npz('test_int_0_4.npz')

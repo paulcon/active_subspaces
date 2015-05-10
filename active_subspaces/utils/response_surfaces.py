@@ -154,8 +154,6 @@ class PolynomialApproximation(ResponseSurface):
         """
         X, M, m = process_inputs(X)
         
-        logging.getLogger('PAUL').info('Evaluating the polynomial surface at {:d} points.'.format(M))
-        
         B = polynomial_bases(X, self.N)[0]
         f = np.dot(B, self.poly_weights).reshape((M, 1))
         
@@ -316,8 +314,6 @@ class RadialBasisApproximation(ResponseSurface):
         process people. 
         """
         X, M, m = process_inputs(X)
-        
-        logging.getLogger('PAUL').info('Evaluating the RBF surface at {:d} points.'.format(M))
         
         #
         K = exponential_squared(X, self.X, 1.0, self.ell)
