@@ -222,7 +222,7 @@ class ActiveVariableMap():
         if not isinstance(N, int):
             raise TypeError('N must be an int') 
             
-        logging.getLogger('PAUL').info('Inverting {:d} y\'s with {:d} z\'s per y.'.format(NY, N))
+        logging.getLogger(__name__).debug('Inverting {:d} y\'s with {:d} z\'s per y.'.format(NY, N))
         
         Z = self.regularize_z(Y, N)
         W = self.domain.subspaces.eigenvectors
@@ -406,7 +406,7 @@ def interval_endpoints(W1):
         m-dimensional hypercube that map to the active variable endpoints.
     """
     
-    logging.getLogger('PAUL').info('Interval domain.')
+    logging.getLogger(__name__).debug('Interval domain.')
     
     m = W1.shape[0]
     y0 = np.dot(W1.T, np.sign(W1))[0]
@@ -443,7 +443,7 @@ def zonotope_vertices(W1):
     m, n = W1.shape
     totalverts = int(nzv(m,n)[0])
     
-    logging.getLogger('PAUL').info('Zonotope domain with {:d} points.'.format(totalverts))
+    logging.getLogger(__name__).debug('Zonotope domain in {:d} dims with {:d} vertices.'.format(n, totalverts))
     
     Xlist = []
     maxcount = int(1e9)
@@ -461,7 +461,7 @@ def zonotope_vertices(W1):
             numverts += 1
         count += 1
         if count > maxcount:
-            logging.getLogger('PAUL').warn('After a billion tries, I cannot find all {:d} zonotope vertices.'.format(totalverts))
+            logging.getLogger(__name__).warn('After a billion tries, I cannot find all {:d} zonotope vertices.'.format(totalverts))
             break
     X = np.array(Xlist).reshape((numverts, m))
     Y = np.dot(X, W1).reshape((numverts, n))
@@ -518,7 +518,7 @@ def sample_z(N, y, W1, W2):
     
     Z = rejection_sampling_z(N, y, W1, W2)
     if Z is None:
-        logging.getLogger('PAUL').warn('Rejection sampling has failed miserably. Will try hit and run sampling.')
+        logging.getLogger(__name__).warn('Rejection sampling has failed miserably. Will try hit and run sampling.')
         Z = hit_and_run_z(N, y, W1, W2)
     return Z
 
@@ -566,7 +566,7 @@ def hit_and_run_z(N, y, W1, W2):
             bad_dir = np.any(np.dot(A, z0 + eps0*d) <= b)
             count += 1
             if count >= maxcount:
-                logging.getLogger('PAUL').warn('There are no more directions worth pursuing in hit and run. Got {:d} samples.'.format(i))
+                logging.getLogger(__name__).warn('There are no more directions worth pursuing in hit and run. Got {:d} samples.'.format(i))
                 Z[i:,:] = np.tile(z0, (1,N-i)).transpose()
                 return Z
                 

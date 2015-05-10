@@ -99,7 +99,7 @@ class PolynomialApproximation(ResponseSurface):
         if M < comb(self.N + m, m):
             raise Exception('Not enough points to fit response surface of order {:d}'.format(self.N))
         
-        logging.getLogger('PAUL').info('Training a degree {:d} polynomial in {:d} dims with {:d} points.'.format(self.N, m, M))
+        logging.getLogger(__name__).debug('Training a degree {:d} polynomial in {:d} dims with {:d} points.'.format(self.N, m, M))
         
         B, indices = polynomial_bases(X,  self.N)
         p = B.shape[1]
@@ -245,7 +245,7 @@ class RadialBasisApproximation(ResponseSurface):
         if M < comb(self.N + m, m):
             raise Exception('Not enough points to fit response surface of order {:d}'.format(self.N))
         
-        logging.getLogger('PAUL').info('Training an RBF surface with degree {:d} polynomial in {:d} dims with {:d} points.'.format(self.N, m, M))
+        logging.getLogger(__name__).debug('Training an RBF surface with degree {:d} polynomial in {:d} dims with {:d} points.'.format(self.N, m, M))
         
         # use maximum likelihood to tune parameters
         g = fminbound(rbf_objective, 1e-6, 10.0, args=(X, f, v, self.N, e, ))

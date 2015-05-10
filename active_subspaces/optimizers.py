@@ -1,5 +1,6 @@
 """Utilities for exploiting active subspaces when optimizing."""
 import numpy as np
+import logging
 from domains import UnboundedActiveVariableDomain, BoundedActiveVariableDomain, \
                 ActiveVariableMap
 import scipy.optimize as scopt
@@ -50,6 +51,10 @@ class MinVariableMap(ActiveVariableMap):
             p = n+2
         else:
             p = n+1
+            
+        logging.getLogger(__name__).debug('Training a MinVariableMap on {:d} active variables out of {:d} for a {:d}-dim active subspace.'\
+                                .format(p, m, n))
+        
         Yp = np.dot(X, W[:,:p])
         pr = PolynomialApproximation(N=2)
         pr.train(Yp, f)
@@ -206,6 +211,8 @@ def minimize(asrs, X, f):
     # ActiveVariableDomain
     avdom = asrs.avmap.domain
     
+    logging.getLogger(__name__).debug('Minimizing a {:d}-variate function exploiting a {:d}-dim active subspace.'\
+                                .format(m, avdom.subspaces.W1.shape[1]))
     # wrappers
     def avfun(y):
         f = asrs.predict_av(y.reshape((1,y.size)))[0]
@@ -292,9 +299,16 @@ def interval_minimize(avfun, avdom):
     -----
     This function wraps the scipy.optimize function fminbound.
     """
+    
+    logging.getLogger(__name__).debug('Interval minimization.')
+                                
     yl, yu = avdom.vertY[0,0], avdom.vertY[1,0]
     result = scopt.fminbound(avfun, yl, yu, xtol=1e-9, maxfun=1e4, full_output=1)
-    ystar, fstar = np.array([[result[0]]]), result[1]
+    if result[2]:
+        raise Exception('Max function values used in fminbound.')
+        ystar, fstar = None, None
+    else:    
+        ystar, fstar = np.array([[result[0]]]), result[1]
     return ystar, fstar
     
 def zonotope_minimize(avfun, avdom, avdfun):
@@ -326,7 +340,12 @@ def zonotope_minimize(avfun, avdom, avdfun):
     This function wraps the scipy.optimize implementation of SLSQP with linear
     inequality constraints derived from the zonotope.
     """
+    
+    
     n = avdom.subspaces.W1.shape[1]
+
+    logging.getLogger(__name__).debug('Zonotope minimization in {:d} vars.'.format(n))
+    
     opts = {'disp':False, 'maxiter':1e4, 'ftol':1e-9}
     
     # a bit of globalization
@@ -339,9 +358,12 @@ def zonotope_minimize(avfun, avdom, avdfun):
         cons = avdom.constraints
         result = scopt.minimize(avfun, y0, constraints=cons, method='SLSQP', \
                             jac=avdfun, options=opts)
+        if not result.success:
+            raise Exception('SLSQP failed with message: {}.'.format(result.message))
         if result.fun < minf:
             minf = result.fun
             minres = result
+            logging.getLogger(__name__).debug('\tMinimum {:6.4f}.'.format(minf))
             
     np.random.set_state(curr_state)
     ystar, fstar = minres.x, minres.fun
@@ -392,9 +414,12 @@ def unbounded_minimize(avfun, avdom, avdfun):
     for i in range(10):
         y0 = np.random.normal(size=(1, n))
         result = scopt.minimize(avfun, y0, method=method, jac=avdfun, options=opts)
+        if not result.success:
+            raise Exception('{} failed with message: {}.'.format(method, result.message))
         if result.fun < minf:
             minf = result.fun
             minres = result
+            logging.getLogger(__name__).debug('\tMinimum {:6.4f}.'.format(minf))
     np.random.set_state(curr_state)
     ystar, fstar = minres.x, minres.fun
     return ystar, fstar

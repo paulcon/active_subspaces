@@ -75,12 +75,12 @@ class SimulationRunner():
         X, M, m = process_inputs(X)
         F = np.zeros((M, 1))
         
-        logger = logging.getLogger('PAUL')
+        logger = logging.getLogger(__name__)
         
         start = time.time()
         for i in range(M):
             F[i] = self.fun(X[i,:].reshape((1,m)))
-            logger.info('\t{:d} of {:d}'.format(i+1, M))
+            logger.debug('\t{:d} of {:d}'.format(i+1, M))
         end = time.time() - start
         logger.info('Completed {:d} function evaluations in {:4.2f} seconds.'.format(M, end))
             
@@ -159,13 +159,13 @@ class SimulationGradientRunner():
         X, M, m = process_inputs(X)
         dF = np.zeros((M, m))
         
-        logger = logging.getLogger('PAUL')
+        logger = logging.getLogger(__name__)
         
         start = time.time()
         for i in range(M):
             df = self.dfun(X[i,:].reshape((1,m)))
             dF[i,:] = df.reshape((1,m))
-            logger.info('Completed {:d} of {:d} gradient evaluations.'.format(i+1, M))
+            logger.debug('Completed {:d} of {:d} gradient evaluations.'.format(i+1, M))
         end = time.time() - start
         logger.info('Completed {:d} gradient evaluations in {:4.2f} seconds.'.format(M, end))
             

@@ -56,7 +56,7 @@ def integrate(fun, avmap, N, NMC=10):
     if not isinstance(N, int):
         raise TypeError('N should be an integer')
     
-    logging.getLogger('PAUL').info('Integrating a function of {:d} vars with {:d}-dim active subspace using a {:d}-point rule and {:d} MC samples.'\
+    logging.getLogger(__name__).debug('Integrating a function of {:d} vars with {:d}-dim active subspace using a {:d}-point rule and {:d} MC samples.'\
         .format(avmap.domain.subspaces.W1.shape[0], avmap.domain.subspaces.W1.shape[1], N, NMC))
     
     # get the quadrature rule
@@ -176,7 +176,7 @@ def quadrature_rule(avmap, N, NMC=10):
     if not isinstance(NMC, int):
         raise TypeError('NMC should be an integer.')
     
-    logging.getLogger('PAUL').info('Getting an integration rule on {:d} dims with a {:d}-dim active subspace with {:d}-points rule and {:d} MC samples.'\
+    logging.getLogger(__name__).debug('Getting an integration rule on {:d} dims with a {:d}-dim active subspace with {:d}-points rule and {:d} MC samples.'\
         .format(avmap.domain.subspaces.W1.shape[0], avmap.domain.subspaces.W1.shape[1], N, NMC))
         
     # get quadrature rule on active variables
