@@ -4,7 +4,7 @@ import misc as mi
 from quadrature import gauss_hermite
 from scipy.spatial import ConvexHull, distance_matrix
 from scipy.optimize import minimize
-import pdb
+import logging
 
 def interval_design(a, b, N):
     """
@@ -26,6 +26,7 @@ def interval_design(a, b, N):
         in the interval. It does not contain the endpoints. 
         
     """
+    logging.getLogger('PAUL').info('Interval design with {:d} points.'.format(N))
     y = np.linspace(a, b, N+2)
     design = mi.atleast_2d_col(y[1:-1])
     return design
@@ -77,13 +78,16 @@ def maximin_design(vert, N):
     np.random.seed(42)
     minf = 1e10
     minres = []
+    
+    logging.getLogger('PAUL').info('Maximin design with {:d} points in {:d} dimensions.'.format(N, n))
     for i in range(3):
         y0 = np.random.normal(size=(N, n))
         res = minimize(_maximin_design_obj, y0, args=(vert, ), jac=_maximin_design_grad, constraints=cons,
-                        method='SLSQP', options={'disp':True, 'maxiter':1e2, 'ftol':1e-4})
+                        method='SLSQP', options={'disp':False, 'maxiter':1e2, 'ftol':1e-4})
         if res.fun < minf:
             minf = res.fun
             minres = res
+            logging.getLogger('PAUL').info('\tMax distance {:6.4f}.'.format(minf))
     
     np.random.set_state(curr_state)
     design = minres.x.reshape((N, n))
@@ -105,6 +109,8 @@ def gauss_hermite_design(N):
         `design` is an ndarray of shape N-by-m that contains the design points.
         
     """
+    Npts = int(np.prod(np.array(N)))
+    logging.getLogger('PAUL').info('Gauss-Hermite design with {:d} points in {:d} dimensions.'.format(Npts, len(N)))
     design = gauss_hermite(N)[0]
     return design
     

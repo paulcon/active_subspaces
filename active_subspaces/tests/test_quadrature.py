@@ -86,8 +86,4 @@ class TestQuadrature(TestCase):
         self.assertRaises(TypeError, gq.gauss_hermite, 'sting')
 
 if __name__ == '__main__':
-    log.basicConfig(filename='paul.log', 
-                    format='%(asctime)s %(module)s %(message)s', 
-                    datefmt='%m/%d/%Y %I:%M:%S %p',
-                    level=log.INFO)
     unittest.main()

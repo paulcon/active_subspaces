@@ -1,6 +1,6 @@
 """Miscellaneous utilities."""
-
 import numpy as np
+import logging
 
 class Normalizer():
     """
@@ -272,7 +272,11 @@ def conditional_expectations(f, ind):
     `f` that have the same index in `ind`. The indices in `ind` correspond to
     values of the active variables. 
     """
+    
     n = int(np.amax(ind)) + 1
+    NMC = np.sum(ind==0)
+    logging.getLogger('PAUL').info('Computing {:d} conditional averages with {:d} MC samples.'.format(n, NMC))
+    
     Ef, Vf = np.zeros((n, 1)), np.zeros((n, 1))
     for i in range(n):
         fi = f[ind == i]

@@ -7,7 +7,6 @@ import numpy as np
 import misc as mi
 import logging
 
-
 def r_hermite(N):
     """Recurence coefficients for the Hermite orthogonal polynomials. 
 
@@ -160,8 +159,9 @@ def gauss_hermite(N):
     if type(N) is not list:
         raise TypeError('N must be a list.')
     
+    # logging things
     Npts = int(np.prod(np.array(N)))
-    logging.info('Making a tensor product Gauss-Hermite rule with {:d} points in {:d} dimensions.'.format(Npts, len(N)))
+    logging.getLogger('PAUL').info('Making a tensor product Gauss-Hermite rule with {:d} points in {:d} dimensions.'.format(Npts, len(N)))
     
     if len(N) == 1:
         x, w = gh1d(N[0])
