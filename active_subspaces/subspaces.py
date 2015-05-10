@@ -1,5 +1,6 @@
 """Utilities for computing active and inactive subspaces."""
 import numpy as np
+import logging
 from utils.misc import process_inputs
 
 class Subspaces():
@@ -58,25 +59,26 @@ class Subspaces():
         `eigenvectors`. If `n_boot` is greater than zero, then this method
         also runs a bootstrap to compute and set `e_br` and `sub_br`.
         """
-        if len(df.shape)!=2:
-            raise Exception('df is not a 2d array.')
+        df, M, m = process_inputs(df)
         
         if not isinstance(n_boot, int):
             raise Exception('n_boot must be an integer.')
         
         # compute eigenvalues and eigenvecs
+        logging.getLogger('PAUL').info('Computing spectral decomp with {:d} samples in {:d} dims.'.format(M, m))
         evals, evecs = spectral_decomposition(df)
+        self.eigenvalues, self.eigenvectors = evals, evecs
         
         # compute bootstrap ranges for eigenvalues and subspace distances
         if n_boot > 0:
+            logging.getLogger('PAUL').info('Bootstrapping {:d} spectral decomps of size {:d} by {:d}.'.format(n_boot, M, m))
             e_br, sub_br = bootstrap_ranges(df, evals, evecs, n_boot=n_boot)
             self.e_br, self.sub_br = e_br, sub_br
 
         # partition the subspaces with a crappy heuristic
         n = compute_partition(evals)
+        self.partition(n)
         
-        self.W1, self.W2 = evecs[:,:n], evecs[:,n:]
-        self.eigenvalues, self.eigenvectors = evals, evecs
         
     def partition(self, n):
         """
@@ -96,9 +98,12 @@ class Subspaces():
         """
         if not isinstance(n, int):
             raise TypeError('n should be an integer')
-            
-        if n<1 or n>self.eigenvectors.shape[0]:
+        
+        m = self.eigenvectors.shape[0]
+        if n<1 or n>m:
             raise ValueError('n must be positive and less than the dimension of the eigenvectors.')
+            
+        logging.getLogger('PAUL').info('Active subspace dimension is {:d} out of {:d}.'.format(n, m))
         
         self.W1, self.W2 = self.eigenvectors[:,:n], self.eigenvectors[:,n:]
 

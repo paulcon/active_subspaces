@@ -17,10 +17,10 @@ class TestDomains(TestCase):
         sub.compute(df0)
         
         uavd = dom.UnboundedActiveVariableDomain(sub)
-        np.testing.assert_almost_equal(uavd.vertY, None)
-        np.testing.assert_almost_equal(uavd.vertX, None)
-        np.testing.assert_almost_equal(uavd.convhull, None)
-        np.testing.assert_almost_equal(uavd.constraints, None)
+        np.testing.assert_equal(uavd.vertY, None)
+        np.testing.assert_equal(uavd.vertX, None)
+        np.testing.assert_equal(uavd.convhull, None)
+        np.testing.assert_equal(uavd.constraints, None)
         np.testing.assert_almost_equal(uavd.n, sub.W1.shape[1])
         np.testing.assert_almost_equal(uavd.m, sub.W1.shape[0])
         

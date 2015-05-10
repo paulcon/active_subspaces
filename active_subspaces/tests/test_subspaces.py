@@ -87,8 +87,8 @@ class TestSubspaces(TestCase):
         sub.compute(df0, n_boot=0)
         np.testing.assert_almost_equal(sub.eigenvalues, e0)
         np.testing.assert_almost_equal(sub.eigenvectors, W0)
-        np.testing.assert_almost_equal(sub.e_br, None)
-        np.testing.assert_almost_equal(sub.sub_br, None)
+        np.testing.assert_equal(sub.e_br, None)
+        np.testing.assert_equal(sub.sub_br, None)
         
     def test_subspaces_3(self):
         data = helper.load_test_npz('test_spec_decomp_1.npz')
@@ -99,8 +99,8 @@ class TestSubspaces(TestCase):
         sub.compute(df0, n_boot=0)
         np.testing.assert_almost_equal(sub.eigenvalues, e0)
         np.testing.assert_almost_equal(sub.eigenvectors, W0)
-        np.testing.assert_almost_equal(sub.e_br, None)
-        np.testing.assert_almost_equal(sub.sub_br, None)
+        np.testing.assert_equal(sub.e_br, None)
+        np.testing.assert_equal(sub.sub_br, None)
         
 
 if __name__ == '__main__':
