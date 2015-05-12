@@ -80,7 +80,8 @@ class SimulationRunner():
         start = time.time()
         for i in range(M):
             F[i] = self.fun(X[i,:].reshape((1,m)))
-            logger.debug('\t{:d} of {:d}'.format(i+1, M))
+            if ((i+1) % 10) == 0:
+                logger.debug('\t{:d} of {:d}'.format(i+1, M))
         end = time.time() - start
         logger.info('Completed {:d} function evaluations in {:4.2f} seconds.'.format(M, end))
             
