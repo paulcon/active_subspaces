@@ -17,22 +17,22 @@ class TestUtils(TestCase):
         np.testing.assert_almost_equal(XX, X1)
         np.testing.assert_array_less(X0, 1.0)
         np.testing.assert_array_less(-X0, 1.0)
-        
+
     def test_unbounded_normalizer(self):
         M, m = 100, 3
         XX = np.hstack((np.random.normal(-4.0,7.0,size=(M,1)),
                         np.random.normal(4.0,6.0,size=(M,1)),
                         np.random.normal(2.0,3.0,size=(M,1))))
-                        
+
         C = np.diag([7.0**2, 6.0**2, 3.0**2])
         mu = np.array([-4.0, 4.0, 2.0]).reshape((3,1))
-        
+
         un = ut.UnboundedNormalizer(mu, C)
         X0 = un.normalize(XX)
         X1 = un.unnormalize(X0)
         np.testing.assert_almost_equal(XX, X1)
         np.testing.assert_allclose(np.mean(X0,axis=0).reshape((m,1)), np.zeros((m,1)), atol=1.0)
-        
+
     def test_process_inputs_bad_inputs(self):
         self.assertRaises(ValueError, ut.process_inputs, np.array([1.0,1.0,-1.0]))
 
@@ -49,7 +49,7 @@ class TestUtils(TestCase):
         E, V = ut.conditional_expectations(f, ind)
         np.testing.assert_almost_equal(E,np.array([[0.2],[1.5]]))
         np.testing.assert_almost_equal(V,np.array([[0.0],[0.25]]))
-        
+
 
 if __name__ == '__main__':
     unittest.main()

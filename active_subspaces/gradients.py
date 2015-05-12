@@ -7,7 +7,7 @@ from utils.simrunners import SimulationRunner
 def local_linear_gradients(X, f, p=None):
     """
     Estimate a collection of gradients from input/output pairs.
-    
+
     Parameters
     ----------
     X : ndarray
@@ -17,18 +17,18 @@ def local_linear_gradients(X, f, p=None):
     p : int, optional
         `p` determines how many nearest neighbors to use when constructing the
         local linear model. (Default is None)
-                    
+
     Returns
     -------
     df : ndarray
         An ndarray of size M-by-m that contains estimated partial derivatives
-        approximated by the local linear models. 
-    
+        approximated by the local linear models.
+
     Notes
     -----
-    If `p` is not specified, the default value is floor(1.7*m). 
+    If `p` is not specified, the default value is floor(1.7*m).
     """
-    
+
     X, M, m = process_inputs(X)
     if M<=m: raise Exception('Not enough samples for local linear models.')
 
@@ -36,8 +36,8 @@ def local_linear_gradients(X, f, p=None):
         p = int(np.minimum(np.floor(1.7*m), M))
     elif not isinstance(p, int):
         raise TypeError('p must be an integer.')
-    
-    if p < m+1 or p > M: 
+
+    if p < m+1 or p > M:
         raise Exception('p must be between m+1 and M')
 
     MM = np.minimum(int(np.ceil(10*m*np.log(m))), M-1)
@@ -51,11 +51,11 @@ def local_linear_gradients(X, f, p=None):
         u = np.linalg.lstsq(A, f[ind[1:p+1]])[0]
         df[i,:] = u[1:].T
     return df
-    
+
 def finite_difference_gradients(X, fun, h=1e-6):
     """
     Compute finite difference gradients with a given interface.
-    
+
     Parameters
     ----------
     X : ndarray
@@ -66,26 +66,26 @@ def finite_difference_gradients(X, fun, h=1e-6):
         given inputs.
     h : float, optional
         `h` is the finite difference step size. (Default is 1e-6)
-                    
+
     Returns
     -------
     df : ndarray
         An ndarray of size M-by-m that contains estimated partial derivatives
-        approximated by finite differences 
-    
+        approximated by finite differences
+
     """
     X, M, m = process_inputs(X)
     logging.getLogger(__name__).debug('Computing finite diff grads at {:d} points in {:d} dims.'.format(M, m))
-    
+
     # points to run simulations including the perturbed inputs
     XX = np.kron(np.ones((m+1, 1)),X) + \
         h*np.kron(np.vstack((np.zeros((1, m)), np.eye(m))), np.ones((M, 1)))
-    
+
     # run the simulation
     if isinstance(fun, SimulationRunner):
         F = fun.run(XX)
     else:
         F = SimulationRunner(fun).run(XX)
-    
+
     df = (F[M:].reshape((m, M)).transpose() - F[:M]) / h
     return df.reshape((M,m))
