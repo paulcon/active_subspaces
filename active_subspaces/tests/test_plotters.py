@@ -10,7 +10,10 @@ import matplotlib.pyplot as mplt
 import helper
 
 class TestPlotters(TestCase):
-    
+
+    def tearDown(self):
+        mplt.close("all")
+
     def test_eigenvalues(self):
         e = np.power(10*np.ones(6),-np.arange(1,7)).reshape((6,1))
         plt.eigenvalues(e)

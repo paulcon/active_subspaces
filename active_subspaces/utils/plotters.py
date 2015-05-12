@@ -90,8 +90,8 @@ def eigenvalues(e, e_br=None, out_label=None, opts=None):
     if opts['savefigs']:
         figname = 'figs/evals_' + out_label + opts['figtype']
         plt.savefig(figname, dpi=300, bbox_inches='tight', pad_inches=0.0)
-    plt.show()
 
+    show_plot(plt)
 def subspace_errors(sub_br ,out_label=None, opts=None):
     """
     Plot the estimated subspace errors for the active subspace analysis with  
@@ -135,8 +135,8 @@ def subspace_errors(sub_br ,out_label=None, opts=None):
     if opts['savefigs']:
         figname = 'figs/subspace_' + out_label + opts['figtype']
         plt.savefig(figname, dpi=300, bbox_inches='tight', pad_inches=0.0)
-    plt.show()
 
+    show_plot(plt)
 def eigenvectors(W, W_br=None, in_labels=None, out_label=None, opts=None):
     """
     Plot the estimated eigenvectors for the active subspace analysis with 
@@ -330,7 +330,7 @@ def eigenvectors(W, W_br=None, in_labels=None, out_label=None, opts=None):
     if opts['savefigs']:
         figname = 'figs/evecs_' + out_label + opts['figtype']
         plt.savefig(figname, dpi=300, bbox_inches='tight', pad_inches=0.0)
-    plt.show()
+    show_plot(plt)
 
 def sufficient_summary(y, f, out_label=None, opts=None):
     """
@@ -402,8 +402,8 @@ def sufficient_summary(y, f, out_label=None, opts=None):
             figname = 'figs/ssp2_' + out_label + opts['figtype']
             plt.savefig(figname, dpi=300, bbox_inches='tight', pad_inches=0.0)
 
-    plt.show()
     
+    show_plot(plt)
 def zonotope_2d_plot(vertices, design=None, y=None, f=None, out_label=None, opts=None):
     """
     A utility for plotting (m,2) zonotopes with associated designs and 
@@ -492,7 +492,7 @@ def zonotope_2d_plot(vertices, design=None, y=None, f=None, out_label=None, opts
     plt.axis([1.1*xmin,1.1*xmax,1.1*xmin,1.1*xmax])
     plt.xlabel('Active variable 1')
     plt.ylabel('Active variable 2')
-    plt.show()
+    show_plot(plt)
     if opts['savefigs']:
         figname = 'figs/zonotope_2d_' + out_label + opts['figtype']
         plt.savefig(figname, dpi=300, bbox_inches='tight', pad_inches=0.0)
@@ -502,3 +502,5 @@ def zonotope_2d_plot(vertices, design=None, y=None, f=None, out_label=None, opts
         
     
     
+def show_plot(plot, opts=None):
+    plot.show(block=False)
