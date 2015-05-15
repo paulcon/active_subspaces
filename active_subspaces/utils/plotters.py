@@ -16,15 +16,15 @@ def plot_opts(savefigs=True, figtype='.eps'):
         Save figures into a separate figs director. (Default is True)
     figtype : str, optional
         A file extention for the type of image to save. (Default is '.eps')
-    
+
     Returns
     -------
     opts : dict
         A dictionary with the chosen options. The keys in the dictionary are
-        `figtype`, `savefigs`, and `font`. The `font` is a dictionary that 
+        `figtype`, `savefigs`, and `font`. The `font` is a dictionary that
         sets the font properties of the figures.
     """
-    
+
     # make figs directory
     if savefigs:
         if not os.path.isdir('figs'):
@@ -34,31 +34,31 @@ def plot_opts(savefigs=True, figtype='.eps'):
     myfont = {'family' : 'arial',
             'weight' : 'normal',
             'size' : 14}
-    
+
     opts = {'figtype' : figtype,
             'savefigs' : savefigs,
             'myfont' : myfont}
-            
+
     return opts
-    
+
 def eigenvalues(e, e_br=None, out_label=None, opts=None):
     """
-    Plot the eigenvalues for the active subspace analysis with optional 
+    Plot the eigenvalues for the active subspace analysis with optional
     bootstrap ranges.
 
     Parameters
     ----------
     e : ndarray
-        `e` is an ndarray of shape k-by-1 that contains the estimated 
+        `e` is an ndarray of shape k-by-1 that contains the estimated
         eigenvalues.
     e_br : ndarray, optional
-        An ndarray with lower and upper bounds for the estimated eigenvalues. 
+        An ndarray with lower and upper bounds for the estimated eigenvalues.
         These are typically computed with a bootstrap. (Default is None)
     out_label : str, optional
         A label for the quantity of interest. (Default is None)
     opts : dict, optional
         A dictionary with some plot options. (Default is None)
-    
+
     See Also
     --------
     utils.plotters.eigenvectors
@@ -86,15 +86,15 @@ def eigenvalues(e, e_br=None, out_label=None, opts=None):
         plt.axis([0, k+1, 0.1*np.amin(e), 10*np.amax(e)])
     else:
         plt.axis([0, k+1, 0.1*np.amin(e_br[:,0]), 10*np.amax(e_br[:,1])])
-    
+
     if opts['savefigs']:
         figname = 'figs/evals_' + out_label + opts['figtype']
         plt.savefig(figname, dpi=300, bbox_inches='tight', pad_inches=0.0)
-    plt.show()
 
+    show_plot(plt)
 def subspace_errors(sub_br ,out_label=None, opts=None):
     """
-    Plot the estimated subspace errors for the active subspace analysis with  
+    Plot the estimated subspace errors for the active subspace analysis with
     bootstrap ranges.
 
     Parameters
@@ -102,12 +102,12 @@ def subspace_errors(sub_br ,out_label=None, opts=None):
     sub_br : ndarray
         `sub_br` is an ndarray of shape (k-1)-by-3 that contains the lower
         bound, mean, and upper bound of the subspace errors for each dimension
-        of subspace. 
+        of subspace.
     out_label : str, optional
         A label for the quantity of interest. (Default is None)
     opts : dict, optional
         A dictionary with some plot options. (Default is None)
-    
+
     See Also
     --------
     utils.plotters.eigenvectors
@@ -131,24 +131,24 @@ def subspace_errors(sub_br ,out_label=None, opts=None):
     plt.grid(True)
     plt.xticks(range(1, kk+1))
     plt.axis([0, kk+1, 0.1*np.amin(sub_br[:,0]), 1])
-    
+
     if opts['savefigs']:
         figname = 'figs/subspace_' + out_label + opts['figtype']
         plt.savefig(figname, dpi=300, bbox_inches='tight', pad_inches=0.0)
-    plt.show()
 
+    show_plot(plt)
 def eigenvectors(W, W_br=None, in_labels=None, out_label=None, opts=None):
     """
-    Plot the estimated eigenvectors for the active subspace analysis with 
+    Plot the estimated eigenvectors for the active subspace analysis with
     optional bootstrap ranges.
 
     Parameters
     ----------
     W : ndarray
-        `W` is an ndarray of shape m-by-k that contains k of the estimated 
+        `W` is an ndarray of shape m-by-k that contains k of the estimated
         eigenvectors from the active subspace analysis.
     W_br : ndarray, optional
-        `W_br` is an ndarray of shape m-by-(2*k) that contains estimated 
+        `W_br` is an ndarray of shape m-by-(2*k) that contains estimated
         upper and lower bounds on the components of the eigenvectors. (Default
         is None)
     in_labels : list of str, optional
@@ -157,12 +157,12 @@ def eigenvectors(W, W_br=None, in_labels=None, out_label=None, opts=None):
         A label for the quantity of interest. (Default is None)
     opts : dict, optional
         A dictionary with some plot options. (Default is None)
-    
+
     See Also
     --------
     utils.plotters.subspace_errors
     utils.plotters.eigenvalues
-    
+
     Notes
     -----
     This function will plot at most the first four eigevectors in a four-subplot
@@ -171,9 +171,9 @@ def eigenvectors(W, W_br=None, in_labels=None, out_label=None, opts=None):
     if opts == None:
         opts = plot_opts()
 
-    
+
     m, n = W.shape
-    
+
     if W_br is not None:
         m_br, n_br = W_br.shape
         if n_br != 2*n:
@@ -198,7 +198,7 @@ def eigenvectors(W, W_br=None, in_labels=None, out_label=None, opts=None):
             plt.margins(0.2)
             plt.subplots_adjust(bottom=0.15)
         plt.axis([1, m, -1, 1])
-        
+
     elif n==2:
         plt.figure(figsize=(7,7))
         plt.subplot(211)
@@ -213,7 +213,7 @@ def eigenvectors(W, W_br=None, in_labels=None, out_label=None, opts=None):
             axis='x',          # changes apply to the x-axis
             labelbottom='off') # labels along the bottom edge are off
         plt.axis([1, m, -1, 1])
-        
+
         plt.subplot(212)
         plt.rc('font', **opts['myfont'])
         plt.plot(range(1, m+1), W[:,1], 'ko-', markersize=12)
@@ -227,7 +227,7 @@ def eigenvectors(W, W_br=None, in_labels=None, out_label=None, opts=None):
             plt.margins(0.2)
             plt.subplots_adjust(bottom=0.15)
         plt.axis([1, m, -1, 1])
-        
+
     elif n==3:
         plt.figure(figsize=(7,7))
         plt.subplot(221)
@@ -242,7 +242,7 @@ def eigenvectors(W, W_br=None, in_labels=None, out_label=None, opts=None):
             axis='x',          # changes apply to the x-axis
             labelbottom='off') # labels along the bottom edge are off
         plt.axis([1, m, -1, 1])
-        
+
         plt.subplot(222)
         plt.rc('font', **opts['myfont'])
         plt.plot(range(1, m+1), W[:,1], 'ko-', markersize=12)
@@ -257,7 +257,7 @@ def eigenvectors(W, W_br=None, in_labels=None, out_label=None, opts=None):
             plt.margins(0.2)
             plt.subplots_adjust(bottom=0.15)
         plt.axis([1, m, -1, 1])
-        
+
         plt.subplot(223)
         plt.rc('font', **opts['myfont'])
         plt.plot(range(1, m+1), W[:,2], 'ko-', markersize=12)
@@ -271,7 +271,7 @@ def eigenvectors(W, W_br=None, in_labels=None, out_label=None, opts=None):
             plt.margins(0.2)
             plt.subplots_adjust(bottom=0.15)
         plt.axis([1, m, -1, 1])
-        
+
     else:
         plt.figure(figsize=(7,7))
         plt.subplot(221)
@@ -286,7 +286,7 @@ def eigenvectors(W, W_br=None, in_labels=None, out_label=None, opts=None):
             axis='x',          # changes apply to the x-axis
             labelbottom='off') # labels along the bottom edge are off
         plt.axis([1, m, -1, 1])
-        
+
         plt.subplot(222)
         plt.rc('font', **opts['myfont'])
         plt.plot(range(1, m+1), W[:,1], 'ko-', markersize=12)
@@ -295,9 +295,9 @@ def eigenvectors(W, W_br=None, in_labels=None, out_label=None, opts=None):
                 facecolor='0.7', interpolate=True)
         plt.title(out_label + ', evec 2')
         plt.grid(True)
-        plt.tick_params(labelleft='off', labelbottom='off') 
+        plt.tick_params(labelleft='off', labelbottom='off')
         plt.axis([1, m, -1, 1])
-        
+
         plt.subplot(223)
         plt.rc('font', **opts['myfont'])
         plt.plot(range(1, m+1), W[:,2], 'ko-', markersize=12)
@@ -311,7 +311,7 @@ def eigenvectors(W, W_br=None, in_labels=None, out_label=None, opts=None):
             plt.margins(0.2)
             plt.subplots_adjust(bottom=0.15)
         plt.axis([1, m, -1, 1])
-        
+
         plt.subplot(224)
         plt.rc('font', **opts['myfont'])
         plt.plot(range(1, m+1), W[:,3], 'ko-', markersize=12)
@@ -320,35 +320,35 @@ def eigenvectors(W, W_br=None, in_labels=None, out_label=None, opts=None):
                 facecolor='0.7', interpolate=True)
         plt.title(out_label + ', evec 4')
         plt.grid(True)
-        plt.tick_params(axis='y', labelleft='off') 
+        plt.tick_params(axis='y', labelleft='off')
         if in_labels is not None:
             plt.xticks(range(1, m+1), in_labels, rotation='vertical')
             plt.margins(0.2)
             plt.subplots_adjust(bottom=0.15)
         plt.axis([1, m, -1, 1])
-        
+
     if opts['savefigs']:
         figname = 'figs/evecs_' + out_label + opts['figtype']
         plt.savefig(figname, dpi=300, bbox_inches='tight', pad_inches=0.0)
-    plt.show()
+    show_plot(plt)
 
 def sufficient_summary(y, f, out_label=None, opts=None):
     """
-    Make a summary plot with the given predictors and responses. 
+    Make a summary plot with the given predictors and responses.
 
     Parameters
     ----------
     y : ndarray
         `y` is an ndarray of shape M-by-1 or M-by-2 that contains the values of
-        the predictors for the summary plot. 
+        the predictors for the summary plot.
     f : ndarray
-        `f` is an ndarray of shape M-by-1 that contains the corresponding 
-        responses. 
+        `f` is an ndarray of shape M-by-1 that contains the corresponding
+        responses.
     out_label : str, optional
         A label for the quantity of interest. (Default is None)
     opts : dict, optional
         A dictionary with some plot options. (Default is None)
-    
+
     Notes
     -----
     If `y.shape[1]` is 1, then this function produces only the univariate
@@ -402,25 +402,25 @@ def sufficient_summary(y, f, out_label=None, opts=None):
             figname = 'figs/ssp2_' + out_label + opts['figtype']
             plt.savefig(figname, dpi=300, bbox_inches='tight', pad_inches=0.0)
 
-    plt.show()
-    
+
+    show_plot(plt)
 def zonotope_2d_plot(vertices, design=None, y=None, f=None, out_label=None, opts=None):
     """
-    A utility for plotting (m,2) zonotopes with associated designs and 
-    quadrature rules. 
+    A utility for plotting (m,2) zonotopes with associated designs and
+    quadrature rules.
 
     Parameters
     ----------
     vertices : ndarray
-        `vertices` is an ndarray of shape M-by-2 that contains the vertices 
-        that define the zonotope. 
+        `vertices` is an ndarray of shape M-by-2 that contains the vertices
+        that define the zonotope.
     design : ndarray, optional
         `design` is an ndarray of shape N-by-2 that contains a design-of-
-        experiments on the zonotope. The plot will contain the Delaunay 
-        triangulation of the points in `design` and `vertices`. (Default is 
+        experiments on the zonotope. The plot will contain the Delaunay
+        triangulation of the points in `design` and `vertices`. (Default is
         None)
     y : ndarray, optional
-        `y` is an ndarray of shape K-by-2 that contains points to be plotted 
+        `y` is an ndarray of shape K-by-2 that contains points to be plotted
         inside the zonotope. If `y` is given, then `f` must be given, too.
     f : ndarray, optional
         `f` is an ndarray of shape K-by-1 that contains a color value for the
@@ -431,10 +431,10 @@ def zonotope_2d_plot(vertices, design=None, y=None, f=None, out_label=None, opts
         A label for the quantity of interest. (Default is None)
     opts : dict, optional
         A dictionary with some plot options. (Default is None)
-    
+
     Notes
     --------
-    This function makes use of the scipy.spatial routines for plotting the 
+    This function makes use of the scipy.spatial routines for plotting the
     zonotopes.
     """
     if opts == None:
@@ -443,65 +443,67 @@ def zonotope_2d_plot(vertices, design=None, y=None, f=None, out_label=None, opts
     # set labels for plots
     if out_label is None:
         out_label = 'Output'
-        
+
     if vertices.shape[1] != 2:
         raise Exception('Zonotope vertices should be 2d.')
-        
+
     if design is not None:
         if design.shape[1] != 2:
             raise Exception('Zonotope design should be 2d.')
-            
+
     if y is not None:
         if y.shape[1] != 2:
             raise Exception('Zonotope design should be 2d.')
-            
+
     if (y is not None and f is None) or (y is None and f is not None):
         raise Exception('You need both y and f to plot.')
-        
+
     if y is not None and f is not None:
         if y.shape[0] != f.shape[0]:
             raise Exception('Lengths of y and f are not the same.')
-    
+
     # get the xlim and ylim
     xmin, xmax = np.amin(vertices), np.amax(vertices)
-    
+
     # make the Polygon patch for the zonotope
     ch = ConvexHull(vertices)
-    
-    # make the Delaunay triangulation 
+
+    # make the Delaunay triangulation
     if design is not None:
         points = np.vstack((design, vertices))
         dtri = Delaunay(points)
-    
+
     fig = plt.figure(figsize=(7,7))
     ax = fig.add_subplot(111)
     fig0 = convex_hull_plot_2d(ch, ax=ax)
     for l in fig0.axes[0].get_children():
         if type(l) is Line2D:
 	        l.set_linewidth(3)
-    
+
     if design is not None:
         fig1 = delaunay_plot_2d(dtri, ax=ax)
         for l in fig1.axes[0].get_children():
             if type(l) is Line2D:
 	        l.set_color('0.75')
-        
+
     if y is not None:
         plt.scatter(y[:,0], y[:,1], c=f, s=100.0, vmin=np.min(f), vmax=np.max(f))
         plt.axes().set_aspect('equal')
         plt.title(out_label)
         plt.colorbar()
-        
+
     plt.axis([1.1*xmin,1.1*xmax,1.1*xmin,1.1*xmax])
     plt.xlabel('Active variable 1')
     plt.ylabel('Active variable 2')
-    plt.show()
+    show_plot(plt)
     if opts['savefigs']:
         figname = 'figs/zonotope_2d_' + out_label + opts['figtype']
         plt.savefig(figname, dpi=300, bbox_inches='tight', pad_inches=0.0)
-    
-    
-    
-        
-    
-    
+
+
+
+
+
+
+def show_plot(plot, opts=None):
+    plot.show(block=False)

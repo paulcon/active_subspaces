@@ -5,8 +5,8 @@ from utils.misc import process_inputs
 
 class Subspaces():
     """
-    A class for computing active and inactive subspaces. 
-    
+    A class for computing active and inactive subspaces.
+
     Attributes
     ----------
     eigenvalues : ndarray
@@ -22,37 +22,37 @@ class Subspaces():
         `W2` is an ndarray of shape m-by-(m-n) that contains the basis for the
         inactive subspaces.
     e_br : ndarray
-        `e_br` is an ndarray of shape m-by-2 that contains the bootstrap 
+        `e_br` is an ndarray of shape m-by-2 that contains the bootstrap
         ranges for the eigenvalues.
     sub_br : ndarray
-        `sub_br` is an ndarray of shape m-by-3 that contains the bootstrap 
+        `sub_br` is an ndarray of shape m-by-3 that contains the bootstrap
         ranges (first and third column) and the mean (second column) of the
         error in the estimated subspaces approximated by bootstrap
-        
+
     Notes
     -----
     The attributes `W1` and `W2` are convenience variables. They are identical
     to the first n and last (m-n) columns of `eigenvectors`, respectively.
     """
-    
+
     eigenvalues, eigenvectors = None, None
     W1, W2 = None, None
     e_br, sub_br = None, None
 
     def compute(self, df, n_boot=200):
         """
-        Compute the active and inactive subspaces from a collection of 
+        Compute the active and inactive subspaces from a collection of
         sampled gradients.
-        
+
         Parameters
         ----------
         df : ndarray
             `df` is an ndarray of size M-by-m that contains evaluations of the
             gradient.
         n_boot : int, optional
-            `n_boot` is the number of bootstrap replicates to use when 
+            `n_boot` is the number of bootstrap replicates to use when
             computing bootstrap ranges. (Default is 200)
-        
+
         Notes
         -----
         This method sets the class's attributes `W1`, `W2`, `eigenvalues`, and
@@ -60,15 +60,15 @@ class Subspaces():
         also runs a bootstrap to compute and set `e_br` and `sub_br`.
         """
         df, M, m = process_inputs(df)
-        
+
         if not isinstance(n_boot, int):
             raise Exception('n_boot must be an integer.')
-        
+
         # compute eigenvalues and eigenvecs
         logging.getLogger('PAUL').info('Computing spectral decomp with {:d} samples in {:d} dims.'.format(M, m))
         evals, evecs = spectral_decomposition(df)
         self.eigenvalues, self.eigenvectors = evals, evecs
-        
+
         # compute bootstrap ranges for eigenvalues and subspace distances
         if n_boot > 0:
             logging.getLogger('PAUL').info('Bootstrapping {:d} spectral decomps of size {:d} by {:d}.'.format(n_boot, M, m))
@@ -78,45 +78,45 @@ class Subspaces():
         # partition the subspaces with a crappy heuristic
         n = compute_partition(evals)
         self.partition(n)
-        
-        
+
+
     def partition(self, n):
         """
         Set the partition between active and inactive subspaces.
-        
+
         Parameters
         ----------
         n : int
             `n` is the dimension of the active subspace.
-        
+
         Notes
         -----
         This method sets the class's attributes `W1` and `W2` according to the
-        given `n`. It is mostly a convenience method in case one wants to 
+        given `n`. It is mostly a convenience method in case one wants to
         manually set the dimension of the active subspace after the basis is
-        computed. 
+        computed.
         """
         if not isinstance(n, int):
             raise TypeError('n should be an integer')
-        
+
         m = self.eigenvectors.shape[0]
         if n<1 or n>m:
             raise ValueError('n must be positive and less than the dimension of the eigenvectors.')
-            
+
         logging.getLogger('PAUL').info('Active subspace dimension is {:d} out of {:d}.'.format(n, m))
-        
+
         self.W1, self.W2 = self.eigenvectors[:,:n], self.eigenvectors[:,n:]
 
 def compute_partition(evals):
     """
     A heuristic based on eigenvalue gaps for deciding the dimension of the
     active subspace.
-    
+
     Parameters
     ----------
     evals : ndarray
         `evals` contains the eigenvalues.
-        
+
     Returns
     -------
     n : int
@@ -126,38 +126,38 @@ def compute_partition(evals):
     e = evals.copy()
     ind = e==0.0
     e[ind] = 1e-100
-    
+
     # crappy threshold for choosing active subspace dimension
     n = np.argmax(np.fabs(np.diff(np.log(e.reshape((e.size,)))))) + 1
     return n
 
 def spectral_decomposition(df):
     """
-    Use the SVD to compute the eigenvectors and eigenvalues for the 
-    active subspace analysis. 
-    
+    Use the SVD to compute the eigenvectors and eigenvalues for the
+    active subspace analysis.
+
     Parameters
     ----------
     df : ndarray
         `df` is an ndarray of size M-by-m that contains evaluations of the
         gradient.
-        
+
     Returns
     -------
     e : ndarray
         `e` is the ndarray of shape m-by-1 that contains the eigenvalues.
     W : ndarray
         `W` contains the eigenvectors.
-        
+
     Notes
     -----
-    If the number M of gradient samples is less than the dimension m of the 
+    If the number M of gradient samples is less than the dimension m of the
     inputs, then the method builds an arbitrary basis for the nullspace, which
-    corresponds to the inactive subspace. 
+    corresponds to the inactive subspace.
     """
     # set integers
     df, M, m = process_inputs(df)
-    
+
     # compute active subspace
     if M >= m:
         U, sig, W = np.linalg.svd(df, full_matrices=False)
@@ -171,9 +171,9 @@ def spectral_decomposition(df):
 
 def bootstrap_ranges(df, e, W, n_boot=200):
     """
-    Use a nonparametric bootstrap to estimate variability in the computed 
-    eigenvalues and subspaces. 
-    
+    Use a nonparametric bootstrap to estimate variability in the computed
+    eigenvalues and subspaces.
+
     Parameters
     ----------
     df : ndarray
@@ -184,26 +184,26 @@ def bootstrap_ranges(df, e, W, n_boot=200):
     W : ndarray
         `W` contains the eigenvectors.
     n_boot : int, optional
-        `n_boot` is the number of bootstrap replicates to use when 
+        `n_boot` is the number of bootstrap replicates to use when
         computing bootstrap ranges. (Default is 200)
-        
+
     Returns
     -------
     e_br : ndarray
-        `e_br` is an ndarray of shape m-by-2 that contains the bootstrap 
+        `e_br` is an ndarray of shape m-by-2 that contains the bootstrap
         ranges for the eigenvalues.
     sub_br : ndarray
-        `sub_br` is an ndarray of shape m-by-3 that contains the bootstrap 
+        `sub_br` is an ndarray of shape m-by-3 that contains the bootstrap
         ranges (first and third column) and the mean (second column) of the
         error in the estimated subspaces approximated by bootstrap
-        
+
     Notes
     -----
     The mean of the subspace distance bootstrap replicates is an interesting
     quantity. Still trying to figure out what its precise relation is to
     the subspace error. They seem to behave similarly in test problems. And an
     initial "coverage" study suggested that they're unbiased for a quadratic
-    test problem. Quadratics, though, may be special cases. 
+    test problem. Quadratics, though, may be special cases.
     """
     # number of gradient samples and dimension
     M, m = df.shape

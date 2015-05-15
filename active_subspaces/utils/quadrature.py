@@ -1,5 +1,5 @@
 """
-Gaussian quadrature utilities for use with the Python Active-subspaces Utility 
+Gaussian quadrature utilities for use with the Python Active-subspaces Utility
 Library.
 """
 
@@ -8,7 +8,7 @@ import misc as mi
 import logging
 
 def r_hermite(N):
-    """Recurence coefficients for the Hermite orthogonal polynomials. 
+    """Recurence coefficients for the Hermite orthogonal polynomials.
 
     Parameters
     ----------
@@ -19,16 +19,16 @@ def r_hermite(N):
     -------
     ab : ndarray
         An `N`-by-2 array of the recurrence coefficients.
-        
+
     See Also
     --------
     utils.quadrature.jacobi_matrix
     utils.quadrature.gauss_hermite
-    
+
     Notes
     -----
-    This computation is inspired by Walter Gautschi's code at 
-    https://www.cs.purdue.edu/archives/2002/wxg/codes/OPQ.html. 
+    This computation is inspired by Walter Gautschi's code at
+    https://www.cs.purdue.edu/archives/2002/wxg/codes/OPQ.html.
     """
 
     if not isinstance(N, int):
@@ -54,22 +54,22 @@ def jacobi_matrix(ab):
     ----------
     ab : ndarray
         N-by-2 array of recurrence coefficients
-    
+
     Returns
     -------
     J : ndarray
         (N-1)-by-(N-1) symmetric, tridiagonal Jacobi matrix associated with
         the orthogonal polynomials.
-        
+
     See Also
     --------
     utils.quadrature.r_hermite
     utils.quadrature.gauss_hermite
-    
+
     Notes
     -----
-    This computation is inspired by Walter Gautschi's code at 
-    https://www.cs.purdue.edu/archives/2002/wxg/codes/OPQ.html. 
+    This computation is inspired by Walter Gautschi's code at
+    https://www.cs.purdue.edu/archives/2002/wxg/codes/OPQ.html.
     """
 
     if len(ab.shape) != 2:
@@ -101,22 +101,22 @@ def gh1d(N):
     ----------
     N : int
         Number of nodes in the quadrature rule
-    
+
     Returns
     -------
     x : ndarray
         N-by-1 array of quadrature nodes
     w : ndarray
         N-by-1 array of quadrature weights
-        
+
     See Also
     --------
     utils.quadrature.gauss_hermite
-    
+
     Notes
     -----
-    This computation is inspired by Walter Gautschi's code at 
-    https://www.cs.purdue.edu/archives/2002/wxg/codes/OPQ.html. 
+    This computation is inspired by Walter Gautschi's code at
+    https://www.cs.purdue.edu/archives/2002/wxg/codes/OPQ.html.
     """
 
     if N > 1:
@@ -139,29 +139,29 @@ def gauss_hermite(N):
     ----------
     N : list of int
         Number of nodes in each dimension of the quadrature rule
-    
+
     Returns
     -------
     x : ndarray
         prod(N)-by-n array of quadrature nodes
     w : ndarray
         prod(N)-by-1 array of quadrature weights
-    
+
     Notes
     -----
-    This computation is inspired by Walter Gautschi's code at 
-    https://www.cs.purdue.edu/archives/2002/wxg/codes/OPQ.html. 
+    This computation is inspired by Walter Gautschi's code at
+    https://www.cs.purdue.edu/archives/2002/wxg/codes/OPQ.html.
     """
-    
+
     if isinstance(N, int):
         N = [N]
 
     if type(N) is not list:
         raise TypeError('N must be a list.')
-    
+
     Npts = int(np.prod(np.array(N)))
     logging.getLogger(__name__).debug('Making a tensor product Gauss-Hermite rule with {:d} points in {:d} dimensions.'.format(Npts, len(N)))
-    
+
     if len(N) == 1:
         x, w = gh1d(N[0])
     else:
@@ -175,5 +175,5 @@ def gauss_hermite(N):
             x = np.hstack((xL, xU))
             w = np.kron(w.copy(), wi)
         x, w = np.atleast_2d(x[:,1:]), mi.atleast_2d_col(w)
-    
+
     return x, w

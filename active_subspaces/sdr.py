@@ -7,14 +7,14 @@ def linear_gradient_check(X, f, n_boot=1000, in_labels=None, out_label=None):
     """
     Use the normalized gradient of a global linear model to define the active
     subspace.
-    
+
     Parameters
     ----------
     X : ndarray
-        `X` is an ndarray of shape M-by-m containing points in the simulation 
+        `X` is an ndarray of shape M-by-m containing points in the simulation
         input space.
     f : ndarray
-        `f` is an ndarray of shape M-by-1 containing the corresponding 
+        `f` is an ndarray of shape M-by-1 containing the corresponding
         simulation outputs.
     n_boot : int, optional
         `n_boot` is the number of bootstrap replicates. (Default is 1000)
@@ -23,28 +23,28 @@ def linear_gradient_check(X, f, n_boot=1000, in_labels=None, out_label=None):
         is None)
     out_label : str, optional
         `out_label` is a string that labels the simulation output.
-                    
+
     Returns
     -------
     w : ndarray
-        `w` is an ndarray of shape m-by-1 that is the normalized gradient of 
+        `w` is an ndarray of shape m-by-1 that is the normalized gradient of
         the global linear model.
-        
+
     See Also
     --------
     sdr.quadratic_model_check
-            
+
     Notes
     -----
     This is usually my first step when analyzing a new data set. It can be used
     to identify a one-dimensional active subspace under two conditions: (i) the
     simulation output is roughly a monotonic function of the inputs and (ii)
-    the simulation output is well represented by f(x) \approx g(w^T x). 
-    
+    the simulation output is well represented by f(x) \approx g(w^T x).
+
     The function produces the summary plot, which can verify these assumptions.
-    
+
     It also plots the components of `w`, which often provide insight into the
-    important parameters of the model. 
+    important parameters of the model.
     """
 
     M, m = X.shape
@@ -73,34 +73,34 @@ def linear_gradient_check(X, f, n_boot=1000, in_labels=None, out_label=None):
 
 def quadratic_model_check(X, f, gamma):
     """
-    Use the Hessian of a least-squares-fit quadratic model to identify active 
+    Use the Hessian of a least-squares-fit quadratic model to identify active
     and inactive subspaces
-    
+
     Parameters
     ----------
     X : ndarray
-        `X` is an ndarray of shape M-by-m containing points in the simulation 
+        `X` is an ndarray of shape M-by-m containing points in the simulation
         input space.
     f : ndarray
-        `f` is an ndarray of shape M-by-1 containing the corresponding 
+        `f` is an ndarray of shape M-by-1 containing the corresponding
         simulation outputs.
     gamma : float
-        `gamma` is the variance of the simulation inputs. If the inputs are 
+        `gamma` is the variance of the simulation inputs. If the inputs are
         bounded by a hypercube, then `gamma` is 1/3.
-                    
+
     Returns
     -------
     e : ndarray
         `e` is an ndarray of shape m-by-1 that contains the eigenvalues of the
         quadratic model's Hessian.
     W : ndarray
-        `W` is an ndarray of shape m-by-m that contains the eigenvectors of the 
+        `W` is an ndarray of shape m-by-m that contains the eigenvectors of the
         quadratic model's Hessian.
-        
+
     See Also
     --------
     sdr.linear_gradient_check
-            
+
     Notes
     -----
     This approach is very similar to Ker Chau Li's principal Hessian directions.
@@ -114,19 +114,19 @@ def quadratic_model_check(X, f, gamma):
 
     # get regression coefficients
     b, A = pr.g, pr.H
-    
+
     # compute eigenpairs
     e, W = np.linalg.eig(np.outer(b, b.T) + \
         np.dot(A, np.dot(np.diagflat(gamma), A)))
     ind = np.argsort(e)[::-1]
     e, W = e[ind], W[:,ind]*np.sign(W[0,ind])
-    
+
     return e.reshape((m,1)), W.reshape((m,m))
-    
+
 def _lingrad(X, f):
     """
-    A private function that builds the linear model with least-squares and 
-    returns the normalized gradient of the linear model. 
+    A private function that builds the linear model with least-squares and
+    returns the normalized gradient of the linear model.
     """
 
     M, m = X.shape
