@@ -475,11 +475,14 @@ def zonotope_2d_plot(vertices, design=None, y=None, f=None, out_label=None, opts
     
     fig = plt.figure(figsize=(7,7))
     ax = fig.add_subplot(111)
-    convex_hull_plot_2d(ch, ax=ax)
+    fig0 = convex_hull_plot_2d(ch, ax=ax)
+    for l in fig0.axes[0].get_children():
+        if type(l) is Line2D:
+	        l.set_linewidth(3)
     
     if design is not None:
-        fig = delaunay_plot_2d(dtri, ax=ax)
-        for l in fig.axes[0].get_children():
+        fig1 = delaunay_plot_2d(dtri, ax=ax)
+        for l in fig1.axes[0].get_children():
             if type(l) is Line2D:
 	        l.set_color('0.75')
         

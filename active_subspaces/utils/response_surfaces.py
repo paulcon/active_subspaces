@@ -4,6 +4,7 @@ import logging
 from scipy.optimize import fminbound
 from scipy.misc import comb
 from misc import process_inputs, process_inputs_outputs
+import pdb
 
 class ResponseSurface():
     """
@@ -248,7 +249,8 @@ class RadialBasisApproximation(ResponseSurface):
         logging.getLogger(__name__).debug('Training an RBF surface with degree {:d} polynomial in {:d} dims with {:d} points.'.format(self.N, m, M))
         
         # use maximum likelihood to tune parameters
-        g = fminbound(rbf_objective, 1e-6, 10.0, args=(X, f, v, self.N, e, ))
+        log10g = fminbound(rbf_objective, -10.0, 1.0, args=(X, f, v, self.N, e, ))
+        g = 10**(log10g)
         
         if e is None:
             ell = g*np.ones((m,1))
@@ -334,15 +336,15 @@ class RadialBasisApproximation(ResponseSurface):
             
         return f, df
 
-def rbf_objective(g, X, f, v, N, e):
+def rbf_objective(log10g, X, f, v, N, e):
     """
     Objective function for the maximum likelihood heuristic for choosing the 
     rbf shape parameters.
     
     Parameters
     ----------
-    g : float
-        `g` is the scaling factor for the rbf shape parameters.
+    log10g : float
+        `log10g` is the log of the scaling factor for the rbf shape parameters.
     X : ndarray
         `X` is the ndarray of training points.
     f : ndarray
@@ -364,6 +366,8 @@ def rbf_objective(g, X, f, v, N, e):
     """
     # TODO: I can probably make this implementation more efficient, but as of
     # now, I don't need to.
+    
+    g = 10**(log10g)
     
     M, m = X.shape
     if e is None:
