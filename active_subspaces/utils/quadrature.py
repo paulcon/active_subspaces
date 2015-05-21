@@ -41,7 +41,7 @@ def r_hermite(N):
         return np.array([[0.0, 1.0]])
     else:
         n = np.array(range(1, N + 1))
-        b = np.vstack((1.0, 0.5 * n.reshape((N, 1))))
+        b = np.vstack((1.0, n.reshape((N, 1))))
         a = np.zeros(b.shape)
         ab = np.hstack((a, b))
         return ab
