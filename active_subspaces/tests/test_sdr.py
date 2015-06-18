@@ -8,10 +8,6 @@ import numpy as np
 class TestSDR(TestCase):
     writeData = False
 
-
-    def tearDown(self):
-        mplt.close('all')
-
     def quad_fun(self, x):
         A = np.array([[ 0.2406659045776698, -0.3159904335007421, -0.1746908591702878],
                     [-0.3159904335007421,  0.5532215729009683,  0.3777995408101305],
