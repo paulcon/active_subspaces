@@ -169,7 +169,8 @@ class TestResponseSurfaces(TestCase):
         np.testing.assert_almost_equal(f, f_test.reshape((10,1)), decimal=10)
         np.testing.assert_almost_equal(df[:,0].reshape((10,1)), df1_test.reshape((10,1)), decimal=10)
         np.testing.assert_almost_equal(df[:,1].reshape((10,1)), df2_test.reshape((10,1)), decimal=10)
-
+    
+    """
     def test_polynomial_approximation_2d_sklearn(self):
         data = helper.load_test_npz('train_points_10_2.npz')
         X = data['X']
@@ -192,6 +193,7 @@ class TestResponseSurfaces(TestCase):
         f_test = clf.predict(X_test)
 
         np.testing.assert_almost_equal(f, f_test.reshape((10,1)), decimal=10)
+    """
 
     def test_exact_rbf_approximation_1d(self):
         data = helper.load_test_npz('train_points_10_2.npz')
