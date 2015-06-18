@@ -6,7 +6,7 @@ import numpy as np
 import logging as log
 
 class TestQuadrature(TestCase):
-    writeData = True
+    writeData = False
     
     def test_r_hermite_type_error(self):
         self.assertRaises(TypeError, gq.r_hermite, 'string')
