@@ -27,6 +27,6 @@ setup(name='active_subspaces',
           'matplotlib'
       ],
       test_suite='nose.collector',
-      tests_require=['nose', 'scikit-learn'],
+      tests_require=['nose'],
       include_package_data=True,
       zip_safe=False)
