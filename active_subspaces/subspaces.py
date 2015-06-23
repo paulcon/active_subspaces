@@ -7,30 +7,15 @@ class Subspaces():
     """
     A class for computing active and inactive subspaces.
 
-    Attributes
-    ----------
-    eigenvalues : ndarray
-        `eigenvalues` is an ndarray of shape m-by-1, where m is the dimension
-        of the input space.
-    eigenvectors : ndarray
-        `eigenvectors` is an ndarray of shape m-by-m that contains the
-        eigenvectors oriented column-wise.
-    W1 : ndarray
-        `W1` is an ndarray of shape m-by-n that contains the basis for the
-        active subspace.
-    W2 : ndarray
-        `W2` is an ndarray of shape m-by-(m-n) that contains the basis for the
-        inactive subspaces.
-    e_br : ndarray
-        `e_br` is an ndarray of shape m-by-2 that contains the bootstrap
-        ranges for the eigenvalues.
-    sub_br : ndarray
-        `sub_br` is an ndarray of shape m-by-3 that contains the bootstrap
-        ranges (first and third column) and the mean (second column) of the
-        error in the estimated subspaces approximated by bootstrap
+    :cvar ndarray eigenvalues: m-by-1 matrix where m is the dimension of the input space.
+    :cvar ndarray eigenvectors: m-by-m matrix that contains the eigenvectors oriented column-wise.
+    :cvar ndarray W1: m-by-n matrix that contains the basis for the active subspace.
+    :cvar ndarray W2: m-by-(m-n) matix that contains the basis for the inactive subspaces.
+    :cvar ndarray e_br: m-by-2 matrix that contains the bootstrap ranges for the eigenvalues.
+    :cvar ndarray sub_br: m-by-3 matrix that contains the bootstrap ranges (first and third column) and the mean (second column) of the error in the estimated subspaces approximated by bootstrap
 
-    Notes
-    -----
+    **Notes**
+
     The attributes `W1` and `W2` are convenience variables. They are identical
     to the first n and last (m-n) columns of `eigenvectors`, respectively.
     """
@@ -44,17 +29,11 @@ class Subspaces():
         Compute the active and inactive subspaces from a collection of
         sampled gradients.
 
-        Parameters
-        ----------
-        df : ndarray
-            `df` is an ndarray of size M-by-m that contains evaluations of the
-            gradient.
-        n_boot : int, optional
-            `n_boot` is the number of bootstrap replicates to use when
-            computing bootstrap ranges. (Default is 200)
+        :param ndarray df: an ndarray of size M-by-m that contains evaluations of the gradient.
+        :param int n_boot: number of bootstrap replicates to use when computing bootstrap ranges.
 
-        Notes
-        -----
+        **Notes**
+
         This method sets the class's attributes `W1`, `W2`, `eigenvalues`, and
         `eigenvectors`. If `n_boot` is greater than zero, then this method
         also runs a bootstrap to compute and set `e_br` and `sub_br`.
@@ -62,7 +41,7 @@ class Subspaces():
         df, M, m = process_inputs(df)
 
         if not isinstance(n_boot, int):
-            raise Exception('n_boot must be an integer.')
+            raise TypeError('n_boot must be an integer.')
 
         # compute eigenvalues and eigenvecs
         logging.getLogger('PAUL').info('Computing spectral decomp with {:d} samples in {:d} dims.'.format(M, m))
@@ -84,13 +63,10 @@ class Subspaces():
         """
         Set the partition between active and inactive subspaces.
 
-        Parameters
-        ----------
-        n : int
-            `n` is the dimension of the active subspace.
+        :param int n: dimension of the active subspace.
 
-        Notes
-        -----
+        **Notes**
+
         This method sets the class's attributes `W1` and `W2` according to the
         given `n`. It is mostly a convenience method in case one wants to
         manually set the dimension of the active subspace after the basis is
@@ -112,15 +88,10 @@ def compute_partition(evals):
     A heuristic based on eigenvalue gaps for deciding the dimension of the
     active subspace.
 
-    Parameters
-    ----------
-    evals : ndarray
-        `evals` contains the eigenvalues.
+    :param ndarray evals: the eigenvalues.
 
-    Returns
-    -------
-    n : int
-        `n` is the dimension of the active subspace.
+    :return: dimension of the active subspace
+    :rtype: int
     """
     # dealing with zeros for the log
     e = evals.copy()
@@ -136,21 +107,13 @@ def spectral_decomposition(df):
     Use the SVD to compute the eigenvectors and eigenvalues for the
     active subspace analysis.
 
-    Parameters
-    ----------
-    df : ndarray
-        `df` is an ndarray of size M-by-m that contains evaluations of the
-        gradient.
+    :param ndarray df: ndarray of size M-by-m that contains evaluations of the gradient.
 
-    Returns
-    -------
-    e : ndarray
-        `e` is the ndarray of shape m-by-1 that contains the eigenvalues.
-    W : ndarray
-        `W` contains the eigenvectors.
+    :return: [e, W], [ eigenvalues, eigenvectors ]
+    :rtype: [ndarray, ndarray]
 
-    Notes
-    -----
+    **Notes**
+
     If the number M of gradient samples is less than the dimension m of the
     inputs, then the method builds an arbitrary basis for the nullspace, which
     corresponds to the inactive subspace.
@@ -174,31 +137,16 @@ def bootstrap_ranges(df, e, W, n_boot=200):
     Use a nonparametric bootstrap to estimate variability in the computed
     eigenvalues and subspaces.
 
-    Parameters
-    ----------
-    df : ndarray
-        `df` is an ndarray of size M-by-m that contains evaluations of the
-        gradient.
-    e : ndarray
-        `e` is the ndarray of shape m-by-1 that contains the eigenvalues.
-    W : ndarray
-        `W` contains the eigenvectors.
-    n_boot : int, optional
-        `n_boot` is the number of bootstrap replicates to use when
-        computing bootstrap ranges. (Default is 200)
+    :param ndarray df: M-by-m matrix of evaluations of the gradient.
+    :param ndarray e: m-by-1 vector of eigenvalues
+    :param ndarray W: eigenvectors
+    :param int n_boot: number of bootstrap replicates to use when computing bootstrap ranges.
 
-    Returns
-    -------
-    e_br : ndarray
-        `e_br` is an ndarray of shape m-by-2 that contains the bootstrap
-        ranges for the eigenvalues.
-    sub_br : ndarray
-        `sub_br` is an ndarray of shape m-by-3 that contains the bootstrap
-        ranges (first and third column) and the mean (second column) of the
-        error in the estimated subspaces approximated by bootstrap
+    :return: [e_br, sub_br], e_br: m-by-2 matrix that contains the bootstrap ranges for the eigenvalues, sub_br: m-by-3 matrix that contains the bootstrap ranges (first and third column) and the mean (second column) of the error in the estimated subspaces approximated by bootstrap
+    :rtype: [ndarray, ndarray]
 
-    Notes
-    -----
+    **Notes**
+
     The mean of the subspace distance bootstrap replicates is an interesting
     quantity. Still trying to figure out what its precise relation is to
     the subspace error. They seem to behave similarly in test problems. And an

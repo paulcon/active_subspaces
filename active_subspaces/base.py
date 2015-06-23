@@ -15,48 +15,20 @@ import time
 
 class ActiveSubspaceReducedModel():
     """
-    A class for approximation, optimization, and integration with active
-    subspaces.
+    A class for approximation, optimization, and integration with active subspaces.
 
-    Attributes
-    ----------
-    bounded_inputs : bool
-        `bounded_inputs` is a flag that tells if the simulation's inputs are
-        bounded by an m-dimensional hypercube and equipped with a uniform
-        probability density function (True) or if they are unbounded and
-        equipped with a standard Gaussian density function (False).
-    X : ndarray
-        `X` is an ndarray of shape M-by-m that contains a set of simulation
-        inputs. Each row of `X` is a point in the simulations m-dimensional
-        parameter space. These points are used to train response surfaces. They
-        are also used in plots when analyzing the simulation.
-    f : ndarray
-        `f` is an ndarray of shape M-by-1 that contains the simulation outputs
-        that correspond to the rows of `X`. `f` is used as training data for
-        response surfaces.
-    m : int
-        `m` is the dimension of the simulation inputs.
-    n : int
-        `n` is the dimension of the active subspace. Typically `n` is less than
-        `m`---often much less.
-    fun : function
-        `fun` is a function that interfaces with the simulation. It should take
-        an ndarray of shape 1-by-m (e.g., a row of `X`), and it should return
-        a scalar. That scalar is the quantity of interest from the simulation.
-    dfun : function
-        `dfun` is a function that interfaces with the simulation. It should
-        take an ndarray of shape 1-by-m (e.g., a row of `X`), and it should
-        return the gradient of the quantity of interest as an ndarray of shape
-        1-by-m.
-    as_respsurf : ActiveSubspaceResponseSurface
-        `as_respsurf` is a response_surfaces.ActiveSubspacesResponseSurface. It
-        is initialized and trained while building the model. Once trained, it
-        can be used as a cheap surrogate for the simulation code.
-    Rsqr : float
-        The R-squared coefficient for the response surface.
+    :cvar bool bounded_inputs: flag that tells if the simulation's inputs are bounded by an m-dimensional hypercube and equipped with a uniform probability density function (True) or if they are unbounded and equipped with a standard Gaussian density function (False).
+    :cvar ndarray X: M-by-m matrix that contains a set of simulation inputs. Each row of `X` is a point in the simulations m-dimensional parameter space. These points are used to train response surfaces. They are also used in plots when analyzing the simulation.
+    :cvar ndarray f: M-by-1 matrix that contains the simulation outputs that correspond to the rows of `X`. `f` is used as training data for response surfaces.
+    :cvar int m: The dimension of the simulation inputs.
+    :cvar int n: The dimension of the active subspace. Typically `n` is less than `m`---often much less.
+    :cvar function fun: A function that interfaces with the simulation. It should take an ndarray of shape 1-by-m (e.g., a row of `X`), and it should return a scalar. That scalar is the quantity of interest from the simulation.
+    :cvar function dfun: A function that interfaces with the simulation. It should take an ndarray of shape 1-by-m (e.g., a row of `X`), and it should return the gradient of the quantity of interest as an ndarray of shape 1-by-m.
+    :cvar active-subspaces.response_surfaces.ActiveSubspaceResponseSurface as_respsurf: A response surface initialized and trained while building the model. Once trained, it can be used as a cheap surrogate for the simulation code.
+    :cvar float Rsqr: The R-squared coefficient for the response surface.
 
-    Notes
-    -----
+    **Notes**
+
     This class contains several convenient methods for working with active
     subspaces. These methods are mostly wrappers to other parts of the library.
     The methods are structured to be used with relatively little knowledge of
@@ -93,19 +65,11 @@ class ActiveSubspaceReducedModel():
         """
         Initialize the ActiveSubspaceReducedModel.
 
-        Parameters
-        ----------
-        bounded_inputs : bool
-            `bounded_inputs` is a flag that tells if the simulation's inputs are
-            bounded by an m-dimensional hypercube and equipped with a uniform
-            probability density function (True) or if they are unbounded and
-            equipped with a standard Gaussian density function (False).
-        m : int
-            `m` is the number of the simulation inputs, i.e., the dimension of
-            the space of simulation inputs.
+        :param bool bounded_inputs: A flag that tells if the simulation's inputs are bounded by an m-dimensional hypercube and equipped with a uniform probability density function (True) or if they are unbounded and equipped with a standard Gaussian density function (False).
+        :param int m: The number of the simulation inputs, i.e., the dimension of the space of simulation inputs.
 
-        Notes
-        -----
+        **Notes**
+
         An ActiveSubspaceReducedModel cannot exist without knowing some
         information about the inputs to the simulation that the model is meant
         to represent. `m` tells the model how many inputs the simulation takes.
@@ -130,7 +94,6 @@ class ActiveSubspaceReducedModel():
         lets us compute integrals. The simulation's true inputs may be
         unbounded with some correlation. In this case, we assume that the
         inputs have been properly transformed to a standard Gaussian.
-
         """
         if not isinstance(m, int):
             raise TypeError('m must be an integer.')
@@ -146,33 +109,17 @@ class ActiveSubspaceReducedModel():
         """
         Build the active subspace-enabled model with input/output pairs.
 
-        Parameters
-        ----------
-        X : ndarray
-            `X` is an ndarray of shape M-by-m with evaluations of the
-            m-dimensional simulation inputs.
-        f : ndarray
-            `f` is an ndarray of shape M-by-1 with corresponding simulation
-            quantities of interest.
-        df : ndarray, optional
-            `df` is an ndarray of shape M-by-m that contains the gradients of
-            the simulation quantity of interest, oriented row-wise, that
-            correspond to the rows of `X`. If `df` is not present, then it is
-            estimated with crude local linear models using the pairs `X` and
-            `f`. (Default is None)
-        avdim : int, optional
-            `avdim` is the dimension of the active subspace. If `avdim` is not
-            present, a crude heuristic is used to choose an active subspace
-            dimension based on the given data `X` and `f`---and possible `df`.
-            (Default is None)
+        :param ndarray X: M-by-m matrix with evaluations of the m-dimensional simulation inputs.
+        :param ndarray f: M-by-1 matrix with corresponding simulation quantities of interest.
+        :param ndarray df: M-by-m matrix that contains the gradients of the simulation quantity of interest, oriented row-wise, that correspond to the rows of `X`. If `df` is not present, then it is estimated with crude local linear models using the pairs `X` and `f`.
+        :param int avdim: The dimension of the active subspace. If `avdim` is not present, a crude heuristic is used to choose an active subspace dimension based on the given data `X` and `f`---and possible `df`.
 
-        Notes
-        -----
+        **Notes**
+
         This method follows these steps:
-        (1) If `df` is None, estimate it with local linear models using the
-        input/output pairs `X` and `f`.
-        (2) Compute the active and inactive subspaces using `df`.
-        (3) Train a response surface using `X` and `f` that exploits the active
+        #. If `df` is None, estimate it with local linear models using the input/output pairs `X` and `f`.
+        #. Compute the active and inactive subspaces using `df`.
+        #. Train a response surface using `X` and `f` that exploits the active
         subspace.
         """
         X, f, M, m = process_inputs_outputs(X, f)
@@ -230,34 +177,27 @@ class ActiveSubspaceReducedModel():
         Build the active subspace-enabled model with interfaces to the
         simulation.
 
-        Parameters
-        ----------
-        fun : function
-            `fun` is a function that interfaces with the simulation. It should
-            take an ndarray of shape 1-by-m (e.g., a row of `X`), and it should
-            return a scalar. That scalar is the quantity of interest from the
-            simulation.
-        dfun : function, optional
-            `dfun` is a function that interfaces with the simulation. It should
-            take an ndarray of shape 1-by-m (e.g., a row of `X`), and it should
-            return the gradient of the quantity of interest as an ndarray of
-            shape 1-by-m. (Default is None)
-        avdim : int, optional
-            `avdim` is the dimension of the active subspace. If `avdim` is not
-            present, it is chosen after computing the active subspaces using
-            the given interfaces. (Default is None)
+        :param function fun: A function that interfaces with the simulation. \
+        It should take an ndarray of shape 1-by-m (e.g., a row of `X`), and \
+        it should return a scalar. That scalar is the quantity of interest from the simulation.
+        :param function dfun: A function that interfaces with the simulation. \
+        It should take an ndarray of shape 1-by-m (e.g., a row of `X`), and it \
+        should return the gradient of the quantity of interest as an ndarray of shape 1-by-m.
+        :param int avdim: The dimension of the active subspace. If `avdim` is not \
+            present, it is chosen after computing the active subspaces using \
+            the given interfaces.
 
-        Notes
-        -----
+        **Notes**
+
         This method follows these steps:
-        (1) Draw random points according to the weight function on the space
+        #. Draw random points according to the weight function on the space\
         of simulation inputs.
-        (2) Compute the quantity of interest and its gradient at the sampled
+        #. Compute the quantity of interest and its gradient at the sampled\
         inputs. If `dfun` is None, use finite differences.
-        (3) Use the collection of gradients to estimate the eigenvectors and
+        #. Use the collection of gradients to estimate the eigenvectors and\
         eigenvalues that determine and define the active subspace.
-        (4) Train a response surface using the interface, which uses a careful
-        design of experiments on the space of active variables. This design
+        #. Train a response surface using the interface, which uses a careful\
+        design of experiments on the space of active variables. This design\
         uses about 5 points per dimension of the active subspace.
         """
         if not hasattr(fun, '__call__'):
@@ -326,22 +266,24 @@ class ActiveSubspaceReducedModel():
         Make plots that help determine the quality of the active subspace-
         enabled response surface and approximation.
 
-        Notes
-        -----
+        **Notes**
+
         This method produces four useful plots for verifying the quality of the
         active subspace-enable approximation.
-        (1) A semilog plot of the first 10 eigenvalues with their bootstrap
-        ranges. One is typically looking for large gaps between the
+
+        #. A semilog plot of the first 10 eigenvalues with their bootstrap ranges. \
+        One is typically looking for large gaps between the\
         eigenvalues in the log space.
-        (2) A semilog plot of the estimated errors in the estimated active
+        #. A semilog plot of the estimated errors in the estimated active\
         subspace. This plot uses a bootstrap to estimate the errors.
-        (3) A plot of the components of the first four eigenvectors. These
-        components often reveal insights into the simulation's important
+        #. A plot of the components of the first four eigenvectors. These\
+        components often reveal insights into the simulation's important\
         parameters.
-        (4) A 1d and a 2d summary plot of the computed quantity of interest at
-        different values of the first and second active variables. These plots
-        can be very useful in revealing the structure in the quantity of
+        #. A 1d and a 2d summary plot of the computed quantity of interest at\
+        different values of the first and second active variables. These plots\
+        can be very useful in revealing the structure in the quantity of\
         interest as a function of the inputs.
+
         """
         ss = self.as_respsurf.avmap.domain.subspaces
         eigenvalues(ss.eigenvalues[:10,0], e_br=ss.e_br[:10,:])
@@ -355,30 +297,25 @@ class ActiveSubspaceReducedModel():
         Compute the value of the response surface at given values of the
         simulation inputs.
 
-        Parameters
-        ----------
-        X : ndarray
-            `X` is an ndarray of shape M-by-m containing points in simulation's
-            input space.
-        compgrad : bool, optional
-            `compgrad` determines if the gradient of the response surface is
-            computed and returned. (Default is False)
+        :param ndarray X: M-by-m matrix containing points in simulation's\
+        input space.
+        :param bool compgrad: Determines if the gradient of the response surface is\
+        computed and returned. (Default is False)
 
-        Returns
-        -------
-        f : ndarray
-            `f` contains the response surface values at the given `X`.
-        df : ndarray
-            `df` is an ndarray of shape M-by-m that contains the estimated
-            gradient at the given `X`. If `compgrad` is False, then `df` is
-            None.
+        :return: response surface values at the given `X`.
+        :return: df :  estimated \
+        gradient at the given `X`. If `compgrad` is False, then `df` is \
+        None.
 
-        See Also
-        --------
+        :rtype: response_surface
+        :rtype: ndarray (M-by-m)
+
+        **See Also**
+
         response_surfaces.ActiveSubspaceResponseSurface
 
-        Notes
-        -----
+        **Notes**
+
         The default response surface is a radial basis function approximation
         using an exponential-squared (i.e., Gaussian) radial basis. The
         eigenvalues from the active subspace analysis are used to determine the
@@ -415,34 +352,31 @@ class ActiveSubspaceReducedModel():
         """
         Estimate the average of the simulation over the input space.
 
-        Parameters
-        ----------
-        N : int
-            `N` is the number of function calls to use when estimating the
+        **Parameters**
+
+        :param int N: The number of function calls to use when estimating the
             average.
 
-        Returns
-        -------
-        mu : float
-            `mu` is the estimated average of the quantity of interest as a
-            function of the simulation inputs.
-        lb : float
-            `lb` is an estimated lower bound on `mu`. It comes from the
-            variance of the Monte Carlo estimates when the model is built
-            with a simulation interface. When no simulation interface is
-            present, `lb` is None.
-        ub : float
-            `ub` is an estimated upper bound on `mu`. It comes from the
-            variance of the Monte Carlo estimates when the model is built
-            with a simulation interface. When no simulation interface is
-            present, `ub` is None.
+        :return: mu, estimated average of the quantity of interest as a\
+        function of the simulation inputs.
+        :return: lb, estimated lower bound on `mu`. It comes from the\
+        variance of the Monte Carlo estimates when the model is built\
+        with a simulation interface. When no simulation interface is\
+        present, `lb` is None.
+        :return: ub, estimated upper bound on `mu`. It comes from the\
+        variance of the Monte Carlo estimates when the model is built\
+        with a simulation interface. When no simulation interface is\
+        present, `ub` is None.
+        :rtype: float
+        :rtype: float
+        :rtype: float
 
-        See Also
-        --------
+        **See Also**
+
         integrals.integrate
 
-        Notes
-        -----
+        **Notes**
+
         When the model is built with a given simulation interface, the
         quadrature rule for estimating the average includes simple Monte Carlo
         integration over the inactive variables. These bounds do not include
@@ -472,34 +406,27 @@ class ActiveSubspaceReducedModel():
         Estimate the probably that the quantity of interest is within a given
         range.
 
-        Parameters
-        ----------
-        lb : float
-            `lb` is the lower bound on the interval.
-        ub : float
-            `ub` is the upper bound on the interval.
-        M : int, optional
-            `M` is the number of samples of the response surface. (Default is
-            10000)
+        :param float lb: The lower bound on the interval.
+        :param float ub: The upper bound on the interval.
+        :param int M: The number of samples of the response surface.
 
-        Returns
-        -------
-        p : float
-            `p` is the estimated probability that the quantity of interest
+        :return: p, The estimated probability that the quantity of interest\
             falls in the given interval.
-        plb : float
-            `plb` is a central limit theorem-based estimate of the lower 99%
-            confidence bound on `p`. Note that this lower bound is only from
-            the Monte Carlo used to estimate `p`. It does not include errors
+        :return: plb, A central limit theorem-based estimate of the lower 99%\
+            confidence bound on `p`. Note that this lower bound is only from\
+            the Monte Carlo used to estimate `p`. It does not include errors\
             in the response surface.
-        pub : float
-            `pub` is a central limit theorem-based estimate of the upper 99%
-            confidence bound on `p`. Note that this lower bound is only from
-            the Monte Carlo used to estimate `p`. It does not include errors
+        :return: pub, A central limit theorem-based estimate of the upper 99%\
+            confidence bound on `p`. Note that this lower bound is only from\
+            the Monte Carlo used to estimate `p`. It does not include errors\
             in the response surface.
 
-        Notes
-        -----
+        :rtype: float
+        :rtype: float
+        :rtype: float
+
+        **Notes**
+
         This method estimates the probability
         P[lb <= f <= ub],
         where f is the response surface approximation to the simulation
@@ -533,26 +460,24 @@ class ActiveSubspaceReducedModel():
         """
         Estimate the minimum of the quantity of interest.
 
-        Returns
-        -------
-        fstar : float
-            `fstar` is the estimated minimum of the quantity of interest over
+        :return: fstar, The estimated minimum of the quantity of interest over
             the simulation input space.
-        xstar : ndarray
-            `xstar` is an ndarray of shape 1-by-m that is the approximate
+        :return: xstar, An ndarray of shape 1-by-m that is the approximate
             minimizer of the simulation quantity of interest.
 
-        See Also
-        --------
+        :rtype: float
+        :rtype: ndarray
+
+        **See Also**
+
         optimizers.minimize
 
-        Notes
-        -----
+        **Notes**
+
         This method uses the active subspace-enabled response surface to search
         for a minimizer in the simulation input space. It is only a heuristic.
         There is not guarantee that this method finds the true global
         minimum.
-
         """
         xstar, fstar = minimize(self.as_respsurf, self.X, self.f)
         return fstar, xstar
