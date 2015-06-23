@@ -500,10 +500,5 @@ def zonotope_2d_plot(vertices, design=None, y=None, f=None, out_label=None, opts
         figname = 'figs/zonotope_2d_' + out_label + opts['figtype']
         plt.savefig(figname, dpi=300, bbox_inches='tight', pad_inches=0.0)
 
-
-
-
-
-
 def show_plot(plot, opts=None):
-    plot.show(block=False)
+    plot.show()
