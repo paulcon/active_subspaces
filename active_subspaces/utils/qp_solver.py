@@ -19,13 +19,10 @@ class QPSolver():
     """
     A class for solving linear and quadratic programs.
 
-    Attributes
-    ----------
-    solver : str
-        `solver` identifies which linear program software to use.
+    :cvar str solver: Identifies which linear program software to use.
 
-    Notes
-    -----
+    **Notes**
+
     The class checks to see if Gurobi is present. If it is, it uses Gurobi to
     solve the linear and quadratic programs. Otherwise, it uses scipy
     implementations to solve the linear and quadratic programs.
@@ -36,11 +33,8 @@ class QPSolver():
         """
         Initialize a QPSolver.
 
-        Parameters
-        ----------
-        solver : str, optional
-            `solver` identifies which linear program software to use. Default is
-            'GUROBI'. Another option is 'SCIPY'.
+        :param str solver: Identifies which linear program software to use.
+            Options are 'GUROBI' and 'SCIPY'.
         """
 
         if solver==solver_GUROBI and HAS_GUROBI:
@@ -56,31 +50,21 @@ class QPSolver():
         """
         Solves an equality constrained linear program with variable bounds.
 
-        Parameters
-        ----------
-        c : ndarray
-            `c` is an ndarray of size m-by-1 for the linear objective function.
-        A : ndarray
-            `A` is an ndarray of size M-by-m that contains the coefficients
-            of the linear equality constraints.
-        b : ndarray
-            `b` is an ndarray of size M-by-1 that is the right hand side of the
+        :param ndarray c: m-by-1 matrix for the linear objective function.
+        :param ndarray A: M-by-m matrix that contains the coefficients of the
+            linear equality constraints.
+        :param ndarray b: M-by-1 matrix that is the right hand side of the
             equality constraints.
-        lb : ndarray
-            `lb` is an ndarray of size m-by-1 that contains the lower bounds
-            on the variables.
-        ub : ndarray
-            `ub` is an ndarray of size m-by-1 that contains the upper bounds
-            on the variables.
+        :param ndarray lb: m-by-1 matrix that contains the lower bounds on the
+            variables.
+        :param ndarray ub: m-by-1 matrix that contains the upper bounds on the
+            variables.
 
-        Returns
-        -------
-        x : ndarray
-            An ndarray of size m-by-1 that is the minimizer of the linear
-            program.
+        :return: x, m-by-1 matrix that is the minimizer of the linear program.
+        :rtype: ndarray
 
-        Notes
-        -----
+        **Notes**
+
         This method returns the minimizer of the following linear program.
 
         minimize  c^T x
@@ -99,25 +83,17 @@ class QPSolver():
         """
         Solves an inequality constrained linear program.
 
-        Parameters
-        ----------
-        c : ndarray
-            `c` is an ndarray of size m-by-1 for the linear objective function.
-        A : ndarray
-            `A` is an ndarray of size M-by-m that contains the coefficients
-            of the linear equality constraints.
-        b : ndarray
-            `b` is an ndarray of size M-by-1 that is the right hand side of the
+        :param ndarray c: m-by-1 matrix for the linear objective function.
+        :param ndarray A: M-by-m matrix that contains the coefficients of the
+            linear equality constraints.
+        :param ndarray b: size M-by-1 matrix that is the right hand side of the
             equality constraints.
 
-        Returns
-        -------
-        x : ndarray
-            An ndarray of size m-by-1 that is the minimizer of the linear
-            program.
+        :return: x, m-by-1 matrix that is the minimizer of the linear program.
+        :rtype: ndarray
 
-        Notes
-        -----
+        **Notes**
+
         This method returns the minimizer of the following linear program.
 
         minimize  c^T x
@@ -135,29 +111,20 @@ class QPSolver():
         """
         Solves a quadratic program with variable bounds.
 
-        Parameters
-        ----------
-        c : ndarray
-            `c` is an ndarray of size m-by-1 that contains the coefficients of
-            the linear term in the objective function.
-        Q : ndarray
-            `Q` is an ndarray of size m-by-m that contains the coefficients
-            of the quadratic term in the objective function.
-        lb : ndarray
-            `lb` is an ndarray of size m-by-1 that contains the lower bounds
-            on the variables.
-        ub : ndarray
-            `ub` is an ndarray of size m-by-1 that contains the upper bounds
-            on the variables.
+        :param ndarray c: m-by-1 matrix that contains the coefficients of the
+            linear term in the objective function.
+        :param ndarray Q: m-by-m matrix that contains the coefficients of the
+            quadratic term in the objective function.
+        :param ndarray lb: m-by-1 matrix that contains the lower bounds on the
+            variables.
+        :param ndarray ub: m-by-1 matrix that contains the upper bounds on the
+            variables.
 
-        Returns
-        -------
-        x : ndarray
-            An ndarray of size m-by-1 that is the minimizer of the quadratic
-            program.
+        :return: x, m-by-1 matrix that is the minimizer of the quadratic program.
+        :rtype: ndarray
 
-        Notes
-        -----
+        **Notes**
+
         This method returns the minimizer of the following linear program.
 
         minimize  c^T x + x^T Q x
@@ -175,29 +142,20 @@ class QPSolver():
         """
         Solves an inequality constrained quadratic program with variable bounds.
 
-        Parameters
-        ----------
-        c : ndarray
-            `c` is an ndarray of size m-by-1 that contains the coefficients of
-            the linear term in the objective function.
-        Q : ndarray
-            `Q` is an ndarray of size m-by-m that contains the coefficients
-            of the quadratic term in the objective function.
-        A : ndarray
-            `A` is an ndarray of size M-by-m that contains the coefficients
-            of the linear equality constraints.
-        b : ndarray
-            `b` is an ndarray of size M-by-1 that is the right hand side of the
+        :param ndarray c: m-by-1 matrix that contains the coefficients of the
+            linear term in the objective function.
+        :param ndarray Q: m-by-m matrix that contains the coefficients of the
+            quadratic term in the objective function.
+        :param ndarray A: M-by-m matrix that contains the coefficients of the
+            linear equality constraints.
+        :param ndarray b: M-by-1 matrix that is the right hand side of the
             equality constraints.
 
-        Returns
-        -------
-        x : ndarray
-            An ndarray of size m-by-1 that is the minimizer of the quadratic
-            program.
+        :return: x, m-by-1 matrix that is the minimizer of the quadratic program.
+        :rtype: ndarray
 
-        Notes
-        -----
+        **Notes**
+
         This method returns the minimizer of the following linear program.
 
         minimize  c^T x + x^T Q x

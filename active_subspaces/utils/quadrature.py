@@ -10,23 +10,18 @@ import logging
 def r_hermite(N):
     """Recurence coefficients for the Hermite orthogonal polynomials.
 
-    Parameters
-    ----------
-    N : int
-        The number of recurence coefficients.
+    :param int N: The number of recurence coefficients.
 
-    Returns
-    -------
-    ab : ndarray
-        An `N`-by-2 array of the recurrence coefficients.
+    :return: ab, An `N`-by-2 array of the recurrence coefficients.
+    :rtype: ndarray
 
-    See Also
-    --------
+    **See Also**
+
     utils.quadrature.jacobi_matrix
     utils.quadrature.gauss_hermite
 
-    Notes
-    -----
+    **Notes**
+
     This computation is inspired by Walter Gautschi's code at
     https://www.cs.purdue.edu/archives/2002/wxg/codes/OPQ.html.
     """
@@ -50,24 +45,19 @@ def jacobi_matrix(ab):
     """
     Tri-diagonal Jacobi matrix of recurrence coefficients.
 
-    Parameters
-    ----------
-    ab : ndarray
-        N-by-2 array of recurrence coefficients
+    :param ndarray ab: N-by-2 array of recurrence coefficients
 
-    Returns
-    -------
-    J : ndarray
-        (N-1)-by-(N-1) symmetric, tridiagonal Jacobi matrix associated with
-        the orthogonal polynomials.
+    :return: J, (N-1)-by-(N-1) symmetric, tridiagonal Jacobi matrix associated
+        with the orthogonal polynomials.
+    :rtype: ndarray
 
-    See Also
-    --------
+    **See Also**
+
     utils.quadrature.r_hermite
     utils.quadrature.gauss_hermite
 
-    Notes
-    -----
+    **Notes**
+
     This computation is inspired by Walter Gautschi's code at
     https://www.cs.purdue.edu/archives/2002/wxg/codes/OPQ.html.
     """
@@ -97,24 +87,20 @@ def gh1d(N):
     """
     One-dimensional Gauss-Hermite quadrature rule.
 
-    Parameters
-    ----------
-    N : int
-        Number of nodes in the quadrature rule
+    :param int N: Number of nodes in the quadrature rule
 
-    Returns
-    -------
-    x : ndarray
-        N-by-1 array of quadrature nodes
-    w : ndarray
-        N-by-1 array of quadrature weights
+    :return: x, N-by-1 array of quadrature nodes
+    :rtype: ndarray
 
-    See Also
-    --------
+    :return: w, N-by-1 array of quadrature weights
+    :rtype: ndarray
+
+    **See Also**
+
     utils.quadrature.gauss_hermite
 
-    Notes
-    -----
+    **Notes**
+
     This computation is inspired by Walter Gautschi's code at
     https://www.cs.purdue.edu/archives/2002/wxg/codes/OPQ.html.
     """
@@ -135,20 +121,16 @@ def gauss_hermite(N):
     """
     Tensor product Gauss-Hermite quadrature rule.
 
-    Parameters
-    ----------
-    N : list of int
-        Number of nodes in each dimension of the quadrature rule
+    :param int[] N: Number of nodes in each dimension of the quadrature rule
 
-    Returns
-    -------
-    x : ndarray
-        prod(N)-by-n array of quadrature nodes
-    w : ndarray
-        prod(N)-by-1 array of quadrature weights
+    :return: x, N-by-1 array of quadrature nodes
+    :rtype: ndarray
 
-    Notes
-    -----
+    :return: w, N-by-1 array of quadrature weights
+    :rtype: ndarray
+
+    **Notes**
+
     This computation is inspired by Walter Gautschi's code at
     https://www.cs.purdue.edu/archives/2002/wxg/codes/OPQ.html.
     """
