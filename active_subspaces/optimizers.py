@@ -12,13 +12,13 @@ class MinVariableMap(ActiveVariableMap):
     """
     This subclass is an domains.ActiveVariableMap specifically for optimization.
 
-    See Also
-    --------
+    **See Also**
+
     optimizers.BoundedMinVariableMap
     optimizers.UnboundedMinVariableMap
 
-    Notes
-    -----
+    **Notes**
+
     This class's train function fits a global quadratic surrogate model to the
     n+2 active variables---two more than the dimension of the active subspace.
     This quadratic surrogate is used to map points in the space of active
@@ -29,15 +29,10 @@ class MinVariableMap(ActiveVariableMap):
         """
         Train the global quadratic for the regularization.
 
-        Parameters
-        ----------
-        X : ndarray
-            `X` is an ndarray of input points used to train a global quadratic
-            used in the `regularize_z` function.
-        f : ndarray
-            `f` is an ndarray of simulation outputs used to train a global
-            quadratic in the `regularize_z` function.
-
+        :param ndarray X: input points used to train a global quadratic used in
+            the `regularize_z` function.
+        :param ndarray f: simulation outputs used to train a global quadratic in
+            the `regularize_z` function.
         """
 
         X, f, M, m = process_inputs_outputs(X, f)
@@ -73,8 +68,8 @@ class BoundedMinVariableMap(MinVariableMap):
     """
     This subclass is a MinVariableMap for bounded simulation inputs.
 
-    See Also
-    --------
+    **See Also**
+
     optimizers.MinVariableMap
     optimizers.UnboundedMinVariableMap
     """
@@ -83,23 +78,17 @@ class BoundedMinVariableMap(MinVariableMap):
         """
         Train the global quadratic for the regularization.
 
-        Parameters
-        ----------
-        Y : ndarray
-            `Y` is an ndarray of shape N-by-n of points in the space of active
+        :param ndarray Y: N-by-n matrix of points in the space of active
             variables.
-        N : int
-            `N` is merely there satisfy the interface of `regularize_z`. It
+        :param int N: merely there satisfy the interface of `regularize_z`. It
             should not be anything other than 1.
 
-        Returns
-        -------
-        Z : ndarray
-            `Z` is an ndarray of shape N-by-(m-n)-by-1 that contains a value of
-            the inactive variables for each value of the inactive variables.
+        :return: Z, N-by-(m-n)-by-1 matrix that contains a value of the inactive
+            variables for each value of the inactive variables.
+        :rtype: ndarray
 
-        Notes
-        -----
+        **Notes**
+
         In contrast to the `regularize_z` in BoundedActiveVariableMap and
         UnboundedActiveVariableMap, this implementation of `regularize_z` uses
         a quadratic program to find a single value of the inactive variables
@@ -130,8 +119,8 @@ class UnboundedMinVariableMap(MinVariableMap):
     """
     This subclass is a MinVariableMap for unbounded simulation inputs.
 
-    See Also
-    --------
+    **See Also**
+
     optimizers.MinVariableMap
     optimizers.BoundedMinVariableMap
     """
@@ -140,23 +129,17 @@ class UnboundedMinVariableMap(MinVariableMap):
         """
         Train the global quadratic for the regularization.
 
-        Parameters
-        ----------
-        Y : ndarray
-            `Y` is an ndarray of shape N-by-n of points in the space of active
+        :param ndarray Y: N-by-n matrix of points in the space of active
             variables.
-        N : int
-            `N` is merely there satisfy the interface of `regularize_z`. It
+        :param int N: merely there satisfy the interface of `regularize_z`. It
             should not be anything other than 1.
 
-        Returns
-        -------
-        Z : ndarray
-            `Z` is an ndarray of shape N-by-(m-n)-by-1 that contains a value of
-            the inactive variables for each value of the inactive variables.
+        :return: Z, N-by-(m-n)-by-1 matrix that contains a value of the inactive
+            variables for each value of the inactive variables.
+        :rtype: ndarray
 
-        Notes
-        -----
+        **Notes**
+
         In contrast to the `regularize_z` in BoundedActiveVariableMap and
         UnboundedActiveVariableMap, this implementation of `regularize_z` uses
         a quadratic program to find a single value of the inactive variables
@@ -179,26 +162,20 @@ def minimize(asrs, X, f):
     """
     Minimize a response surface constructed with the aid of the active subspace.
 
-    Parameters
-    ----------
-    asrs : ActiveSubspaceResponseSurface
-        `asrs` is a trained response_surfaces.ActiveSubspaceResponseSurface.
-    X : ndarray
-        `X` is an ndarray of input points used to train the MinVariableMap.
-    f : ndarray
-        `f` is an ndarray of simulation outputs used to train the
-        MinVariableMap.
+    :param ActiveSubspaceResponseSurface asrs: A trained
+        response_surfaces.ActiveSubspaceResponseSurface.
+    :param ndarray X: input points used to train the MinVariableMap.
+    :param ndarray f: simulation outputs used to train the MinVariableMap.
 
-    Returns
-    -------
-    xstar : ndarray
-        `xstar` is the estimated minimizer of the function modeled by the
+    :return: xstar, The estimated minimizer of the function modeled by the
         ActiveSubspaceResponseSurface `asrs`.
-    fstar : float
-        `fstar` is the estimated minimum of the function modeled by `asrs`.
+    :rtype: ndarray
 
-    Notes
-    -----
+    :return: fstar, The estimated minimum of the function modeled by `asrs`.
+    :rtype: float
+
+    **Notes**
+
     This function has two stages. First it uses the scipy.optimize package to
     minimize the response surface of the active variables. Then it trains
     a MinVariableMap with the given input/output pairs, which it uses to map
@@ -237,24 +214,18 @@ def av_minimize(avfun, avdom, avdfun=None):
     """
     Minimize a response surface on the active variables.
 
-    Parameters
-    ----------
-    avfun : function
-        `avfun` is a function of the active variables.
-    avdom : ActiveVariableDomain
-        `avdom` contains information about the domain of `avfun`.
-    avdfun : function, optional
-        `avdfun` returns the gradient of `avfun`. (Default is None)
+    :param function avfun: A function of the active variables.
+    :param ActiveVariableDomain avdom: Information about the domain of `avfun`.
+    :param function avdfun: Returns the gradient of `avfun`.
 
-    Returns
-    -------
-    ystar : ndarray
-        `ystar` is the estimated minimizer of `avfun`.
-    fstar : float
-        `fstar` is the estimated minimum of `avfun`.
+    :return: ystar, The estimated minimizer of `avfun`.
+    :rtype: ndarray
 
-    See Also
-    --------
+    :return: fstar, The estimated minimum of `avfun`.
+    :rtype: float
+
+    **See Also**
+
     optimizers.interval_minimize
     optimizers.zonotope_minimize
     optimizers.unbounded_minimize
@@ -277,26 +248,22 @@ def interval_minimize(avfun, avdom):
     """
     Minimize a response surface defined on an interval.
 
-    Parameters
-    ----------
-    avfun : function
-        `avfun` is a function of the active variables.
-    avdom : ActiveVariableDomain
-        `avdom` contains information about the domain of `avfun`.
+    :param function avfun: A function of the active variables.
+    :param ActiveVariableDomain avdom: Contains information about the domain of
+        `avfun`.
 
-    Returns
-    -------
-    ystar : ndarray
-        `ystar` is the estimated minimizer of `avfun`.
-    fstar : float
-        `fstar` is the estimated minimum of `avfun`.
+    :return: ystar, The estimated minimizer of `avfun`.
+    :rtype: ndarray
 
-    See Also
-    --------
+    :return: fstar, The estimated minimum of `avfun`.
+    :rtype: float
+
+    **See Also**
+
     optimizers.av_minimize
 
-    Notes
-    -----
+    **Notes**
+
     This function wraps the scipy.optimize function fminbound.
     """
 
@@ -315,28 +282,23 @@ def zonotope_minimize(avfun, avdom, avdfun):
     """
     Minimize a response surface defined on a zonotope.
 
-    Parameters
-    ----------
-    avfun : function
-        `avfun` is a function of the active variables.
-    avdom : ActiveVariableDomain
-        `avdom` contains information about the domain of `avfun`.
-    avdfun : function
-        `avdfun` returns the gradient of `avfun`.
+    :param function avfun: A function of the active variables.
+    :param ActiveVariableDomain avdom: Contains information about the domain of
+        `avfun`.
+    :param function avdfun: Returns the gradient of `avfun`.
 
-    Returns
-    -------
-    ystar : ndarray
-        `ystar` is the estimated minimizer of `avfun`.
-    fstar : float
-        `fstar` is the estimated minimum of `avfun`.
+    :return: ystar, The estimated minimizer of `avfun`.
+    :rtype: ndarray
 
-    See Also
-    --------
+    :return: fstar, The estimated minimum of `avfun`.
+    :rtype: float
+
+    **See Also**
+
     optimizers.av_minimize
 
-    Notes
-    -----
+    **Notes**
+
     This function wraps the scipy.optimize implementation of SLSQP with linear
     inequality constraints derived from the zonotope.
     """
@@ -373,28 +335,23 @@ def unbounded_minimize(avfun, avdom, avdfun):
     """
     Minimize a response surface defined on an unbounded domain.
 
-    Parameters
-    ----------
-    avfun : function
-        `avfun` is a function of the active variables.
-    avdom : ActiveVariableDomain
-        `avdom` contains information about the domain of `avfun`.
-    avdfun : function
-        `avdfun` returns the gradient of `avfun`.
+    param function avfun: A function of the active variables.
+    :param ActiveVariableDomain avdom: Contains information about the domain of
+        `avfun`.
+    :param function avdfun: Returns the gradient of `avfun`.
 
-    Returns
-    -------
-    ystar : ndarray
-        `ystar` is the estimated minimizer of `avfun`.
-    fstar : float
-        `fstar` is the estimated minimum of `avfun`.
+    :return: ystar, The estimated minimizer of `avfun`.
+    :rtype: ndarray
 
-    See Also
-    --------
+    :return: fstar, The estimated minimum of `avfun`.
+    :rtype: float
+
+    **See Also**
+
     optimizers.av_minimize
 
-    Notes
-    -----
+    **Notes**
+
     If the gradient `avdfun` is None, this function wraps the scipy.optimize
     implementation of SLSQP. Otherwise, it wraps BFGS.
     """

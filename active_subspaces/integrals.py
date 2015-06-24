@@ -15,37 +15,31 @@ def integrate(fun, avmap, N, NMC=10):
     """
     Approximate the integral of a function of m variables.
 
-    Parameters
-    ----------
-    fun : function
-        `fun` is an interface to the simulation that returns the quantity of
-        interest given inputs as an 1-by-m ndarray.
-    avmap : ActiveVariableMap
-        `avmap` is a domains.ActiveVariableMap.
-    N : int
-        `N` is the number of points in the quadrature rule.
-    NMC : int, optional
-        `NMC` is the number of points in the Monte Carlo estimates of the
-        conditional expectation and conditional variance. (Default is 10)
+    :param function fun: An interface to the simulation that returns the
+        quantity of interest given inputs as an 1-by-m ndarray.
+    :param ActiveVariableMap avmap: a domains.ActiveVariableMap.
+    :param int N: The number of points in the quadrature rule.
+    :param int NMC: The number of points in the Monte Carlo estimates of the
+        conditional expectation and conditional variance.
 
-    Returns
-    -------
-    mu : float
-        `mu` is an estimate of the integral of the function computed against the
-        weight function on the simulation inputs.
-    lb : float
-        `lb` is an central-limit-theorem 95% lower confidence from the Monte
-        Carlo part of the integration.
-    ub : float
-        `ub` is an central-limit-theorem 95% upper confidence from the Monte
-        Carlo part of the integration.
+    :return: mu, An estimate of the integral of the function computed against
+        the weight function on the simulation inputs.
+    :rtype: float
 
-    See Also
-    --------
+    :return: lb, An central-limit-theorem 95% lower confidence from the Monte
+        Carlo part of the integration.
+    :rtype: float
+
+    :return: ub, An central-limit-theorem 95% upper confidence from the Monte
+        Carlo part of the integration.
+    :rtype: float
+
+    **See Also**
+
     integrals.quadrature_rule
 
-    Notes
-    -----
+    **Notes**
+
     The CLT-based bounds `lb` and `ub` are likely poor estimators of the error.
     They only account for the variance from the Monte Carlo portion. They do
     not include any error from the integration rule on the active variables.
@@ -88,22 +82,15 @@ def av_integrate(avfun, avmap, N):
     """
     Approximate the integral of a function of active variables.
 
-    Parameters
-    ----------
-    avfun : function
-        `avfun` is a function of the active variables.
-    avmap : ActiveVariableMap
-        `avmap` is a domains.ActiveVariableMap.
-    N : int
-        `N` is the number of points in the quadrature rule.
+    :param function avfun: A function of the active variables.
+    :param ActiveVariableMap avmap: A domains.ActiveVariableMap.
+    :param int N: The number of points in the quadrature rule.
 
-    Returns
-    -------
-    mu : float
-        `mu` is an estimate of the integral.
+    :return: mu, An estimate of the integral.
+    :rtype: float
 
-    Notes
-    -----
+    **Notes**
+
     This function is usually used when one has already constructed a response
     surface on the active variables and wants to estimate its integral.
     """
@@ -125,34 +112,29 @@ def quadrature_rule(avmap, N, NMC=10):
     """
     Get a quadrature rule on the space of simulation inputs.
 
-    Parameters
-    ----------
-    avmap : ActiveVariableMap
-        `avmap` is a domains.ActiveVariableMap.
-    N : int
-        `N` is the number of quadrature nodes in the active variables.
-    NMC : int, optional
-        `NMC` is the number of samples in the simple Monte Carlo over the
+    :param ActiveVariableMap avmap: A domains.ActiveVariableMap.
+    :param int N: The number of quadrature nodes in the active variables.
+    :param int NMC: The number of samples in the simple Monte Carlo over the
         inactive variables.
 
-    Returns
-    -------
-    Xp : ndarray
-        `Xp` is an ndarray of shape (N*NMC)-by-m containing the quadrature nodes
-        on the simulation input space.
-    Xw : ndarray
-        `Xw` is an ndarray of shape (N*NMC)-by-1 containing the quadrature
-        weights on the simulation input space.
-    ind : ndarray
-        `ind` is an ndarray of indices identifies which rows of `Xp` correspond
-        to the same fixed value of the active variables.
+    :return: Xp, (N*NMC)-by-m matrix containing the quadrature nodes on the
+        simulation input space.
+    :rtype: ndarray
 
-    See Also
-    --------
+    :return: Xw, (N*NMC)-by-1 matrix containing the quadrature weights on the
+        simulation input space.
+    :rtype: ndarray
+
+    :return: ind, array of indices identifies which rows of `Xp` correspond
+        to the same fixed value of the active variables.
+    :rtype: ndarray
+
+    **See Also**
+
     integrals.av_quadrature_rule
 
-    Notes
-    -----
+    **Notes**
+
     This quadrature rule uses an integration rule on the active variables and
     simple Monte Carlo on the inactive variables.
 
@@ -191,22 +173,17 @@ def av_quadrature_rule(avmap, N):
     """
     Get a quadrature rule on the space of active variables.
 
-    Parameters
-    ----------
-    avmap : ActiveVariableMap
-        `avmap` is a domains.ActiveVariableMap.
-    N : int
-        `N` is the number of quadrature nodes in the active variables.
+    :param ActiveVariableMap avmap: A domains.ActiveVariableMap.
+    :param int N: The number of quadrature nodes in the active variables.
 
-    Returns
-    -------
-    Yp : ndarray
-        `Yp` is an ndarray of quadrature nodes on the active variables.
-    Yw : ndarray
-        `Yw` is an ndarray of quadrature weights on the active variables.
+    :return: Yp, quadrature nodes on the active variables.
+    :rtype: ndarray
 
-    See Also
-    --------
+    :return: Yw, quadrature weights on the active variables.
+    :rtype: ndarray
+
+    **See Also**
+
     integrals.quadrature_rule
     """
     m, n = avmap.domain.subspaces.W1.shape
@@ -229,25 +206,19 @@ def interval_quadrature_rule(avmap, N, NX=10000):
     Quadrature when the dimension of the active subspace is 1 and the
     simulation parameter space is bounded.
 
-    Parameters
-    ----------
-    avmap : ActiveVariableMap
-        `avmap` is a domains.ActiveVariableMap.
-    N : int
-        `N` is the number of quadrature nodes in the active variables.
-    NX : int, optional
-        `NX` is the number of samples to use to estimate the quadrature weights.
-        (Default is 10000)
+    :param ActiveVariableMap avmap: A domains.ActiveVariableMap.
+    :param int N: The number of quadrature nodes in the active variables.
+    :param int NX: The number of samples to use to estimate the quadrature
+        weights.
 
-    Returns
-    -------
-    Yp : ndarray
-        `Yp` is an ndarray of quadrature nodes on the active variables.
-    Yw : ndarray
-        `Yw` is an ndarray of quadrature weights on the active variables.
+    :return: Yp, quadrature nodes on the active variables.
+    :rtype: ndarray
 
-    See Also
-    --------
+    :return: Yw, quadrature weights on the active variables.
+    :rtype: ndarray
+
+    **See Also**
+
     integrals.quadrature_rule
     """
     W1 = avmap.domain.subspaces.W1
@@ -274,25 +245,19 @@ def zonotope_quadrature_rule(avmap, N, NX=10000):
     Quadrature when the dimension of the active subspace is greater than 1 and
     the simulation parameter space is bounded.
 
-    Parameters
-    ----------
-    avmap : ActiveVariableMap
-        `avmap` is a domains.ActiveVariableMap.
-    N : int
-        `N` is the number of quadrature nodes in the active variables.
-    NX : int, optional
-        `NX` is the number of samples to use to estimate the quadrature weights.
-        (Default is 10000)
+    :param ActiveVariableMap avmap: A domains.ActiveVariableMap.
+    :param int N: The number of quadrature nodes in the active variables.
+    :param int NX: The number of samples to use to estimate the quadrature
+        weights.
 
-    Returns
-    -------
-    Yp : ndarray
-        `Yp` is an ndarray of quadrature nodes on the active variables.
-    Yw : ndarray
-        `Yw` is an ndarray of quadrature weights on the active variables.
+    :return: Yp, quadrature nodes on the active variables.
+    :rtype: ndarray
 
-    See Also
-    --------
+    :return: Yw, quadrature weights on the active variables.
+    :rtype: ndarray
+
+    **See Also**
+
     integrals.quadrature_rule
     """
 

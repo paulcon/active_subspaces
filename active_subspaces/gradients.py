@@ -8,24 +8,17 @@ def local_linear_gradients(X, f, p=None):
     """
     Estimate a collection of gradients from input/output pairs.
 
-    Parameters
-    ----------
-    X : ndarray
-        `X` is an ndarray of size M-by-m that contains the m-dimensional inputs.
-    f : ndarray
-        `f` is an ndarray of size M-by-1 that contains scalar outputs.
-    p : int, optional
-        `p` determines how many nearest neighbors to use when constructing the
-        local linear model. (Default is None)
+    :param ndarray X: M-by-m matrix that contains the m-dimensional inputs.
+    :param ndarray f: M-by-1 matrix that contains scalar outputs.
+    :param int p: How many nearest neighbors to use when constructing the
+        local linear model.
 
-    Returns
-    -------
-    df : ndarray
-        An ndarray of size M-by-m that contains estimated partial derivatives
+    :return df: M-by-m matrix that contains estimated partial derivatives
         approximated by the local linear models.
+    :rtype: ndarray
 
-    Notes
-    -----
+    **Notes**
+
     If `p` is not specified, the default value is floor(1.7*m).
     """
 
@@ -56,23 +49,15 @@ def finite_difference_gradients(X, fun, h=1e-6):
     """
     Compute finite difference gradients with a given interface.
 
-    Parameters
-    ----------
-    X : ndarray
-        `X` is an ndarray of size M-by-m that contains the points to estimate
-        the gradients with finite differences.
-    fun : function
-        `fun` is the function that returns the simulation's quantity of interest
-        given inputs.
-    h : float, optional
-        `h` is the finite difference step size. (Default is 1e-6)
+    :param ndarray X: M-by-m matrix that contains the points to estimate the
+        gradients with finite differences.
+    :param function fun: Function that returns the simulation's quantity of
+        interest given inputs.
+    :param float h: The finite difference step size.
 
-    Returns
-    -------
-    df : ndarray
-        An ndarray of size M-by-m that contains estimated partial derivatives
+    :return: df, M-by-m matrix that contains estimated partial derivatives
         approximated by finite differences
-
+    :rtype: ndarray
     """
     X, M, m = process_inputs(X)
     logging.getLogger(__name__).debug('Computing finite diff grads at {:d} points in {:d} dims.'.format(M, m))

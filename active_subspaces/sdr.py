@@ -8,34 +8,24 @@ def linear_gradient_check(X, f, n_boot=1000, in_labels=None, out_label=None):
     Use the normalized gradient of a global linear model to define the active
     subspace.
 
-    Parameters
-    ----------
-    X : ndarray
-        `X` is an ndarray of shape M-by-m containing points in the simulation
-        input space.
-    f : ndarray
-        `f` is an ndarray of shape M-by-1 containing the corresponding
-        simulation outputs.
-    n_boot : int, optional
-        `n_boot` is the number of bootstrap replicates. (Default is 1000)
-    in_labels : list of str, optional
-        `in_labels` contains strings that label the input parameters (Default
-        is None)
-    out_label : str, optional
-        `out_label` is a string that labels the simulation output.
+    :param ndarray X: M-by-m matrix containing points in the simulation input
+        space.
+    :param ndarray f: M-by-1 matrix containing the corresponding simulation
+        outputs.
+    :param int n_boot: The number of bootstrap replicates.
+    :param str[] in_labels: Contains strings that label the input parameters.
+    :param str out_label: String that labels the simulation output.
 
-    Returns
-    -------
-    w : ndarray
-        `w` is an ndarray of shape m-by-1 that is the normalized gradient of
+    :return: w, m-by-1 matrix that is the normalized gradient of
         the global linear model.
+    :rtype: ndarray
 
-    See Also
-    --------
+    **See Also**
+
     sdr.quadratic_model_check
 
-    Notes
-    -----
+    **Notes**
+
     This is usually my first step when analyzing a new data set. It can be used
     to identify a one-dimensional active subspace under two conditions: (i) the
     simulation output is roughly a monotonic function of the inputs and (ii)
@@ -76,33 +66,26 @@ def quadratic_model_check(X, f, gamma):
     Use the Hessian of a least-squares-fit quadratic model to identify active
     and inactive subspaces
 
-    Parameters
-    ----------
-    X : ndarray
-        `X` is an ndarray of shape M-by-m containing points in the simulation
-        input space.
-    f : ndarray
-        `f` is an ndarray of shape M-by-1 containing the corresponding
-        simulation outputs.
-    gamma : float
-        `gamma` is the variance of the simulation inputs. If the inputs are
-        bounded by a hypercube, then `gamma` is 1/3.
+    :param ndarray X: M-by-m matrix containing points in the simulation input
+        space.
+    :param ndarray f: M-by-1 containing the corresponding simulation outputs.
+    :param float gamma: The variance of the simulation inputs. If the inputs
+        are bounded by a hypercube, then `gamma` is 1/3.
 
-    Returns
-    -------
-    e : ndarray
-        `e` is an ndarray of shape m-by-1 that contains the eigenvalues of the
-        quadratic model's Hessian.
-    W : ndarray
-        `W` is an ndarray of shape m-by-m that contains the eigenvectors of the
-        quadratic model's Hessian.
+    :return: e, m-by-1 that contains the eigenvalues of the quadratic model's
+        Hessian.
+    :rtype: ndarray
 
-    See Also
-    --------
+    :return: W, m-by-m matrix that contains the eigenvectors of the quadratic
+        model's Hessian.
+    :rtype: ndarray
+
+    **See Also**
+
     sdr.linear_gradient_check
 
-    Notes
-    -----
+    **Notes**
+
     This approach is very similar to Ker Chau Li's principal Hessian directions.
     """
 
