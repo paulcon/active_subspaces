@@ -335,7 +335,7 @@ def unbounded_minimize(avfun, avdom, avdfun):
     """
     Minimize a response surface defined on an unbounded domain.
 
-    param function avfun: A function of the active variables.
+    :param function avfun: A function of the active variables.
     :param ActiveVariableDomain avdom: Contains information about the domain of
         `avfun`.
     :param function avdfun: Returns the gradient of `avfun`.
