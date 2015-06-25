@@ -10,21 +10,15 @@ class ResponseSurface():
     """
     An abstract class for response surfaces.
 
-    Attributes
-    ----------
-    N : int
-        Maximum degree of global polynomial in the response surface.
-    Rsqr : float
-        The R-squared coefficient for the response surface.
-    X : ndarray
-        `X` is an ndarray of training points for the response surface. The shape
-        is M-by-m, where m is the number of dimensions.
-    f : ndarray
-        `f` is an ndarray of function values used to train the response surface.
-        The shape of `f` is M-by-1.
+    :cvar int N: Maximum degree of global polynomial in the response surface.
+    :cvar float Rsqr: The R-squared coefficient for the response surface.
+    :cvar ndarray X: An ndarray of training points for the response surface. The
+        shape is M-by-m, where m is the number of dimensions.
+    :cvar ndarray f: An ndarray of function values used to train the response
+        surface. The shape of `f` is M-by-1.
 
-    See Also
-    --------
+    **See Also**
+
     utils.response_surfaces.PolynomialApproximation
     utils.response_surfaces.RadialBasisApproximation
     """
@@ -52,24 +46,19 @@ class PolynomialApproximation(ResponseSurface):
     A class for least-squares-fit, global, multivariate polynomial
     approximation.
 
-    Attributes
-    ----------
-    poly_weights : ndarray
-        `poly_weights` is an ndarray of coefficients for the polynomial
+    :cvar ndarray poly_weights: An ndarray of coefficients for the polynomial
         approximation in the monomial basis.
-    g : ndarray
-        `g` contains the m coefficients corresponding to the degree 1
+    :cvar ndarray g: Contains the m coefficients corresponding to the degree 1
         monomials in the polynomial approximation
-    H : ndarray
-        `H` is an ndarray of shape m-by-m that contains the coefficients of the
-        degree 2 monomials in the approximation.
+    :cvar ndarray H: An ndarray of shape m-by-m that contains the coefficients
+        of the degree 2 monomials in the approximation.
 
-    See Also
-    --------
+    **See Also**
+
     utils.response_surfaces.RadialBasisApproximation
 
-    Notes
-    -----
+    **Notes**
+
     All attributes besides the degree `N` are set when the class's `train`
     method is called.
     """
@@ -80,17 +69,14 @@ class PolynomialApproximation(ResponseSurface):
         """
         Train the least-squares-fit polynomial approximation.
 
-        Parameters
-        ----------
-        X : ndarray
-            `X` is an ndarray of training points for the polynomial approximation.
-            The shape is M-by-m, where m is the number of dimensions.
-        f : ndarray
-            `f` is an ndarray of function values used to train the polynomial
-            approximation. The shape of `f` is M-by-1.
+        :param ndarray X: An ndarray of training points for the polynomial
+            approximation. The shape is M-by-m, where m is the number of
+            dimensions.
+        :param ndarray f: An ndarray of function values used to train the
+            polynomial approximation. The shape of `f` is M-by-1.
 
-        Notes
-        -----
+        **Notes**
+
         This method sets all the attributes of the class for use in the
         `predict` method.
         """
@@ -134,24 +120,18 @@ class PolynomialApproximation(ResponseSurface):
         """
         Evaluate the least-squares-fit polynomial approximation at new points.
 
-        Parameters
-        ----------
-        X : ndarray
-            `X` is an ndarray of points to evaluate the polynomial
+        :param ndarray X: An ndarray of points to evaluate the polynomial
             approximation. The shape is M-by-m, where m is the number of
             dimensions.
-        compgrad : bool, optional
-            `compgrad` is a flag to decide whether or not to compute the
+        :param bool compgrad: A flag to decide whether or not to compute the
             gradient of the polynomial approximation at the points `X`.
 
-        Returns
-        -------
-        f : ndarray
-            `f` is an ndarray of predictions from the polynomial approximation.
+        :return: f, An ndarray of predictions from the polynomial approximation.
             The shape of `f` is M-by-1.
-        df : ndarray
-            `df` is an ndarray of gradient predictions from the polynomial
+        :rtype: ndarray
+        :return: df, An ndarray of gradient predictions from the polynomial
             approximation. The shape of `df` is M-by-m.
+        :rtype: ndarray
         """
         X, M, m = process_inputs(X)
 
@@ -175,27 +155,21 @@ class RadialBasisApproximation(ResponseSurface):
     squared-exponential radial basis and a weighted-least-squares-fit monomial
     basis.
 
-    Attributes
-    ----------
-    radial_weights : ndarray
-        `radial_weights` is an ndarray of coefficients radial basis functions
-        in the model.
-    poly_weights : ndarray
-        `poly_weights` is an ndarray of coefficients for the polynomial
+    :cvar ndarray radial_weights: An ndarray of coefficients radial basis
+        functions in the model.
+    :cvar ndarray poly_weights: An ndarray of coefficients for the polynomial
         approximation in the monomial basis.
-    K : ndarray
-        `K` is an ndarray of shape M-by-M that contains the matrix of radial
-        basis functions evaluated at the training points.
-    ell : ndarray
-        `ell` is an ndarray of shape m-by-1 that contains the characteristic
-        length scales along each of the inputs.
+    :cvar ndarray K: An ndarray of shape M-by-M that contains the matrix of
+        radial basis functions evaluated at the training points.
+    :cvar ndarray ell: An ndarray of shape m-by-1 that contains the
+        characteristic length scales along each of the inputs.
 
-    See Also
-    --------
+    **See Also**
+
     utils.response_surfaces.PolynomialApproximation
 
-    Notes
-    -----
+    **Notes**
+
     All attributes besides the degree `N` are set when the class's `train`
     method is called.
     """
@@ -206,25 +180,19 @@ class RadialBasisApproximation(ResponseSurface):
         """
         Train the radial basis approximation.
 
-        Parameters
-        ----------
-        X : ndarray
-            `X` is an ndarray of training points for the polynomial approximation.
-            The shape is M-by-m, where m is the number of dimensions.
-        f : ndarray
-            `f` is an ndarray of function values used to train the polynomial
-            approximation. The shape of `f` is M-by-1.
-        v : ndarray, optional
-            `v` contains the regularization parameters that model error in the
-            function values. (Default is None)
-        e : ndarray, optional
-            `e` is an ndarray containing the eigenvalues from the active
+        :param ndarray X: An ndarray of training points for the polynomial
+            approximation. The shape is M-by-m, where m is the number of
+            dimensions.
+        :parma ndarray f: An ndarray of function values used to train the
+            polynomial approximation. The shape of `f` is M-by-1.
+        :param ndarray v: Contains the regularization parameters that model
+            error in the function values.
+        :param ndarray e: An ndarray containing the eigenvalues from the active
             subspace analysis. If present, the radial basis uses it to
-            determine the appropriate anisotropy in the length scales. (Default
-            is None)
+            determine the appropriate anisotropy in the length scales.
 
-        Notes
-        -----
+        **Notes**
+
         The approximation uses an multivariate, squared exponential radial
         basis. If `e` is not None, then the radial basis is anisotropic with
         length scales determined by `e`. Otherwise, the basis is isotropic.
@@ -251,7 +219,7 @@ class RadialBasisApproximation(ResponseSurface):
         # use maximum likelihood to tune parameters
         log10g = fminbound(rbf_objective, -10.0, 1.0, args=(X, f, v, self.N, e, ))
         g = 10**(log10g)
-        
+
         if e is None:
             ell = g*np.ones((m,1))
             if v is None:
@@ -285,27 +253,21 @@ class RadialBasisApproximation(ResponseSurface):
         """
         Evaluate the radial basis approximation at new points.
 
-        Parameters
-        ----------
-        X : ndarray
-            `X` is an ndarray of points to evaluate the polynomial
+        :param ndarray X: An ndarray of points to evaluate the polynomial
             approximation. The shape is M-by-m, where m is the number of
             dimensions.
-        compgrad : bool, optional
-            `compgrad` is a flag to decide whether or not to compute the
+        :param bool compgrad: A flag to decide whether or not to compute the
             gradient of the polynomial approximation at the points `X`.
 
-        Returns
-        -------
-        f : ndarray
-            `f` is an ndarray of predictions from the polynomial approximation.
+        :return: f, An ndarray of predictions from the polynomial approximation.
             The shape of `f` is M-by-1.
-        df : ndarray
-            `df` is an ndarray of gradient predictions from the polynomial
+        :rtype: ndarray
+        :return: df, An ndarray of gradient predictions from the polynomial
             approximation. The shape of `df` is M-by-m.
+        :rtype: ndarray
 
-        Notes
-        -----
+        **Notes**
+
         I'll tell you what. I just refactored this code to use terminology from
         radial basis functions instead of Gaussian processes, and I feel so
         much better about it. Now I don't have to compute that silly
@@ -341,28 +303,20 @@ def rbf_objective(log10g, X, f, v, N, e):
     Objective function for the maximum likelihood heuristic for choosing the
     rbf shape parameters.
 
-    Parameters
-    ----------
-    log10g : float
-        `log10g` is the log of the scaling factor for the rbf shape parameters.
-    X : ndarray
-        `X` is the ndarray of training points.
-    f : ndarray
-        `f` is the ndarray of training data.
-    v : ndarray
-        `v` contains the regularization parameters for the training data.
-    N : int
-        `N` is the order of polynomial approximation.
-    e : ndarray
-        `e` contains the eigenvalues from the active subspace analysis.
+    :param float log10g: The log of the scaling factor for the rbf shape
+        parameters.
+    :param ndarray X: The ndarray of training points.
+    :param ndarray f: The ndarray of training data.
+    :param ndarray v: Contains the regularization parameters for the training
+        data.
+    :param int N: The order of polynomial approximation.
+    :param ndarray e: Contains the eigenvalues from the active subspace
+        analysis.
 
-    Returns
-    -------
-    r : float
-        `r` is objective function value. If you were training a Gaussian
+    :return: r, Objective function value. If you were training a Gaussian
         process, it would be the negative log likelihood. In this context, it's
         just a heuristic.
-
+    :rtype: float
     """
     # TODO: I can probably make this implementation more efficient, but as of
     # now, I don't need to.
@@ -402,23 +356,14 @@ def exponential_squared(X1, X2, sigma, ell):
     """
     Compute the matrix of radial basis functions.
 
-    Parameters
-    ----------
-    X1 : ndarray
-        `X1` contains the centers of the radial functions.
-    X2 : ndarray
-        `X2` is the evaluation points of the radial functions.
-    sigma : float
-        `sigma` scales the radial functions.
-    ell : ndarray
-        `ell` contains the length scales of each dimension.
+    :param ndarray X1: Contains the centers of the radial functions.
+    :param ndarray X2: The evaluation points of the radial functions.
+    :param float sigma: Scales the radial functions.
+    :param ndarray ell: Contains the length scales of each dimension.
 
-    Returns
-    -------
-    C : ndarray
-        `C` is the matrix of radial functions centered at `X1` and evaluated
+    :return: C, The matrix of radial functions centered at `X1` and evaluated
         at `X2`. The shape of `C` is `X1.shape[0]`-by-`X2.shape[0]`.
-
+    :rtype: ndarray
     """
     m = X1.shape[0]
     n = X2.shape[0]
@@ -434,25 +379,20 @@ def grad_exponential_squared(X1, X2, sigma, ell):
     """
     Compute the matrices of radial basis function gradients.
 
-    Parameters
-    ----------
-    X1 : ndarray
+    :param ndarray X1:
         `X1` contains the centers of the radial functions.
-    X2 : ndarray
+    :param ndarray X2:
         `X2` is the evaluation points of the radial functions.
-    sigma : float
+    :param float sigma:
         `sigma` scales the radial functions.
-    ell : ndarray
+    :param ndarray ell:
         `ell` contains the length scales of each dimension.
 
-    Returns
-    -------
-    dC : ndarray
-        `dC` is the matrix of radial function gradients centered at `X1` and
+    :return: dC, The matrix of radial function gradients centered at `X1` and
         evaluated at `X2`. The shape of `dC` is `X1.shape[0]`-by-`X2.shape[0]`-
         by-m. `dC` is a three-dimensional ndarray. The third dimension indexes
         the partial derivatives in each gradient.
-
+    :rtype: ndarray
     """
     m, d = X1.shape
     n = X2.shape[0]
@@ -469,21 +409,14 @@ def polynomial_bases(X, N):
     """
     Compute the monomial bases.
 
-    Parameters
-    ----------
-    X : ndarray
-        `X` contains the points to evaluate the monomials.
-    N : int
-        `N` is the maximum degree of the monomial basis.
+    :param ndarray X: Contains the points to evaluate the monomials.
+    :param int N: The maximum degree of the monomial basis.
 
-    Returns
-    -------
-    B : ndarray
-        `B` contains the monomial evaluations.
-    I : ndarray
-        `I` contains the multi-indices that tell the degree of each univariate
-        monomial term in the multivariate monomial.
-
+    :return: B, Contains the monomial evaluations.
+    :rtype: ndarray
+    :return: I, Contains the multi-indices that tell the degree of each
+        univariate monomial term in the multivariate monomial.
+    :rtype: ndarray
     """
     M, m = X.shape
     I = index_set(N, m)
@@ -498,19 +431,13 @@ def grad_polynomial_bases(X, N):
     """
     Compute the gradients of the monomial bases.
 
-    Parameters
-    ----------
-    X : ndarray
-        `X` contains the points to evaluate the monomials.
-    N : int
-        `N` is the maximum degree of the monomial basis.
+    :param ndarray X: Contains the points to evaluate the monomials.
+    :param int N: The maximum degree of the monomial basis.
 
-    Returns
-    -------
-    dB : ndarray
-        `dB` contains the gradients of the monomials evaluate at `X`. `dB` is
-        a three-dimensional ndarray. The third dimension indexes the partial
+    :return: dB, Contains the gradients of the monomials evaluate at `X`. `dB`
+        is a three-dimensional ndarray. The third dimension indexes the partial
         derivatives in each gradient.
+    :rtype: ndarray
 
     """
     M, m = X.shape
@@ -549,14 +476,11 @@ def index_set(n, d):
     """
     Enumerate multi-indices for a total degree of order `n` in `d` variables.
 
-    Parameters
-    ----------
-    n : int
-    d : int
+    :param int n:
+    :param int d:
 
-    Returns
-    -------
-    I : ndarray
+    :return: I
+    :rtype: ndarray
 
     """
     I = np.zeros((1, d))

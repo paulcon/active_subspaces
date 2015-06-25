@@ -17,17 +17,13 @@ class BoundedNormalizer(Normalizer):
     A class for normalizing bounded inputs. Extends the abstract Normalizer
     class.
 
-    Attributes
-    ----------
-    lb : ndarray
-        `lb` is an ndarray of size m-by-1 that contains lower bounds on the
+    :cvar ndarray lb: A matrix of size m-by-1 that contains lower bounds on the
         simulation inputs.
-    ub : ndarray
-        `ub` is an ndarray of size m-by-1 that contains upper bounds on the
+    :cvar ndarray ub: A matrix of size m-by-1 that contains upper bounds on the
         simulation inputs.
 
-    See Also
-    --------
+    **See Also**
+
     utils.misc.UnboundedNormalizer
     """
     lb, ub = None, None
@@ -36,14 +32,10 @@ class BoundedNormalizer(Normalizer):
         """
         Initialize a BoundedNormalizer.
 
-        Parameters
-        ----------
-        lb : ndarray
-            `lb` is an ndarray of size m-by-1 that contains lower bounds on the
-            simulation inputs.
-        ub : ndarray
-            `ub` is an ndarray of size m-by-1 that contains upper bounds on the
-            simulation inputs.
+        :param ndarray lb: A matrix of size m-by-1 that contains lower bounds on
+            the simulation inputs.
+        :param ndarray ub: A matrix of size m-by-1 that contains upper bounds on
+            the simulation inputs.
         """
         m = lb.size
         self.lb = lb.reshape((1, m))
@@ -53,18 +45,13 @@ class BoundedNormalizer(Normalizer):
         """
         Return corresponding points shifted and scaled to [-1,1]^m.
 
-        Parameters
-        ----------
-        X : ndarray
-            `X` contains all input points one wishes to normalize. The shape of
-            `X` is M-by-m. The components of each row of `X` should be between
-            `lb` and `ub`.
+        :param ndarray X: Contains all input points one wishes to normalize. The
+            shape of `X` is M-by-m. The components of each row of `X` should be
+            between `lb` and `ub`.
 
-        Returns
-        -------
-        X_norm : ndarray
-            `X_norm` contains the normalized inputs corresponding to `X`. The
-            components of each row of `X_norm` should be between -1 and 1.
+        :return: X_norm, contains the normalized inputs corresponding to `X`.
+            The components of each row of `X_norm` should be between -1 and 1.
+        :rtype: ndarray
         """
         X, M, m = process_inputs(X)
         X_norm = 2.0 * (X - self.lb) / (self.ub - self.lb) - 1.0
@@ -74,19 +61,14 @@ class BoundedNormalizer(Normalizer):
         """
         Return corresponding points shifted and scaled to [-1,1]^m.
 
-        Parameters
-        ----------
-        X : ndarray
-            `X` contains all input points one wishes to unnormalize. The shape
-            of `X` is M-by-m. The components of each row of `X` should be
-            between -1 and 1.
+        :param ndarray X: Contains all input points one wishes to unnormalize.
+            The shape of `X` is M-by-m. The components of each row of `X` should
+            be between -1 and 1.
 
-        Returns
-        -------
-        X_unnorm : ndarray
-            `X_unnorm` contains the unnormalized inputs corresponding to `X`.
-            The components of each row of `X_unnorm` should be between `lb` and
-            `ub`.
+        :return: X_unnorm, Contains the unnormalized inputs corresponding to
+            `X`. The components of each row of `X_unnorm` should be between `lb`
+            and `ub`.
+        :rtype: ndarray
         """
         X, M, m = process_inputs(X)
         X_unnorm = (self.ub - self.lb) * (X + 1.0) / 2.0 + self.lb
@@ -97,21 +79,17 @@ class UnboundedNormalizer(Normalizer):
     A class for normalizing unbounded, Gaussian inputs to standard normals.
     Extends the abstract Normalizer class.
 
-    Attributes
-    ----------
-    mu : ndarray
-        `mu` is an ndarray of size m-by-1 that contains the mean of the Gaussian
-        simulation inputs.
-    L : ndarray
-        `L` is an ndarray of size m-by-m that contains the Cholesky factor of
+    :cvar ndarray mu: A matrix of size m-by-1 that contains the mean of the
+        Gaussian simulation inputs.
+    :cvar ndarray L: A matrix size m-by-m that contains the Cholesky factor of
         the covariance matrix of the Gaussian simulation inputs.
 
-    See Also
-    --------
+    **See Also**
+
     utils.misc.BoundedNormalizer
 
-    Notes
-    -----
+    **Notes**
+
     A simulation with unbounded inputs is assumed to have a Gaussian weight
     function associated with the inputs. The covariance of the Gaussian weight
     function should be full rank.
@@ -122,14 +100,10 @@ class UnboundedNormalizer(Normalizer):
         """
         Initialize an UnboundedNormalizer.
 
-        Parameters
-        ----------
-        mu : ndarray
-            `mu` is an ndarray of size m-by-1 that contains the mean of the
+        :param ndarray mu: A matrix of size m-by-1 that contains the mean of the
             Gaussian simulation inputs.
-        C : ndarray
-            `C` is an ndarray of size m-by-m that contains the covariance matrix
-            of the Gaussian simulation inputs.
+        :param ndarray C: A matrix of size m-by-m that contains the covariance
+            matrix of the Gaussian simulation inputs.
         """
         self.mu = mu.reshape((1, mu.size))
         self.L = np.linalg.cholesky(C)
@@ -139,19 +113,14 @@ class UnboundedNormalizer(Normalizer):
         Return corresponding points transformed to a standard normal
         distribution.
 
-        Parameters
-        ----------
-        X : ndarray
-            `X` contains all input points one wishes to normalize. The shape of
-            `X` is M-by-m. The components of each row of `X` should be a draw
-            from a Gaussian with mean `mu` and covariance `C`.
+        :param ndarray X: Contains all input points one wishes to normalize. The
+            shape of `X` is M-by-m. The components of each row of `X` should be
+            a draw from a Gaussian with mean `mu` and covariance `C`.
 
-        Returns
-        -------
-        X_norm : ndarray
-            `X_norm` contains the normalized inputs corresponding to `X`. The
-            components of each row of `X_norm` should be draws from a standard
-            multivariate normal distribution.
+        :return: X_norm, Contains the normalized inputs corresponding to `X`.
+            The components of each row of `X_norm` should be draws from a
+            standard multivariate normal distribution.
+        :rtype: ndarray
         """
         X, M, m = process_inputs(X)
         X0 = X - self.mu
@@ -163,19 +132,14 @@ class UnboundedNormalizer(Normalizer):
         Return corresponding points transformed to draws from a Gaussian
         distribution with mean `mu` and covariance `C`.
 
-        Parameters
-        ----------
-        X : ndarray
-            `X` contains all input points one wishes to unnormalize. The shape
-            of `X` is M-by-m. The components of each row of `X` should be
-            draws from a standard multivariate normal.
+        :param ndarray X: Contains all input points one wishes to unnormalize.
+            The shape of `X` is M-by-m. The components of each row of `X` should
+            be draws from a standard multivariate normal.
 
-        Returns
-        -------
-        X_unnorm : ndarray
-            `X_unnorm` contains the unnormalized inputs corresponding to `X`.
-            The components of each row of `X_unnorm` should represent draws
+        :return: X_unnorm, Contains the unnormalized inputs corresponding to
+            `X`. The components of each row of `X_unnorm` should represent draws
             from a multivariate normal with mean `mu` and covariance `C`.
+        :rtype: ndarray
         """
         X, M, m = process_inputs(X)
         X0 = np.dot(X,self.L.T)
@@ -186,19 +150,14 @@ def process_inputs(X):
     """
     Check a matrix of input values for the right shape.
 
-    Parameters
-    ----------
-    X : ndarray
-        `X` contains input points. The shape of `X` should be M-by-m.
+    :param ndarray X: Contains input points. The shape of `X` should be M-by-m.
 
-    Returns
-    -------
-    X : ndarray
-        The same as the input.
-    M : int
-        Number of rows in `X`.
-    m : int
-        Number of columns in `X`.
+    :return: X, The same as the input.
+    :rtype: ndarray
+    :return: M, Number of rows in `X`.
+    :rtype: int
+    :return: m, Number of columns in `X`.
+    :rtype: int
     """
     if len(X.shape) == 2:
         M, m = X.shape
@@ -212,23 +171,17 @@ def process_inputs_outputs(X, f):
     """
     Check a matrix of input values and a vector of outputs for the right shapes.
 
-    Parameters
-    ----------
-    X : ndarray
-        `X` contains input points. The shape of `X` should be M-by-m.
-    f : ndarray
-        `f` is an ndarry of shape M-by-1.
+    :param ndarray X: Contains input points. The shape of `X` should be M-by-m.
+    :param ndarray f: M-by-1 matrix.
 
-    Returns
-    -------
-    X : ndarray
-        The same as the input.
-    f : ndarray
-        The same as the input.
-    M : int
-        Number of rows in `X`.
-    m : int
-        Number of columns in `X`.
+    :return: X, The same as the input.
+    :rtype: ndarray
+    :return: f, The same as the input.
+    :rtype: ndarray
+    :return: M, Number of rows in `X`.
+    :rtype: int
+    :return: m, Number of columns in `X`.
+    :rtype: int
     """
     X, M, m = process_inputs(X)
 
@@ -251,23 +204,17 @@ def conditional_expectations(f, ind):
     """
     Compute conditional expectations and variances for a set of function values.
 
-    Parameters
-    ----------
-    f : ndarray
-        `f` is an ndarry of function evaluations.
-    ind : ndarray of int
-        `ind` is an index array that tells which values of `f` correspond to
-        the same value for the active variable.
+    :param ndarray f: An ndarry of function evaluations.
+    :param ndarray[int] ind: Index array that tells which values of `f`
+        correspond to the same value for the active variable.
 
-    Returns
-    -------
-    Ef : ndarray
-        `Ef` is an ndarray containing the conditional expectations.
-    Vf : ndarray
-        `Vf` is an ndarray containing the conditional variances.
+    :return: Ef, An ndarray containing the conditional expectations.
+    :rtype: ndarray
+    :return: Vf, An ndarray containing the conditional variances.
+    :rtype: ndarray
 
-    Notes
-    -----
+    **Notes**
+
     This function computes the mean and variance for all values in the ndarray
     `f` that have the same index in `ind`. The indices in `ind` correspond to
     values of the active variables.
@@ -301,13 +248,9 @@ def atleast_2d(A, oned_as='row'):
     """
     Ensures the array `A` is at least two dimensions.
 
-    Parameters
-    ----------
-    A : ndarray
-    oned_as : str, optional
-        `oned_as` should be either 'row' or 'col'. It determines whether the
-        array `A` should be expanded as a 2d row or 2d column. (Default is
-        'row')
+    :param ndarray A: matrix
+    :param str oned_as: Should be either 'row' or 'col'. It determines whether
+        the array `A` should be expanded as a 2d row or 2d column.
     """
 
     # not an array yet
