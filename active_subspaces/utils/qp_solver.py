@@ -69,7 +69,7 @@ class QPSolver():
 
         minimize  c^T x
         subject to  A x = b
-                    lb <= x <= ub
+        lb <= x <= ub
         """
         logging.getLogger(__name__).debug('Linear program with {:d} variables and {:d} equality constraints using {}'.format(A.shape[1], A.shape[0], self.solver))
         if self.solver == solver_SCIPY:

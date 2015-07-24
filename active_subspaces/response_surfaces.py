@@ -11,15 +11,12 @@ class ActiveSubspaceResponseSurface():
     """
     A class for using active subspace with response surfaces.
 
-    Attributes
-    ----------
-    respsurf : ResponseSurface
-        `respsurf` is a utils.response_surfaces.ResponseSurface.
-    avmap : ActiveVariableMap
-        `avmap` is a domains.ActiveVariableMap.
+    :param ResponseSurface respsurf: `respsurf` is a
+        utils.response_surfaces.ResponseSurface.
+    :param ActiveVariableMap avmap: a domains.ActiveVariableMap.
 
-    Notes
-    -----
+    **Notes**
+
     This class has several convenient functions for training and using a
     response surface with active subspaces. Note that the `avmap` must be
     given. This means that the active subspace must be computed already.
@@ -31,16 +28,12 @@ class ActiveSubspaceResponseSurface():
         """
         Initialize an ActiveSubspaceResponseSurface.
 
-        Parameters
-        ----------
-        avmap : ActiveVariableMap
-            `avmap` is a domains.ActiveVariable map that includes the
-            active variable domain, which includes the active and inactive
-            subspaces.
-        respsurf : ResponseSurface, optional
-            `respsurf` is a utils.response_surfaces.ResponseSurface object. If
-            a ResponseSurface is not given, a default RadialBasisApproximation
-            is used.
+        :param ActiveVariableMap avmap: A domains.ActiveVariable map that
+            includes the active variable domain, which includes the active and
+            inactive subspaces.
+        :param ResponseSurface respsurf: A
+            utils.response_surfaces.ResponseSurface object. If a ResponseSurface
+            is not given, a default RadialBasisApproximation is used.
         """
         if not isinstance(avmap, ActiveVariableMap):
             raise TypeError('avmap should be an ActiveVariableMap.')
@@ -55,7 +48,6 @@ class ActiveSubspaceResponseSurface():
         """
         A private function for training the response surface with a set of
         active variable and function evaluations.
-
         """
         if isinstance(self.respsurf, RadialBasisApproximation):
             evals = self.avmap.domain.subspaces.eigenvalues
@@ -67,20 +59,15 @@ class ActiveSubspaceResponseSurface():
         """
         Train the response surface with input/output pairs.
 
-        Parameters
-        ----------
-        X : ndarray
-            `X` is an ndarray of shape M-by-m with evaluations of the
-            simulation inputs.
-        f : ndarray
-            `f` is an ndarray of shape M-by-1 with corresponding simulation
-            quantities of interest.
-        v : ndarray, optional
-            `v` is an ndarray of shape M-by-1 that contains the regularization
+        :param ndarray X: M-by-m matrix with evaluations of the simulation
+            inputs.
+        :param ndarray f: M-by-1 matrix with corresponding simulation quantities
+            of interest.
+        :param ndarray v: M-by-1 matrix that contains the regularization
             (i.e., errors) associated with `f`.
 
-        Notes
-        -----
+        **Notes**
+
         The training methods exploit the eigenvalues from the active subspace
         analysis to determine length scales for each variable when tuning
         the parameters of the radial bases.
@@ -94,21 +81,16 @@ class ActiveSubspaceResponseSurface():
         """
         Train the response surface with input/output pairs.
 
-        Parameters
-        ----------
-        fun : function
-            `fun` is a function that returns the simulation quantity of interest
-            given a point in the input space as an 1-by-m ndarray.
-        N : int
-            `N` is the number of points used in the design-of-experiments for
+        :param function fun: A function that returns the simulation quantity of
+            interest given a point in the input space as an 1-by-m ndarray.
+        :param int N: The number of points used in the design-of-experiments for
             constructing the response surface.
-        NMC : int, optional
-            `NMC` is the number of points used to estimate the conditional
+        :param int NMC: The number of points used to estimate the conditional
             expectation and conditional variance of the function given a value
-            of the active variables. (Default is 10)
+            of the active variables.
 
-        Notes
-        -----
+        **Notes**
+
         The training methods exploit the eigenvalues from the active subspace
         analysis to determine length scales for each variable when tuning
         the parameters of the radial bases.
@@ -142,23 +124,17 @@ class ActiveSubspaceResponseSurface():
         Compute the value of the response surface given values of the active
         variables.
 
-        Parameters
-        ----------
-        Y : ndarray
-            `Y` is an ndarray of shape M-by-n containing points in the range
-            of active variables to evaluate the response surface.
-        compgrad : bool, optional
-            `compgrad` determines if the gradient of the response surface with
-            respect to the active variables is computed and returned. (Default
-            is False)
+        :param ndarray Y: M-by-n matrix containing points in the range of active
+            variables to evaluate the response surface.
+        :param bool compgrad: Determines if the gradient of the response surface
+            with respect to the active variables is computed and returned.
 
-        Returns
-        -------
-        f : ndarray
-            `f` contains the response surface values at the given `Y`.
-        df : ndarray
-            `df` contains the response surface gradients at the given `Y`. If
-            `compgrad` is False, then `df` is None.
+        :return: f, contains the response surface values at the given `Y`.
+        :rtype: ndarray
+
+        :return: df, Contains the response surface gradients at the given `Y`.
+            If `compgrad` is False, then `df` is None.
+        :rtype: ndarray
         """
         f, df = self.respsurf.predict(Y, compgrad)
         return f, df
@@ -168,16 +144,11 @@ class ActiveSubspaceResponseSurface():
         A convenience function for computing the gradient of the response
         surface with respect to the active variables.
 
-        Parameters
-        ----------
-        Y : ndarray
-            `Y` is an ndarray of shape M-by-n containing points in the range
-            of active variables to evaluate the response surface gradient.
+        :param ndarray Y: M-by-n matrix containing points in the range of active
+            variables to evaluate the response surface gradient.
 
-        Returns
-        -------
-        df : ndarray
-            `df` contains the response surface gradient at the given `Y`.
+        :return: df, Contains the response surface gradient at the given `Y`.
+        :rtype: ndarray
         """
         df = self.respsurf.predict(Y, compgrad=True)[1]
         return df
@@ -187,23 +158,18 @@ class ActiveSubspaceResponseSurface():
         Compute the value of the response surface given values of the simulation
         variables.
 
-        Parameters
-        ----------
-        X : ndarray
-            `X` is an ndarray of shape M-by-m containing points in simulation's
+        :param ndarray X: M-by-m matrix containing points in simulation's
             parameter space.
-        compgrad : bool, optional
-            `compgrad` determines if the gradient of the response surface is
-            computed and returned. (Default is False)
+        :param bool compgrad: Determines if the gradient of the response surface
+            is computed and returned.
 
-        Returns
-        -------
-        f : ndarray
-            `f` contains the response surface values at the given `X`.
-        dfdx : ndarray
-            `dfdx` is an ndarray of shape M-by-m that contains the estimated
+        :return: f, Contains the response surface values at the given `X`.
+        :rtype: ndarray
+
+        :return: dfdx, An ndarray of shape M-by-m that contains the estimated
             gradient at the given `X`. If `compgrad` is False, then `dfdx` is
             None.
+        :rtype: ndarray
         """
         Y = self.avmap.forward(X)[0]
         f, dfdy = self.predict_av(Y, compgrad)
@@ -219,16 +185,11 @@ class ActiveSubspaceResponseSurface():
         A convenience function for computing the gradient of the response
         surface with respect to the simulation inputs.
 
-        Parameters
-        ----------
-        X : ndarray
-            `X` is an ndarray of shape M-by-m containing points in the space
-            of simulation inputs.
+        :param ndarray X: M-by-m matrix containing points in the space of
+            simulation inputs.
 
-        Returns
-        -------
-        df : ndarray
-            `df` contains the response surface gradient at the given `X`.
+        :return: df, Contains the response surface gradient at the given `X`.
+        :rtype: ndarray
         """
         return self.predict(X, compgrad=True)[1]
 
@@ -240,33 +201,28 @@ def av_design(avmap, N, NMC=10):
     A wrapper that returns the design for the response surface in the space of
     the active variables.
 
-    Parameters
-    ----------
-    avmap : ActiveVariableMap
-        `avmap` is a domains.ActiveVariable map that includes the
-        active variable domain, which includes the active and inactive
+    :param ActiveVariableMap avmap: A domains.ActiveVariable map that includes
+        the active variable domain, which includes the active and inactive
         subspaces.
-    N : int
-        `N` is the number of points used in the design-of-experiments for
+    :param int N: The number of points used in the design-of-experiments for
         constructing the response surface.
-    NMC : int, optional
-        `NMC` is the number of points used to estimate the conditional
+    :param int NMC: The number of points used to estimate the conditional
         expectation and conditional variance of the function given a value
         of the active variables. (Default is 10)
 
-    Returns
-    -------
-    Y : ndarray
-        `Y` is an ndarray of shape N-by-n that contains the design points in
-        the space of active variables.
-    X : ndarray
-        `X` is an ndarray of shape (N*NMC)-by-m that contains points in the
-        simulation input space to run the simulation.
-    ind : ndarray
-        `ind` is an ndarray of indices that map points in `X` to points in `Y`.
+    :return: Y, N-by-n matrix that contains the design points in the space of
+        active variables.
+    :rtype: ndarray
 
-    See Also
-    --------
+    :return: X, (N*NMC)-by-m matrix that contains points in the simulation input
+        space to run the simulation.
+    :rtype: ndarray
+
+    :return: ind, Indices that map points in `X` to points in `Y`.
+    :rtype: ndarray
+
+    **See Also**
+
     utils.designs.gauss_hermite_design
     utils.designs.interval_design
     utils.designs.maximin_design

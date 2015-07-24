@@ -1,8 +1,19 @@
 Code Documentation
 ==================
 
-.. automodule:: active_subspaces
-    :members:
 
-.. automodule:: active_subspaces.utils.response_surfaces
+.. toctree::
+   :maxdepth: 2
+
+   base
+   domains
+   gradients
+   integrals
+   optimizers
+   response_surfaces
+   sdr
+   subspaces
+   utils
+
+.. automodule:: active_subspaces
     :members:
