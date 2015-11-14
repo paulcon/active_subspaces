@@ -1,4 +1,4 @@
 import numpy as np
 
 def load_test_npz(filename):
-    return np.load('tests/data/' + filename)
+    return np.load('data/' + filename)

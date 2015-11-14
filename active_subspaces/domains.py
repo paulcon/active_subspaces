@@ -261,7 +261,8 @@ class BoundedActiveVariableMap(ActiveVariableMap):
         Zlist = []
         for y in Y:
             Zlist.append(sample_z(N, y, W1, W2))
-        Z = np.array(Zlist).reshape((NY, m-n, N))
+        #Z = np.array(Zlist).reshape((NY, m-n, N))
+        Z = np.swapaxes(np.array(Zlist),1,2)
         return Z
 
 class UnboundedActiveVariableMap(ActiveVariableMap):
@@ -605,7 +606,7 @@ def _rotate_x(Y, Z, W):
     NY, n = Y.shape
     N = Z.shape[2]
     m = n + Z.shape[1]
-
+    
     YY = np.tile(Y.reshape((NY, n, 1)), (1, 1, N))
     YZ = np.concatenate((YY, Z), axis=1).transpose((1, 0, 2)).reshape((m, N*NY)).transpose((1, 0))
     X = np.dot(YZ, W.T).reshape((N*NY,m))
