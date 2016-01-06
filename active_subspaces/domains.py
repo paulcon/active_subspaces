@@ -3,6 +3,7 @@ import numpy as np
 import logging
 from utils.misc import process_inputs, BoundedNormalizer
 from scipy.spatial import ConvexHull
+from scipy.misc import comb
 from utils.qp_solver import QPSolver
 from subspaces import Subspaces
 
@@ -300,7 +301,7 @@ class UnboundedActiveVariableMap(ActiveVariableMap):
         Z = np.random.normal(size=(NY, m-n, N))
         return Z
 
-def nzv(m, n, M=None):
+def nzv(m, n):
     """
     Compute the number of zonotope vertices for a linear map from R^m to R^n.
 
@@ -321,18 +322,11 @@ def nzv(m, n, M=None):
         raise TypeError('n should be an integer.')
 
     # number of zonotope vertices
-    if M is None:
-        M = np.zeros((m, n))
-    if m==1 or n==1:
-        M[m-1, n-1] = 2
-    elif M[m-1, n-1]==0:
-        k1, M = nzv(m-1, n-1, M)
-        k2, M = nzv(m-1, n, M)
-        M[m-1, n-1] = k1 + k2
-        for i in range(n-1):
-            M = nzv(m, i+1, M)[1]
-    k = M[m-1, n-1]
-    return k, M
+    N = 0
+    for i in range(n):
+        N = N + comb(m-1,i)
+    N = 2*N
+    return int(N)
 
 def interval_endpoints(W1):
     """
