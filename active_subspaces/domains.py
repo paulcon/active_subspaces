@@ -359,7 +359,15 @@ def interval_endpoints(W1):
     X = np.vstack((xl.reshape((1, m)), xu.reshape((1, m))))
     return Y, X
 
-def zonotope_vertices(W1):
+def unique_rows(S):
+    """
+    Return the unique rows from S.
+    http://stackoverflow.com/questions/16970982/find-unique-rows-in-numpy-array
+    """
+    T = S.view(np.dtype((np.void, S.dtype.itemsize * S.shape[1])))
+    return np.unique(T).view(S.dtype).reshape(-1, S.shape[1])
+
+def zonotope_vertices(W1, Nsamples=1e4, maxcount=1e5):
     """
     Compute the vertices of the zonotope.
 
@@ -375,31 +383,33 @@ def zonotope_vertices(W1):
     """
 
     m, n = W1.shape
-    totalverts = int(nzv(m,n)[0])
-
+    totalverts = nzv(m,n)
     logging.getLogger(__name__).debug('Zonotope domain in {:d} dims with {:d} vertices.'.format(n, totalverts))
 
-    Xlist = []
-    maxcount = int(1e9)
-    count, numverts = 0, 0
-    while numverts < totalverts:
-        y = np.random.normal(size=(n))
-        x = np.sign(np.dot(y, W1.transpose()))
-        addx = True
-        for xx in Xlist:
-            if all(x==xx):
-                addx = False
-                break
-        if addx:
-            Xlist.append(x)
-            numverts += 1
+    # initialize
+    Z = np.random.normal(size=(Nsamples, n))
+    X = unique_rows(np.sign(np.dot(Z, W1.transpose())))
+    X = unique_rows(np.vstack((X, -X)))
+    N = X.shape[0]
+    
+    count = 0
+    while N < totalverts:
+        Z = np.random.normal(size=(Nsamples, n))
+        X0 = unique_rows(np.sign(np.dot(Z, W1.transpose())))
+        X0 = unique_rows(np.vstack((X0, -X0)))
+        X = unique_rows(np.vstack((X, X0)))
+        N = X.shape[0]
         count += 1
         if count > maxcount:
-            logging.getLogger(__name__).warn('After a billion tries, I cannot find all {:d} zonotope vertices.'.format(totalverts))
             break
-    X = np.array(Xlist).reshape((numverts, m))
-    Y = np.dot(X, W1).reshape((numverts, n))
-    return Y, X
+    
+    numverts = X.shape[0]
+    if totalverts > numverts:
+        print 'Warning: {} of {} vertices found.'.format(numverts, totalverts)
+    
+    Y = np.dot(X, W1)
+    return Y.reshape((numverts, n)), X.reshape((numverts, m))
+    
 
 def sample_z(N, y, W1, W2):
     """
