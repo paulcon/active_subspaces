@@ -3,6 +3,7 @@ import numpy as np
 import logging
 from utils.misc import process_inputs, BoundedNormalizer
 from scipy.spatial import ConvexHull
+from scipy.misc import comb
 from utils.qp_solver import QPSolver
 from subspaces import Subspaces
 
@@ -261,7 +262,8 @@ class BoundedActiveVariableMap(ActiveVariableMap):
         Zlist = []
         for y in Y:
             Zlist.append(sample_z(N, y, W1, W2))
-        Z = np.array(Zlist).reshape((NY, m-n, N))
+        #Z = np.array(Zlist).reshape((NY, m-n, N))
+        Z = np.swapaxes(np.array(Zlist),1,2)
         return Z
 
 class UnboundedActiveVariableMap(ActiveVariableMap):
@@ -300,7 +302,7 @@ class UnboundedActiveVariableMap(ActiveVariableMap):
         Z = np.random.normal(size=(NY, m-n, N))
         return Z
 
-def nzv(m, n, M=None):
+def nzv(m, n):
     """
     Compute the number of zonotope vertices for a linear map from R^m to R^n.
 
@@ -321,18 +323,11 @@ def nzv(m, n, M=None):
         raise TypeError('n should be an integer.')
 
     # number of zonotope vertices
-    if M is None:
-        M = np.zeros((m, n))
-    if m==1 or n==1:
-        M[m-1, n-1] = 2
-    elif M[m-1, n-1]==0:
-        k1, M = nzv(m-1, n-1, M)
-        k2, M = nzv(m-1, n, M)
-        M[m-1, n-1] = k1 + k2
-        for i in range(n-1):
-            M = nzv(m, i+1, M)[1]
-    k = M[m-1, n-1]
-    return k, M
+    N = 0
+    for i in range(n):
+        N = N + comb(m-1,i)
+    N = 2*N
+    return int(N)
 
 def interval_endpoints(W1):
     """
@@ -364,7 +359,15 @@ def interval_endpoints(W1):
     X = np.vstack((xl.reshape((1, m)), xu.reshape((1, m))))
     return Y, X
 
-def zonotope_vertices(W1):
+def unique_rows(S):
+    """
+    Return the unique rows from S.
+    http://stackoverflow.com/questions/16970982/find-unique-rows-in-numpy-array
+    """
+    T = S.view(np.dtype((np.void, S.dtype.itemsize * S.shape[1])))
+    return np.unique(T).view(S.dtype).reshape(-1, S.shape[1])
+
+def zonotope_vertices(W1, Nsamples=1e4, maxcount=1e5):
     """
     Compute the vertices of the zonotope.
 
@@ -380,31 +383,33 @@ def zonotope_vertices(W1):
     """
 
     m, n = W1.shape
-    totalverts = int(nzv(m,n)[0])
-
+    totalverts = nzv(m,n)
     logging.getLogger(__name__).debug('Zonotope domain in {:d} dims with {:d} vertices.'.format(n, totalverts))
 
-    Xlist = []
-    maxcount = int(1e9)
-    count, numverts = 0, 0
-    while numverts < totalverts:
-        y = np.random.normal(size=(n))
-        x = np.sign(np.dot(y, W1.transpose()))
-        addx = True
-        for xx in Xlist:
-            if all(x==xx):
-                addx = False
-                break
-        if addx:
-            Xlist.append(x)
-            numverts += 1
+    # initialize
+    Z = np.random.normal(size=(Nsamples, n))
+    X = unique_rows(np.sign(np.dot(Z, W1.transpose())))
+    X = unique_rows(np.vstack((X, -X)))
+    N = X.shape[0]
+    
+    count = 0
+    while N < totalverts:
+        Z = np.random.normal(size=(Nsamples, n))
+        X0 = unique_rows(np.sign(np.dot(Z, W1.transpose())))
+        X0 = unique_rows(np.vstack((X0, -X0)))
+        X = unique_rows(np.vstack((X, X0)))
+        N = X.shape[0]
         count += 1
         if count > maxcount:
-            logging.getLogger(__name__).warn('After a billion tries, I cannot find all {:d} zonotope vertices.'.format(totalverts))
             break
-    X = np.array(Xlist).reshape((numverts, m))
-    Y = np.dot(X, W1).reshape((numverts, n))
-    return Y, X
+    
+    numverts = X.shape[0]
+    if totalverts > numverts:
+        print 'Warning: {} of {} vertices found.'.format(numverts, totalverts)
+    
+    Y = np.dot(X, W1)
+    return Y.reshape((numverts, n)), X.reshape((numverts, m))
+    
 
 def sample_z(N, y, W1, W2):
     """
@@ -605,7 +610,7 @@ def _rotate_x(Y, Z, W):
     NY, n = Y.shape
     N = Z.shape[2]
     m = n + Z.shape[1]
-
+    
     YY = np.tile(Y.reshape((NY, n, 1)), (1, 1, N))
     YZ = np.concatenate((YY, Z), axis=1).transpose((1, 0, 2)).reshape((m, N*NY)).transpose((1, 0))
     X = np.dot(YZ, W.T).reshape((N*NY,m))

@@ -61,7 +61,7 @@ def linear_gradient_check(X, f, n_boot=1000, in_labels=None, out_label=None):
 
     return w
 
-def quadratic_model_check(X, f, gamma):
+def quadratic_model_check(X, f, gamma, weights=None):
     """
     Use the Hessian of a least-squares-fit quadratic model to identify active
     and inactive subspaces
@@ -69,8 +69,9 @@ def quadratic_model_check(X, f, gamma):
     :param ndarray X: M-by-m matrix containing points in the simulation input
         space.
     :param ndarray f: M-by-1 containing the corresponding simulation outputs.
-    :param float gamma: The variance of the simulation inputs. If the inputs
+    :param ndarray gamma: The variance of the simulation inputs. If the inputs
         are bounded by a hypercube, then `gamma` is 1/3.
+    :param ndarray weights: M-by-1 containing weights for the least-squares.
 
     :return: e, m-by-1 that contains the eigenvalues of the quadratic model's
         Hessian.
@@ -93,7 +94,7 @@ def quadratic_model_check(X, f, gamma):
     gamma = gamma.reshape((1, m))
 
     pr = PolynomialApproximation(2)
-    pr.train(X, f)
+    pr.train(X, f, weights)
 
     # get regression coefficients
     b, A = pr.g, pr.H

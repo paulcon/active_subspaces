@@ -8,7 +8,7 @@ import pdb
 
 class TestDomains(TestCase):
     writeData = False
-
+    
     def test_unbounded_active_variable_domain(self):
         data = helper.load_test_npz('test_spec_decomp_0.npz')
         df0, e0, W0 = data['df'], data['e'], data['W']
@@ -152,7 +152,7 @@ class TestDomains(TestCase):
         Y,Z = bavm.forward(X)
         X0 = np.dot(Y, sub.W1.T) + np.dot(Z, sub.W2.T)
         np.testing.assert_almost_equal(X0, X)
-
+    
     def test_bounded_active_variable_map_2(self):
         data = helper.load_test_npz('test_spec_decomp_0.npz')
         df0, e0, W0 = data['df'], data['e'], data['W']
@@ -168,7 +168,8 @@ class TestDomains(TestCase):
         Y,Z = bavm.forward(X)
         X0 = bavm.inverse(Y, N=10)[0]
         np.testing.assert_almost_equal(np.dot(X0, sub.W1), np.kron(Y, np.ones((10,1))) )
-
+        np.testing.assert_equal(np.floor(np.abs(X0)), np.zeros(X0.shape))
+    
     def test_bounded_active_variable_map_3(self):
         data = helper.load_test_npz('test_spec_decomp_1.npz')
         df0, e0, W0 = data['df'], data['e'], data['W']
@@ -176,7 +177,7 @@ class TestDomains(TestCase):
         sub = ss.Subspaces()
         sub.compute(df0)
         m, n = sub.W1.shape
-
+        
         bavd = dom.BoundedActiveVariableDomain(sub)
         bavm = dom.BoundedActiveVariableMap(bavd)
 
@@ -184,7 +185,8 @@ class TestDomains(TestCase):
         Y,Z = bavm.forward(X)
         X0 = bavm.inverse(Y, N=10)[0]
         np.testing.assert_almost_equal(np.dot(X0, sub.W1), np.kron(Y, np.ones((10,1))) )
-
+        np.testing.assert_equal(np.floor(np.abs(X0)), np.zeros(X0.shape))
+    
     def test_rejection_sample_z(self):
         data = helper.load_test_npz('test_spec_decomp_1.npz')
         df0, e0, W0 = data['df'], data['e'], data['W']
@@ -266,7 +268,7 @@ class TestDomains(TestCase):
 
         data_test = helper.load_test_npz('test_sampling_z_0_0.npz')
         np.testing.assert_almost_equal(Z, data_test['Z'])
-
+    
 
 if __name__ == '__main__':
     unittest.main()
