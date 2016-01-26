@@ -20,7 +20,7 @@ setup(name='active_subspaces',
       author='Paul Constantine',
       author_email='paul.constantine@mines.edu',
       license='MIT',
-      packages=['active_subspaces', 'active_subspaces.utils'],
+      packages=['active_subspaces', 'active_subspaces.utils','tutorials'],
       install_requires=[
           'numpy',
           'scipy >= 0.15.0',
