@@ -65,7 +65,7 @@ class PolynomialApproximation(ResponseSurface):
     poly_weights = None
     g, H = None, None
 
-    def train(self, X, f):
+    def train(self, X, f, weights=None):
         """
         Train the least-squares-fit polynomial approximation.
 
@@ -74,6 +74,7 @@ class PolynomialApproximation(ResponseSurface):
             dimensions.
         :param ndarray f: An ndarray of function values used to train the
             polynomial approximation. The shape of `f` is M-by-1.
+        :param ndarray f: An ndarray of weights for the least-squares.
 
         **Notes**
 
@@ -90,6 +91,9 @@ class PolynomialApproximation(ResponseSurface):
 
         B, indices = polynomial_bases(X,  self.N)
         p = B.shape[1]
+        if weights is not None:
+            B, f = weights*B, weights*f
+
         Q, R = np.linalg.qr(B)
         Qf = np.dot(Q.T, f)
         poly_weights = np.linalg.solve(R, Qf)
