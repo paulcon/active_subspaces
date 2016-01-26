@@ -32,8 +32,10 @@ opts = plot_opts(opts);
 figure()
 
 % Plot bootstrap errors.
-fill([1:1:m, m:-1:1], [sub_br(:,1)', fliplr(sub_br(:,3)')], opts.err_color)
-hold on
+if max(abs(sub_br(:,3) - sub_br(:,1))) > 1e-7
+    fill([1:1:m, m:-1:1], [sub_br(:,1)', fliplr(sub_br(:,3)')], opts.err_color)
+    hold on
+end
 
 % Plog subspace errors.
 semilogy(sub_br(:,2), ...

@@ -62,7 +62,7 @@ for i = 1:n
     subplot(subplot_vert, subplot_horiz, i)
     
     % Plot bootstrap errors if provided.
-    if ~isempty(W_br)
+    if ~isempty(W_br) && (max(abs(W_br(:, 2*(i-1)+2) - W_br(:, 2*(i-1)+1))) > 1e-7)
         fill([1:1:m, m:-1:1], [W_br(:, 2*(i-1)+1)', fliplr(W_br(:, 2*(i-1)+2)')], opts.err_color)
         hold on
     end

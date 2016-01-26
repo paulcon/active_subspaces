@@ -27,6 +27,7 @@ if M >= m
 else
     e = [(diag(Sigma).^2)/M; zeros(m-M, 1)];
 end
+e(e < 0) = 0;
 
 mult = sign(W(1, :));
 mult(mult == 0) = 1;

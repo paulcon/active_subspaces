@@ -34,6 +34,7 @@ addpath 'ResponseSurfaces'
 
 e = diag(e);
 [e, ind] = sort(e, 'descend');
+e(e < 0) = 0;
 
 W = W(:, ind);
 mult = sign(W(1, :));

@@ -1,4 +1,4 @@
-function [net,f_hat,r] = rbf_train(X, f)
+function [net,f_hat,r] = rbf_train(X, f, varargin)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -10,6 +10,7 @@ function [net,f_hat,r] = rbf_train(X, f)
 %             approximation such that m is the number of dimensions
 %          f: The M-by-1 vector of function values paired with the M
 %             observations of the training points in X
+%          s: radial basis funtion spreading
 %
 %   Outputs:
 %        net: Radial Basis Neural Network stucture
@@ -17,13 +18,25 @@ function [net,f_hat,r] = rbf_train(X, f)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% Train network using internal Matlab routine
-net = newrb(X',f');
+if max(size(varargin)) <= 1
 
-% Approximate training function evaluations
-f_hat = sim(net,X');
-f_hat = f_hat';
+    % Check variable inputs
+    if isempty(varargin)
+        s = 1;
+    else
+        s = varargin{1};
+    end
+    
+    % Train network using internal Matlab routine
+    net = newrb(X',f',0,s);
 
-r = f_hat-f;
+    % Approximate training function evaluations
+    f_hat = sim(net,X');
+    f_hat = f_hat';
 
-close('NEWRB')
+    r = f_hat-f;
+
+    close('NEWRB')
+else 
+    disp('Error: Too many inputs');
+end

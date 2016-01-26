@@ -16,7 +16,7 @@ function design = maximin_design(vert, N)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-n = size(vert, 2);
+[N_vert, n] = size(vert);
 
 % Construct polytope constraints for optimization.
 K = convhulln(vert);
@@ -40,28 +40,40 @@ fun = @(x) maximin_objective_function(x);
 % Optimization options.
 options = optimset('Algorithm', 'sqp', ...
                    'Display', 'Off', ...
+                   'GradObj', 'On', ...
                    'MaxIter', 100, ...
                    'TolFun', 1e-4);
 
 warning('off','all')
-design = []; fopt = 0; count = 0;
+count = 0; x0 = []; design = []; fopt = 0;
 while (count < 3) || isempty(design)
     count = count + 1;
     
     % Get N initial points within the polytope.
     ind = [];
-    while length(ind) < N
-        x0 = randn(3*N, n);
-        ind = find(all(A*x0'- repmat(b, 1, 3*N) < 0, 1), N, 'first');
+    while (length(ind) < N)
+        x0 = [x0; randn(3*N, n)];
+        ind = find(all(A*x0'- repmat(b, 1, size(x0, 1)) < 0, 1), N, 'first');
         x0 = x0(ind,:);
+        if (count >= 6)
+            design = x0;
+            all(A*design'- repmat(b, 1, N) < 0, 1)
+            break
+        end
     end
     
     % Find optimal design.
     [design_temp, fval] = fmincon(fun, x0, A1, b1, [], [], [], [], [], options);
     
-    if (fval < fopt) && all(all(A*design_temp'- repmat(b, 1, N) < 0, 1))
-        fopt = fval;
-        design = design_temp;
+    tf_InPolytope = all(A*design_temp'- repmat(b, 1, N) < 0, 1);
+    if all(tf_InPolytope)
+        if (fval < fopt)
+            fopt = fval;
+            design = design_temp;
+        end
+        x0 = [];
+    else
+        x0 = design_temp(tf_InPolytope, :);
     end
 end
 warning('on','all')
@@ -69,25 +81,39 @@ warning('on','all')
     % Object function for maximin optimization.  Returns the negative of
     % the minimum square distance between points in the design and the
     % polytope vertices.
-    function f = maximin_objective_function(x)
+    function [f, g] = maximin_objective_function(x)
+        % Compute distances between points.
         d0 = sum((kron(x, ones(N, 1)) - kron(ones(N, 1), x)).^2, 2);
-        d0 = unique(d0);
-        d0(d0 == 0) = [];
+        d0((1:N:N*N) + (0:N-1)) = 1e3;
         [d0star, k0star] = min(d0);
-        
-        d1 = sum((kron(x, ones(size(vert, 1), 1)) ...
-                        - kron(ones(N, 1), vert)).^2, 2);
+        % Compute distances between poitns and vertices.
+        d1 = sum((kron(x, ones(N_vert, 1)) ...
+                    - kron(ones(N, 1), vert)).^2, 2);
         [d1star, k1star] = min(d1);
         
-        g = zeros(N*n, 1);
-        if d0star < d2star
+        % Compute objective.
+        f = -min([d0star; d1star]);
+        
+        % Compute gradient.
+        g = zeros(N, n);
+        if d0star < d1star
+            istar = ceil(k0star/N);
+            jstar = rem(k0star, N);
+            if (jstar == 0)
+                jstar = N;
+            end
             
+            g(istar, :) = 2*(x(istar, :) - x(jstar, :));
+            g(jstar, :) = 2*(x(jstar, :) - x(istar, :));
         else
+            istar = ceil(k1star/N_vert);
+            jstar = rem(k1star, N_vert);
+            if (jstar == 0)
+                jstar = N_vert;
+            end
             
+            g(istar, :) = 2*(x(istar, :) - vert(jstar, :));
         end
-        f = -min([d0; d1]);
-        
-        
-%         f = -norm(x'*x, Inf);
+        g = -g;
     end
 end

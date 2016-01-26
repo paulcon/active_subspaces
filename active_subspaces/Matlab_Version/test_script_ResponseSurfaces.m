@@ -1,13 +1,14 @@
 clear variables
 close all
 clc
-
+%% Script configuration
 % CD must be "Matlab_Port"
 addpath 'ResponseSurfaces'
 
 % Degree of polynomial basis
 N=2;
 
+% User inputs
 test_reg = 'rbf'; % 'rbf' 'poly'
 test_fcn = 'regression'; %'exact' 'regression' 
 
