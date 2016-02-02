@@ -9,8 +9,8 @@ addpath 'ResponseSurfaces'
 N=2;
 
 % User inputs
-test_reg = 'poly'; % 'rbf' 'poly'
-test_fcn = 'exact'; %'exact' 'regression' 
+test_reg = 'rbf'; % 'rbf' 'poly'
+test_fcn = 'regression'; %'exact' 'regression' 
 
 %% Analytic Function Testing - EITHER THIS OR 'Data Set Testing' must be commented out
 % %2D Exact Quadratic Test

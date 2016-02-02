@@ -67,7 +67,8 @@ end
         
         % Covariance Matrix
         K = exponential_squared(X,X,1.0,ell);
-        % CONTINUE FROM HERE
-    end
+        
               
+
+    end
 end
