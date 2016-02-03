@@ -24,7 +24,7 @@ NY = size(Y, 1);
 NZ = size(Z, 3);
 m = size(W, 1);
 
-YY = repmat(Y, 1, 1, NZ);
+YY = repmat(Y, [1, 1, NZ]);
 YZ = reshape(permute(cat(2, YY, Z), [2, 3, 1]), m, NY*NZ)';
 X = YZ*W';
 

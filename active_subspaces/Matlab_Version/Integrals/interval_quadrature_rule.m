@@ -41,11 +41,15 @@ end
 % Compute quadrature points.
 [~, Y] = zonotope_vertices(W1);
 Y = sort(Y);
-Y = linspace(Y(1), Y(2), N+1)';
+Y = linspace(Y(1)*(1+eps), Y(2)*(1+eps), N+1)';
 Yp = 0.5*(Y(2:N+1) + Y(1:N));
 
 % Estimate quadrature weights.
 Y_samples = (2*rand(NX, m) - 1)*W1;
-Yw = histcounts(Y_samples, Y)'/NX;
+Yw = zeros(N, 1);
+for i = 1:N
+    Yw(i) = sum((Y_samples >= Y(i)) & (Y_samples < Y(i+1)));
+end
+Yw = Yw/NX;
 
 end

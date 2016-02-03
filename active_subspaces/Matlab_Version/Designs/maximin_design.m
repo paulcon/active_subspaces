@@ -57,7 +57,6 @@ while (count < 3) || isempty(design)
         x0 = x0(ind,:);
         if (count >= 6)
             design = x0;
-            all(A*design'- repmat(b, 1, N) < 0, 1)
             break
         end
     end
