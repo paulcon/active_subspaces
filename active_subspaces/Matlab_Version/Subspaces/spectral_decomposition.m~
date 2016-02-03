@@ -126,9 +126,12 @@ elseif c_index == 0 && comp_flag == 1
     [e, ind] = sort(diag(e), 'descend');
     W = W(:,ind);    
 elseif c_index == 1 && comp_flag == 0
-    C = X'*df+df'*X;
+    for i=1:M
+        C = C + (X(i,:)'df(i,:)+df(i,:)'*X(i,:))/M;
+    end
     [~, Sigma, W] = svd(C, 0);
-    e = diag(Sigma).*2/M;
+    e = diag(Sigma).*2;   
+    
 elseif c_index == 1 && comp_flag == 1
     s = [];
     for i=1:m

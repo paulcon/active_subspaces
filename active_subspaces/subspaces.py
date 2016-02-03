@@ -170,6 +170,7 @@ def spectral_decomposition(df,f=0,X=0,function=0,c_index=0,N=5,comp_flag=0):
     :param int c_index: an integer specifying which C matrix to compute, the default matrix is 0.
     :param int comp_flag: an integer specifying computation method: 0 for monte carlo, 1 for LG quadrature.
     :param int N: number of quadrature points per dimension.
+    
     :return: [e, W], [ eigenvalues, eigenvectors ]
     :rtype: [ndarray, ndarray]
 
@@ -312,9 +313,14 @@ def spectral_decomposition(df,f=0,X=0,function=0,c_index=0,N=5,comp_flag=0):
                 yyy = x[i,m:].reshape((m,1))
                 [f_x,DF] = function(xxx)
                 [f_y,DF] = function(yyy)
-                C = C + w[i]*np.dot(xxx-yyy,(xxx-yyy).T)*(f_x-f_y)**2/norm**2
-        U, sig, W = np.linalg.svd(C, full_matrices=True)
-        e = (sig**2)
+                C = C + w[i]*np.dot((xxx-yyy),(xxx-yyy).T)*(f_x-f_y)**2/norm**2
+        [evals,WW] = np.linalg.eig(C)
+        order = np.argsort(evals)
+        order = np.flipud(order)
+        e = evals[order]
+        W = np.zeros((m,m))
+        for jj in range(0,m):
+            W[:,jj] = WW[:,order[jj]]
     W = W.T
     W = W*np.sign(W[0,:])
     return e.reshape((m,1)), W.reshape((m,m))

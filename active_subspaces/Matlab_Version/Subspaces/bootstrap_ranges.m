@@ -10,6 +10,10 @@ function [e_br, sub_br, e_stat] = bootstrap_ranges(df, W, varargin)
 %          df: M-by-m array of gradient evaluations
 %           W: m-by-m array of eigenvectors
 %      n_boot: (optional) number of bootstrap replicates
+%           F: (optional) an ndarray of size M that contains evaluations of the function.
+%           X: (optional) an ndarray of size M-by-m that contains data points in the input space.
+%     c_index: (optional) an integer specifying which C matrix to compute, the default matrix is 0.
+%      
 %
 %  Outputs:
 %          e_br: m-by-2 array with bootstrap eigenvalue bounds
@@ -19,17 +23,49 @@ function [e_br, sub_br, e_stat] = bootstrap_ranges(df, W, varargin)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if max(size(varargin)) <= 1
-    
-    % Check variable inputs
-    if isempty(varargin)
-        n_boot = 200;
-    else
-        n_boot = varargin{1};
+% Set varable arguements
+if isempty(varargin)
+    n_boot = 200;
+    F = 0;
+    X = 0;
+    c_index = 0;
+elseif length(varargin) == 1
+    n_boot = varargin{1};
+    F = 0;
+    X = 0;
+    c_index = 0;
+    if ~isnumeric(n_boot) || rem(n_boot, 1) ~= 0 || (n_boot < 0)
+        error('ERROR: n_boot must be a non-negative integer.')
     end
+elseif length(varargin) == 2
+    n_boot = varargin{1};
+    F = varargin{2};
+    X = 0;
+    c_index = 0;
+elseif length(varargin) == 3
+    n_boot = varargin{1};
+    F = varargin{2};
+    X = varargin{3};
+    c_index = 0;
+elseif length(varargin) == 4
+    n_boot = varargin{1};
+    F = varargin{2};
+    X = varargin{3};
+    c_index = varargin{4};
+else 
+    error('ERROR: Too many inputs.')
+end
 
-    % Number of gradient samples and dimension
+
+% M = number of samples; m = dimension of input space;
+if c_index ~= 4
     [M,m] = size(df);
+else
+    [M,m] = size(X);
+    m = m/2;
+end
+    
+    
     
 %% Basic Min/Max bootstrap intervals
     % Bootstrap indices
@@ -39,16 +75,32 @@ if max(size(varargin)) <= 1
     e_dist = zeros(m,n_boot);
     sub_dist = zeros(m-1,n_boot);
     for i=1:n_boot
-        [e_dist(:,i),W0] = spectral_decomposition(df(ind(:,i),:));
+        if c_index == 0
+            [e_dist(:,i),W0] = spectral_decomposition(df(ind(:,i),:));
+        elseif c_index == 1
+            [e_dist(:,i),W0] = spectral_decomposition(df(ind(:,i),:),F,X(ind(:,i),:),0,c_index,0,0);
+        elseif c_index == 2
+            [e_dist(:,i),W0] = spectral_decomposition(df(ind(:,i),:),0,0,0,c_index,0,0);
+        elseif c_index == 3
+            [e_dist(:,i),W0] = spectral_decomposition(df(ind(:,i),:),F,X(ind(:,i),:),0,c_index,0,0);
+        elseif c_index == 4
+            Fx = F(1:M);
+            Fy = F(M+1:end);
+            f_x = Fx(ind(:,i));
+            f_y = Fy(ind(:,i));
+            F =  cat(1,f_x,f_y);
+            [e_dist(:,i),W0] = spectral_decomposition(0,F,X(ind(:,i),:),0,c_index,0,0); 
+            
+        end
         for j=1:m-1
             sub_dist(j,i) = norm(W(:,1:j)'*W0(:,j+1:end));
         end
+        
     end
     
     % Summarize Eigenvalue Basic Stats
     e_stat = [min(e_dist,[],2),mean(e_dist,2),max(e_dist,[],2)];
     e_br= [e_stat(:,1),e_stat(:,3)];
-    
     %Summarize Eigenvector Basic Stats
     sub_br = [min(sub_dist,[],2),mean(sub_dist,2),max(sub_dist,[],2)];
     
@@ -79,9 +131,11 @@ if max(size(varargin)) <= 1
 %         ub_sub_br(:,i) = sub_br_ci(2,:,i)';
 %     end
 %     
-else
-    disp('Error: Too many inputs');
-end
+% else
+%     disp('Error: Too many inputs');
+% end
+
+    
     
     % Nested function to return second output of spectral_decomposition
     function W0 = spec_decomposition2(df2,i2,M2)
