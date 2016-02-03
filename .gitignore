@@ -1,3 +1,5 @@
+# matlab outsave viles
+*.m~
 # this weird thing for mac file systems
 .DS_Store
 

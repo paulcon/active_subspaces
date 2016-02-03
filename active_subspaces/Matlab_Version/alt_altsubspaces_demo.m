@@ -35,6 +35,7 @@ sufficient_summary(X*sub.eigenvectors(:, 1:2), F)
 
 %% c_index = 0 LG QUADRATURE
 % non-linear test function
+tic;
 fun =  @borehole;
 m = 8; n = 1;
 M = 10000;
@@ -42,18 +43,19 @@ X = 2*rand(M, m) - 1;
 % Generate a data set 
 F = zeros(M,1);
 DF = zeros(M,m);
-for i = 1:M
+parfor i = 1:M
     [f, df] = fun(X(i,:));
     F(i) = f; DF(i,:) = df;
 end
 n_boot = 200;
 c_index = 0;
 comp_flag = 1;
-N = 3;
+N = 15;
 % Compute active subspace
 sub = compute(DF,n_boot,F,X,fun,c_index,comp_flag,N);
 sub.W1 = sub.eigenvectors(:, 1:n);
 sub.W2 = sub.eigenvectors(:, n+1:m);
+toc
 % Plot results
 if comp_flag == 0
 eigenvalues(sub.eigenvalues, sub.e_br)
@@ -61,6 +63,7 @@ subspace_errors(sub.sub_br)
 end
 eigenvectors(sub.W1)
 sufficient_summary(X*sub.eigenvectors(:, 1:2), F)
+
 %% c_index = 1 MONTE CARLO
 % non-linear test function
 fun =  @borehole;

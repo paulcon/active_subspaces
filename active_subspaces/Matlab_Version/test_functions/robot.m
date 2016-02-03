@@ -32,8 +32,10 @@ function [y,dy] = robot(xx)
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Shift and scale inputs from [-1,1] hypercube to describe ranges
-theta = (xx(1:4)+1)*pi;
-L     = (xx(5:8)+1)*0.5;
+b = pi/2;
+a = -pi/2;
+theta = (xx(1:4)+1)*(b-a)*0.5+a;
+L     = (xx(5:8)+1)*0.5+a;
 L1 = L(1);
 L2 = L(2);
 L3 = L(3);
@@ -62,7 +64,7 @@ v = sumv;
 y = (u^2 + v^2)^(0.5);
 
 dy = [  %dy/dT1
-        1e-12;
+        1e-6;
         %dy/dT2 
         (1/2).*(2.*(L1.*cos(T1)+L2.*cos(T1+T2)+L3.*cos(T1+T2+T3)+L4.*cos( ... \
         T1+T2+T3+T4)).*((-1).*L2.*sin(T1+T2)+(-1).*L3.*sin(T1+T2+T3)+(-1) ... \

@@ -118,7 +118,7 @@ elseif c_index == 0 && comp_flag == 1
     [p,w] = gaussian_quadrature(s, order);
     NN = size(w,1);
 
-    for i=1:NN
+    parfor i=1:NN
         [~,g] = fun(p(i,:));
         C = C + (g*g')*w(i);
     end
