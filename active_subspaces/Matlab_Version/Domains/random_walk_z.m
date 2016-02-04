@@ -44,7 +44,7 @@ sig = 0.1*min([norm(W2*z0+s-1), norm(W2*z0+s+1)]);
 for i = 1:10*N
     zc = z0 + sig*randn(m-n, 1);
     if all(W2*zc <= 1-s) && all(W2*zc >= -1-s)
-        Z0 = zc;
+        z0 = zc;
     end
 end
 
@@ -53,7 +53,7 @@ Z = zeros(N, m-n);
 for i = 1:N
     zc = z0 + sig*randn(m-n, 1);
     if all(W2*zc <= 1-s) && all(W2*zc >= -1-s)
-        Z0 = zc;
+        z0 = zc;
     end
     Z(i, :) = z0';
 end

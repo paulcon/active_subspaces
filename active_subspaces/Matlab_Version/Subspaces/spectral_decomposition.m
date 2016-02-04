@@ -118,7 +118,7 @@ elseif c_index == 0 && comp_flag == 1
     [p,w] = gaussian_quadrature(s, order);
     NN = size(w,1);
 
-    parfor i=1:NN
+    for i=1:NN
         [~,g] = fun(p(i,:));
         C = C + (g*g')*w(i);
     end
@@ -150,7 +150,7 @@ elseif c_index == 2 && comp_flag == 0
        Norm = norm(df(i,:));
        if Norm < norm_tol
            df(i,:) = zeros(1,m);
-        else
+       else
            df(i,:) = df(i,:)/Norm;
        end    
     end
@@ -173,9 +173,10 @@ elseif c_index == 2 && comp_flag == 1
           DF = DF/Norm;
           C = C + DF*DF'*w(i);
        end
+    end 
     [~, Sigma, W] = svd(C, 0);
     e = diag(Sigma).*2;
-    end
+    
 elseif c_index == 3 && comp_flag == 0
     for i=1:M
         xxx = X(i,:);
@@ -223,21 +224,6 @@ elseif c_index == 3 && comp_flag == 1
     [~, Sigma, W] = svd(C, 0);
     e = diag(Sigma).*2;
 elseif c_index == 4 && comp_flag == 0
-%     x = X(:,1:m);
-%     y = X(:,m+1:end);
-%     A = (F(1:M)-F(M+1,end)).^2;
-%     for i = 1:M
-%        vec = (x(i,:)-y(i,:));
-%        if norm(vec) > norm_tol
-%           C = C + A(i)*(vec')*vec/(M*norm(vec)^2);
-%        end 
-%     end
-%     [~, Sigma, W] = svd(C, 0);
-%     e = diag(Sigma).*2;
-    %[W,e] = eig(C);
-    %[e, ind] = sort(diag(e), 'descend');
-    %W = W(:,ind);
-    %A = (F(1:M)-F(M+1,end));
     for i = 1:M
         Norm = norm(X(i,1:m) - X(i,m+1:end));
         if Norm > norm_tol

@@ -2,7 +2,7 @@ clear variables
 close all
 clc
 
-addpath 'Subspaces' 'Plotters' 'ResponseSurfaces' '../../tutorials/test_functions/borehole'
+addpath '..Subspaces' '..Plotters' '..ResponseSurfaces' '../../../tutorials/test_functions/borehole'
 
 %% c_index = 0 MONTE CARLO
 % non-linear test function
@@ -20,7 +20,7 @@ end
 n_boot = 200;
 c_index = 0;
 comp_flag = 0;
-N = 4;
+N = 10;
 % Compute active subspace
 sub = compute(DF,n_boot,F,X,fun,c_index,comp_flag,N);
 sub.W1 = sub.eigenvectors(:, 1:n);
@@ -80,7 +80,7 @@ end
 n_boot = 200;
 c_index = 1;
 comp_flag = 0;
-N = 4;
+N = 10;
 % Compute active subspace
 sub = compute(DF,n_boot,F,X,fun,c_index,comp_flag,N);
 sub.W1 = sub.eigenvectors(:, 1:n);
@@ -108,7 +108,7 @@ end
 n_boot = 200;
 c_index = 1;
 comp_flag = 1;
-N = 3;
+N = 10;
 % Compute active subspace
 sub = compute(DF,n_boot,F,X,fun,c_index,comp_flag,N);
 sub.W1 = sub.eigenvectors(:, 1:n);
@@ -137,7 +137,7 @@ end
 n_boot = 200;
 c_index = 2;
 comp_flag = 0;
-N = 4;
+N = 10;
 % Compute active subspace
 sub = compute(DF,n_boot,F,X,fun,c_index,comp_flag,N);
 sub.W1 = sub.eigenvectors(:, 1:n);
@@ -165,7 +165,7 @@ end
 n_boot = 200;
 c_index = 2;
 comp_flag = 1;
-N = 3;
+N = 10;
 % Compute active subspace
 sub = compute(DF,n_boot,F,X,fun,c_index,comp_flag,N);
 sub.W1 = sub.eigenvectors(:, 1:n);
@@ -194,7 +194,7 @@ end
 n_boot = 200;
 c_index = 3;
 comp_flag = 0;
-N = 4;
+N = 10;
 % Compute active subspace
 sub = compute(DF,n_boot,F,X,fun,c_index,comp_flag,N);
 sub.W1 = sub.eigenvectors(:, 1:n);
@@ -222,7 +222,7 @@ end
 n_boot = 200;
 c_index = 3;
 comp_flag = 1;
-N = 3;
+N = 10;
 % Compute active subspace
 sub = compute(DF,n_boot,F,X,fun,c_index,comp_flag,N);
 sub.W1 = sub.eigenvectors(:, 1:n);
@@ -279,7 +279,7 @@ for i = 1:M
     [f_y(i), ~] = fun(X(i,m+1:end));
 end
 F = cat(1,f_x,f_y);
-n_boot = 200;
+n_boot = 500;
 c_index = 4;
 comp_flag = 1; % 1  LG Quadrature 
 N = 2;
