@@ -1,10 +1,8 @@
 """Utilities for computing active and inactive subspaces."""
 from __future__ import division
 import numpy as np
-import logging
 from scipy.spatial import distance_matrix
 from utils.misc import process_inputs, process_inputs_outputs
-import utils.quadrature as quad
 
 SQRTEPS = np.sqrt(np.finfo(float).eps)
 
@@ -64,27 +62,27 @@ class Subspaces():
             if df is None:
                 raise Exception('df is None')
             e, W = active_subspace(df=df, weights=weights)
-            ssmethod = active_subspace
+            ssmethod = lambda X, f, df, weights: active_subspace(df, weights)
         elif sstype == 1:
             if df is None:
                 raise Exception('df is None')
             e, W = normalized_active_subspace(df=df, weights=weights)
-            ssmethod = normalized_active_subspace
+            ssmethod = lambda X, f, df, weights: normalized_active_subspace(df, weights)
         elif sstype == 2:
             if X is None or df is None:
                 raise Exception('X or df is None')
             e, W = active_subspace_x(X=X, df=df, weights=weights)
-            ssmethod = active_subspace_x
+            ssmethod = lambda X, f, df, weights: active_subspace_x(X, df, weights)
         elif sstype == 3:
             if X is None or df is None:
                 raise Exception('X or df is None')            
             e, W = normalized_active_subspace_x(X=X, df=df, weights=weights)
-            ssmethod = normalized_active_subspace_x
+            ssmethod = lambda X, f, df, weights: normalized_active_subspace_x(X, df, weights)
         elif sstype == 4:
             if X is None or f is None:
                 raise Exception('X or f is None')
             e, W = swarm_subspace(X=X, f=f, weights=weights)
-            ssmethod = swarm_subspace
+            ssmethod = lambda X, f, df, weights: swarm_subspace(X, f, weights)
         else:
             e, W = None, None
             ssmethod = None
@@ -105,12 +103,12 @@ class Subspaces():
         
         # Compute the partition
         if ptype == 0:
-            n = eig_partition(e)
+            n = eig_partition(e)[0]
         elif ptype == 1:
             sub_err = sub_br[:,1].reshape((m-1, 1))
-            n = errbnd_partition(e, sub_err)
+            n = errbnd_partition(e, sub_err)[0]
         elif ptype == 2:
-            n = ladle_partition(e, li_F)
+            n = ladle_partition(e, li_F)[0]
         else:
             raise Exception('Unrecognized partition type: {:d}'.format(ptype))
         
@@ -130,7 +128,7 @@ class Subspaces():
 
         self.W1, self.W2 = self.eigenvectors[:,:n], self.eigenvectors[:,n:]
 
-def active_subspace(X=None, f=None, df, weights):
+def active_subspace(df, weights):
     """
     TODO: docs
     """
@@ -141,7 +139,7 @@ def active_subspace(X=None, f=None, df, weights):
     
     return sorted_eigh(C)
     
-def normalized_active_subspace(X=None, f=None, df, weights):
+def normalized_active_subspace(df, weights):
     """
     TODO: docs
     """
@@ -162,7 +160,7 @@ def normalized_active_subspace(X=None, f=None, df, weights):
     
     return sorted_eigh(C)
     
-def active_subspace_x(X, f=None, df, weights):
+def active_subspace_x(X, df, weights):
     """
     TODO: docs
     """
@@ -174,7 +172,7 @@ def active_subspace_x(X, f=None, df, weights):
     
     return sorted_eigh(C)
     
-def normalized_active_subspace_x(X, f=None, df, weights):
+def normalized_active_subspace_x(X, df, weights):
     """
     TODO: docs
     """
@@ -201,7 +199,7 @@ def normalized_active_subspace_x(X, f=None, df, weights):
     
     return sorted_eigh(C)           
 
-def swarm_subspace(X, f, df=None, weights):
+def swarm_subspace(X, f, weights):
     """
     TODO: docs
     """
@@ -221,19 +219,17 @@ def swarm_subspace(X, f, df=None, weights):
     C = np.zeros((m, m))
     for i in range(M):
         P = X - X[i,:]
-        C = C + np.dot(P.transpose(), P*A[:,i])
+        a = A[:,i].reshape((M, 1))
+        C = C + np.dot(P.transpose(), P * a)
     
     return sorted_eigh(C)
 
-def eig_partition(evals):
+def eig_partition(e):
     """
     TODO: docs
     """
     # dealing with zeros for the log
-    e = evals.copy()
-    ind = e==0.0
-    e[ind] = 1e-100
-    ediff = np.fabs(np.diff(np.log10(e.reshape((e.size,)))))
+    ediff = np.fabs(np.diff(e.reshape((e.size,))))
 
     # crappy threshold for choosing active subspace dimension
     n = np.argmax(ediff) + 1
@@ -247,17 +243,16 @@ def errbnd_partition(e, sub_err):
     
     errbnd = np.zeros((m-1, 1))
     for i in range(m-1):
-        err[i] = np.sqrt(np.sum(e[:i+1,:]))*sub_err[i] + np.sqrt(np.sum(e[i+1:,:]))
+        errbnd[i] = np.sqrt(np.sum(e[:i+1]))*sub_err[i] + np.sqrt(np.sum(e[i+1:]))
         
-    n = np.argmin(err) + 1
+    n = np.argmin(errbnd) + 1
     return n, errbnd
 
 def ladle_partition(e, li_F):
     """
     TODO: docs
     """
-    Phi = e / np.sum(e)
-    G = li_F + Phi
+    G = li_F + e.reshape((e.size, 1)) / np.sum(e)
     n = np.argmin(G) + 1
     return n, G
     
@@ -284,13 +279,16 @@ def bootstrap_ranges(e, W, X, f, df, weights, ssmethod, nboot=100):
             sub_det[j,i] = np.linalg.det(np.dot(W[:,:j+1].T, W0[:,:j+1]))
     
     # bootstrap ranges for the eigenvalues
-    e_br = np.hstack(( np.amin(e_boot, axis=1), np.amax(e_boot, axis=1) ))
+    e_br = np.hstack(( np.amin(e_boot, axis=1).reshape((m, 1)), \
+                        np.amax(e_boot, axis=1).reshape((m, 1)) ))
     
     # bootstrap ranges and mean for subspace distance
-    sub_br = np.hstack(( np.amin(sub_dist, axis=1), np.mean(sub_dist, axis=1), np.amax(sub_dist, axis=1) ))
+    sub_br = np.hstack(( np.amin(sub_dist, axis=1).reshape((m-1, 1)), \
+                        np.mean(sub_dist, axis=1).reshape((m-1, 1)), \
+                        np.amax(sub_dist, axis=1).reshape((m-1, 1)) ))
     
     # metric from Li's ladle plot paper
-    li_F = np.sum(1.0 - np.fabs(sub_det), axis=1) / nboot
+    li_F = np.vstack(( np.zeros((1,1)), np.sum(1.0 - np.fabs(sub_det), axis=1).reshape((m-1, 1)) / nboot ))
     li_F = li_F / np.sum(li_F)
 
     return e_br, sub_br, li_F
@@ -310,7 +308,8 @@ def bootstrap_replicate(X, f, df, weights):
     """
     TODO: docs
     """
-    ind = np.random.randint(M, size=(M, 1))
+    M = weights.shape[0]
+    ind = np.random.randint(M, size=(M, ))
     
     if X is not None:
         X0 = X[ind,:].copy()
