@@ -30,107 +30,96 @@ class Subspaces():
     W1, W2 = None, None
     e_br, sub_br = None, None
 
-    def compute(self, df ,f = 0, X = 0,function=0, c_index = 0, comp_flag =0,N=5, n_boot=200):
+    def compute(self, X=None, f=None, df=None, weights=None, sstype=0, ptype=0, nboot=0):
         """
-        Compute the active and inactive subspaces from a collection of
-        sampled gradients.
-
-        :param ndarray df: an ndarray of size M-by-m that contains evaluations of the gradient.
-        :param ndarray f: an ndarray of size M that contains evaluations of the function.
-        :param ndarray X: an ndarray of size M-by-m that contains data points in the input space.
-        :param function: a specified function that outputs f(x), and df(x) the gradient vector for a data point x
-        :param int c_index: an integer specifying which C matrix to compute, the default matrix is 0.
-        :param int comp_flag: an integer specifying computation method: 0 for monte carlo, 1 for LG quadrature.
-        :param int N: number of quadrature points per dimension.
-        :param int n_boot: number of bootstrap replicates to use when computing bootstrap ranges.
-
-        **Notes**
-
-        This method sets the class's attributes `W1`, `W2`, `eigenvalues`, and
-        `eigenvectors`. If `n_boot` is greater than zero, then this method
-        also runs a bootstrap to compute and set `e_br` and `sub_br`.
+        TODO: docs
+        
+        Subspace types (sstype):
+            0, active subspace
+            1, normalized active subspace
+            2, active subspace x
+            3, normalized active subspace x
+            4, swarm subspace
+            
+        Partition types (ptype):
+            0, eigenvalue gaps
+            1, response surface error bound
+            2, Li's ladle plot
         """
         
-        if c_index != 4:
+        # Check inputs
+        if X is not None:
+            X, M, m = process_inputs(X)
+        elif df is not None:
             df, M, m = process_inputs(df)
         else:
-            M = np.shape(X)[0]
-            m = np.shape(X)[1]/2
-        if not isinstance(n_boot, int):
-            raise TypeError('n_boot must be an integer.')
-        evecs = np.zeros((m,m))
-        evals = np.zeros(m)
-        e_br = np.zeros((m,2))
-        sub_br = np.zeros((m-1,3))
-        # compute eigenvalues and eigenvecs
-        if c_index == 0:
-            logging.getLogger('PAUL').info('Computing spectral decomp with {:d} samples in {:d} dims.'.format(M, m))
-            evals, evecs = spectral_decomposition(df=df)
-            if comp_flag == 0:
-                # compute bootstrap ranges for eigenvalues and subspace distances
-                if n_boot > 0:
-                    logging.getLogger('PAUL').info('Bootstrapping {:d} spectral decomps of size {:d} by {:d}.'.format(n_boot, M, m))
-                    e_br, sub_br = bootstrap_ranges(df, evals, evecs, n_boot=n_boot)
-        elif c_index == 1:  
-            if comp_flag == 0:
-                evals, evecs = spectral_decomposition(df,f,X,c_index=c_index,comp_flag=comp_flag)
-                # compute bootstrap ranges for eigenvalues and subspace distances
-                if n_boot > 0:
-                    logging.getLogger('PAUL').info('Bootstrapping {:d} spectral decomps of size {:d} by {:d}.'.format(n_boot, M, m))
-                    e_br, sub_br = bootstrap_ranges(df, evals, evecs,f, X, c_index,n_boot)
-            elif comp_flag == 1:
-                evals, evecs = spectral_decomposition(df,f,X,function,c_index,N,comp_flag)        
-        elif c_index == 2:
-            if comp_flag == 0:
-                evals, evecs = spectral_decomposition(df,f,X,c_index=c_index,comp_flag=comp_flag)
-                # compute bootstrap ranges for eigenvalues and subspace distances
-                if n_boot > 0:
-                    logging.getLogger('PAUL').info('Bootstrapping {:d} spectral decomps of size {:d} by {:d}.'.format(n_boot, M, m))
-                    e_br, sub_br = bootstrap_ranges(df, evals, evecs,f, X, c_index,n_boot)
-            elif comp_flag == 1:
-                evals, evecs = spectral_decomposition(df,f,X,function,c_index,N,comp_flag)
-                
-        elif c_index == 3:
-            if comp_flag == 0:
-                evals, evecs = spectral_decomposition(df,f,X,c_index=c_index,comp_flag=comp_flag)
-                # compute bootstrap ranges for eigenvalues and subspace distances
-                if n_boot > 0:
-                    logging.getLogger('PAUL').info('Bootstrapping {:d} spectral decomps of size {:d} by {:d}.'.format(n_boot, M, m))
-                    e_br, sub_br = bootstrap_ranges(df, evals, evecs,f, X, c_index,n_boot)
-            elif comp_flag == 1:
-                evals, evecs = spectral_decomposition(df,f,X,function,c_index,N,comp_flag)
-        elif c_index == 4:
-            if comp_flag == 0:
-                evals, evecs = spectral_decomposition(df,f,X,c_index=c_index,comp_flag=comp_flag)
-                # compute bootstrap ranges for eigenvalues and subspace distances
-                if n_boot > 0:
-                   # logging.getLogger('PAUL').info('Bootstrapping {:d} spectral decomps of size {:d} by {:d}.'.format(n_boot, M, 2*m))
-                    e_br, sub_br = bootstrap_ranges(df,evals, evecs,f, X, c_index,n_boot)
-            elif comp_flag == 1:
-                evals, evecs = spectral_decomposition(df,f,X,function,c_index,N,comp_flag)   
-        self.e_br, self.sub_br = e_br, sub_br    
-        self.e_br, self.sub_br = e_br, sub_br    
-        self.eigenvalues, self.eigenvectors = evals, evecs
-
+            raise Exception('One of input/output pairs (X,f) or gradients (df) must not be None')
+            
+        if weights is None:
+            # default weights is for Monte Carlo
+            weights = np.ones((M, 1)) / M
         
-
-        # partition the subspaces with a crappy heuristic
-        n = compute_partition(evals)
+        # Compute the subspace
+        if sstype == 0:
+            if df is None:
+                raise Exception('df is None')
+            e, W = active_subspace(df=df, weights=weights)
+            ssmethod = active_subspace
+        elif sstype == 1:
+            if df is None:
+                raise Exception('df is None')
+            e, W = normalized_active_subspace(df=df, weights=weights)
+            ssmethod = normalized_active_subspace
+        elif sstype == 2:
+            if X is None or df is None:
+                raise Exception('X or df is None')
+            e, W = active_subspace_x(X=X, df=df, weights=weights)
+            ssmethod = active_subspace_x
+        elif sstype == 3:
+            if X is None or df is None:
+                raise Exception('X or df is None')            
+            e, W = normalized_active_subspace_x(X=X, df=df, weights=weights)
+            ssmethod = normalized_active_subspace_x
+        elif sstype == 4:
+            if X is None or f is None:
+                raise Exception('X or f is None')
+            e, W = swarm_subspace(X=X, f=f, weights=weights)
+            ssmethod = swarm_subspace
+        else:
+            e, W = None, None
+            ssmethod = None
+            raise Exception('Unrecognized subspace type: {:d}'.format(sstype))
+        
+        self.eigenvalues, self.eigenvectors = e, W    
+        
+        # Compute bootstrap ranges and partition
+        if nboot > 0:
+            e_br, sub_br, li_F = bootstrap_ranges(e, W, X, f, df, weights, ssmethod, nboot)
+        else:
+            if ptype == 1 or ptype == 2:
+                raise Exception('Need to run bootstrap for partition type {:d}'.format(ptype))
+            
+            e_br, sub_br = None, None
+            
+        self.e_br, self.sub_br = e_br, sub_br
+        
+        # Compute the partition
+        if ptype == 0:
+            n = eig_partition(e)
+        elif ptype == 1:
+            sub_err = sub_br[:,1].reshape((m-1, 1))
+            n = errbnd_partition(e, sub_err)
+        elif ptype == 2:
+            n = ladle_partition(e, li_F)
+        else:
+            raise Exception('Unrecognized partition type: {:d}'.format(ptype))
+        
         self.partition(n)
 
 
     def partition(self, n):
         """
-        Set the partition between active and inactive subspaces.
-
-        :param int n: dimension of the active subspace.
-
-        **Notes**
-
-        This method sets the class's attributes `W1` and `W2` according to the
-        given `n`. It is mostly a convenience method in case one wants to
-        manually set the dimension of the active subspace after the basis is
-        computed.
+        TODO: docs
         """
         if not isinstance(n, int):
             raise TypeError('n should be an integer')
@@ -139,47 +128,22 @@ class Subspaces():
         if n<1 or n>m:
             raise ValueError('n must be positive and less than the dimension of the eigenvectors.')
 
-        logging.getLogger('PAUL').info('Active subspace dimension is {:d} out of {:d}.'.format(n, m))
-
         self.W1, self.W2 = self.eigenvectors[:,:n], self.eigenvectors[:,n:]
 
-def compute_partition(evals):
+def active_subspace(X=None, f=None, df, weights):
     """
-    A heuristic based on eigenvalue gaps for deciding the dimension of the
-    active subspace.
-
-    :param ndarray evals: the eigenvalues.
-
-    :return: dimension of the active subspace
-    :rtype: int
-    """
-    # dealing with zeros for the log
-    e = evals.copy()
-    ind = e==0.0
-    e[ind] = 1e-100
-
-    # crappy threshold for choosing active subspace dimension
-    n = np.argmax(np.fabs(np.diff(np.log(e.reshape((e.size,)))))) + 1
-    return n
-
-
-def active_subspaces(X=None, f=None, df, weights):
-    """
-    
+    TODO: docs
     """
     df, M, m = process_inputs(df)
         
-    # multiply each row by the weights
-    df = df * weights
-    
     # compute the matrix
-    C = np.dot(df.transpose(), df)
+    C = np.dot(df.transpose(), df * weights)
     
     return sorted_eigh(C)
     
-def normalized_active_subspaces(X=None, f=None, df, weights):
+def normalized_active_subspace(X=None, f=None, df, weights):
     """
-    
+    TODO: docs
     """
     df, M, m = process_inputs(df)
         
@@ -190,32 +154,29 @@ def normalized_active_subspaces(X=None, f=None, df, weights):
     ind = ndf < SQRTEPS
     df[ind,:], ndf[ind] = 0.0, 1.0
     
-    # normalize rows and multiply by weights
-    df = df * (weights / ndf.reshape((M, 1)))
+    # normalize rows
+    df = df / ndf.reshape((M, 1))
     
     # compute the matrix
-    C = np.dot(df.transpose(), df)
+    C = np.dot(df.transpose(), df * weights)
     
     return sorted_eigh(C)
     
-def active_subspaces_x(X, f=None, df, weights):
+def active_subspace_x(X, f=None, df, weights):
     """
-    
+    TODO: docs
     """
     df, M, m = process_inputs(df)
     
-    # multiply by weights
-    df, X = df * weights, X * weights
-    
     # compute the matrix
-    A = np.dot(df.transpose(), X)
+    A = np.dot(df.transpose(), X * weights)
     C = 0.5*(A + A.transpose())
     
     return sorted_eigh(C)
     
-def normalized_active_subspaces_x(X, f=None, df, weights):
+def normalized_active_subspace_x(X, f=None, df, weights):
     """
-    
+    TODO: docs
     """
     df, M, m = process_inputs(df)
     
@@ -230,19 +191,19 @@ def normalized_active_subspaces_x(X, f=None, df, weights):
     ind = nX < SQRTEPS
     X[ind,:], nX[ind] = 0.0, 1.0
     
-    # normalize rows and multiply by weights
-    df = df * (weights / ndf.reshape((M, 1)))
-    X = X * (weights / nX.reshape((M, 1)))
+    # normalize rows
+    df = df / ndf.reshape((M, 1))
+    X = X / nX.reshape((M, 1))
     
     # compute the matrix
-    A = np.dot(df.transpose(), X)
+    A = np.dot(df.transpose(), X * weights)
     C = 0.5*(A + A.transpose())
     
     return sorted_eigh(C)           
 
-def swarm_subspaces(X, f, df=None, weights):
+def swarm_subspace(X, f, df=None, weights):
     """
-    
+    TODO: docs
     """
     X, f, M, m = process_inputs_outputs(X, f)
     
@@ -264,22 +225,36 @@ def swarm_subspaces(X, f, df=None, weights):
     
     return sorted_eigh(C)
 
-def rs_partition(e, sub_err):
+def eig_partition(evals):
     """
-    
+    TODO: docs
+    """
+    # dealing with zeros for the log
+    e = evals.copy()
+    ind = e==0.0
+    e[ind] = 1e-100
+    ediff = np.fabs(np.diff(np.log10(e.reshape((e.size,)))))
+
+    # crappy threshold for choosing active subspace dimension
+    n = np.argmax(ediff) + 1
+    return n, ediff
+
+def errbnd_partition(e, sub_err):
+    """
+    TODO: docs
     """
     m = e.shape[0]
     
-    err = np.zeros((m-1, 1))
+    errbnd = np.zeros((m-1, 1))
     for i in range(m-1):
         err[i] = np.sqrt(np.sum(e[:i+1,:]))*sub_err[i] + np.sqrt(np.sum(e[i+1:,:]))
         
     n = np.argmin(err) + 1
-    return n, err
+    return n, errbnd
 
-def ladle(e, li_F):
+def ladle_partition(e, li_F):
     """
-    
+    TODO: docs
     """
     Phi = e / np.sum(e)
     G = li_F + Phi
@@ -288,7 +263,7 @@ def ladle(e, li_F):
     
 def bootstrap_ranges(e, W, X, f, df, weights, ssmethod, nboot=100):
     """
-    
+    TODO: docs
     """
     if df is not None:
         df, M, m = process_inputs(df)
@@ -307,25 +282,22 @@ def bootstrap_ranges(e, W, X, f, df, weights, ssmethod, nboot=100):
         for j in range(m-1):
             sub_dist[j,i] = np.linalg.norm(np.dot(W[:,:j+1].T, W0[:,j+1:]), ord=2)
             sub_det[j,i] = np.linalg.det(np.dot(W[:,:j+1].T, W0[:,:j+1]))
-            
-    e_br = np.zeros((m, 2))
-    sub_br = np.zeros((m-1, 3))
-    for i in range(m):
-        e_br[i,0] = np.amin(e_boot[i,:])
-        e_br[i,1] = np.amax(e_boot[i,:])
-    for i in range(m-1):
-        sub_br[i,0] = np.amin(sub_dist[i,:])
-        sub_br[i,1] = np.mean(sub_dist[i,:])
-        sub_br[i,2] = np.amax(sub_dist[i,:])
-        
-    li_F = np.sum(1.0 - np.fabs(sub_det), axis=1) / M
+    
+    # bootstrap ranges for the eigenvalues
+    e_br = np.hstack(( np.amin(e_boot, axis=1), np.amax(e_boot, axis=1) ))
+    
+    # bootstrap ranges and mean for subspace distance
+    sub_br = np.hstack(( np.amin(sub_dist, axis=1), np.mean(sub_dist, axis=1), np.amax(sub_dist, axis=1) ))
+    
+    # metric from Li's ladle plot paper
+    li_F = np.sum(1.0 - np.fabs(sub_det), axis=1) / nboot
     li_F = li_F / np.sum(li_F)
 
     return e_br, sub_br, li_F
     
 def sorted_eigh(C):
     """
-    
+    TODO: docs
     """
     e, W = np.linalg.eigh(C)
     ind = np.argsort(e)
@@ -336,7 +308,7 @@ def sorted_eigh(C):
     
 def bootstrap_replicate(X, f, df, weights):
     """
-    
+    TODO: docs
     """
     ind = np.random.randint(M, size=(M, 1))
     
