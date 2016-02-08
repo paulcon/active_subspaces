@@ -57,6 +57,24 @@ class TestSubspaces(TestCase):
         np.testing.assert_array_less(e[1], e[0])
         np.testing.assert_array_less(np.zeros((3,)), W[0,:])
         
+    def test_ols_subspace(self):
+        np.random.seed(42)
+        X = np.random.normal(size=(20,3))
+        f = np.random.normal(size=(20,1))
+        weights = np.ones((20,1)) / 20
+        e, W = ss.ols_subspace(X, f, weights)
+        np.testing.assert_array_less(e[1], e[0])
+        np.testing.assert_array_less(np.zeros((3,)), W[0,:])
+        
+    def test_qphd_subspace(self):
+        np.random.seed(42)
+        X = np.random.normal(size=(50,3))
+        f = np.random.normal(size=(50,1))
+        weights = np.ones((50,1)) / 50
+        e, W = ss.qphd_subspace(X, f, weights)
+        np.testing.assert_array_less(e[1], e[0])
+        np.testing.assert_array_less(np.zeros((3,)), W[0,:])
+        
     def test_bootstrap_replicate(self):
         np.random.seed(42)
         X = np.random.normal(size=(10,3))
@@ -69,10 +87,10 @@ class TestSubspaces(TestCase):
         
     def test_bootstrap_ranges(self):
         np.random.seed(42)
-        X = np.random.normal(size=(10,3))
-        f = np.random.normal(size=(10,1))
-        df = np.random.normal(size=(10,3))
-        weights = np.ones((10,1)) / 10
+        X = np.random.normal(size=(50,3))
+        f = np.random.normal(size=(50,1))
+        df = np.random.normal(size=(50,3))
+        weights = np.ones((50,1)) / 50
         
         e, W = ss.active_subspace(df, weights)
         ssmethod = lambda X, f, df, weights: ss.active_subspace(df, weights)
@@ -92,6 +110,14 @@ class TestSubspaces(TestCase):
         
         e, W = ss.swarm_subspace(X, f, weights)
         ssmethod = lambda X, f, df, weights: ss.swarm_subspace(X, f, weights)
+        d = ss.bootstrap_ranges(e, W, X, f, None, weights, ssmethod, nboot=10)
+        
+        e, W = ss.ols_subspace(X, f, weights)
+        ssmethod = lambda X, f, df, weights: ss.ols_subspace(X, f, weights)
+        d = ss.bootstrap_ranges(e, W, X, f, None, weights, ssmethod, nboot=10)
+        
+        e, W = ss.qphd_subspace(X, f, weights)
+        ssmethod = lambda X, f, df, weights: ss.qphd_subspace(X, f, weights)
         d = ss.bootstrap_ranges(e, W, X, f, None, weights, ssmethod, nboot=10)
 
     def test_eig_partition(self):
@@ -122,10 +148,10 @@ class TestSubspaces(TestCase):
         
     def test_subspace_class(self):
         np.random.seed(42)
-        X = np.random.normal(size=(10,3))
-        f = np.random.normal(size=(10,1))
-        df = np.random.normal(size=(10,3))
-        weights = np.ones((10,1)) / 10
+        X = np.random.normal(size=(50,3))
+        f = np.random.normal(size=(50,1))
+        df = np.random.normal(size=(50,3))
+        weights = np.ones((50,1)) / 50
         
         sub = ss.Subspaces()
         sub.compute(X, f, df, weights)
@@ -133,12 +159,16 @@ class TestSubspaces(TestCase):
         sub.compute(X, f, df, weights, sstype=2)
         sub.compute(X, f, df, weights, sstype=3)
         sub.compute(X, f, df, weights, sstype=4)
+        sub.compute(X, f, df, weights, sstype=5)
+        sub.compute(X, f, df, weights, sstype=6)
         
-        sub.compute(X, f, df, weights, sstype=0, nboot=100)
-        sub.compute(X, f, df, weights, sstype=1, nboot=100)
-        sub.compute(X, f, df, weights, sstype=2, nboot=100)
-        sub.compute(X, f, df, weights, sstype=3, nboot=100)
-        sub.compute(X, f, df, weights, sstype=4, nboot=100)
+        sub.compute(X, f, df, weights, sstype=0, nboot=10)
+        sub.compute(X, f, df, weights, sstype=1, nboot=10)
+        sub.compute(X, f, df, weights, sstype=2, nboot=10)
+        sub.compute(X, f, df, weights, sstype=3, nboot=10)
+        sub.compute(X, f, df, weights, sstype=4, nboot=10)
+        sub.compute(X, f, df, weights, sstype=5, nboot=10)
+        sub.compute(X, f, df, weights, sstype=6, nboot=10)
         
         sub.compute(X, f, df, weights, sstype=0, ptype=0, nboot=100)
         sub.compute(X, f, df, weights, sstype=0, ptype=1, nboot=100)

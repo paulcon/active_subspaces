@@ -3,6 +3,7 @@ from __future__ import division
 import numpy as np
 from scipy.spatial import distance_matrix
 from utils.misc import process_inputs, process_inputs_outputs
+from utils.response_surfaces import PolynomialApproximation
 
 SQRTEPS = np.sqrt(np.finfo(float).eps)
 
@@ -38,6 +39,8 @@ class Subspaces():
             2, active subspace x
             3, normalized active subspace x
             4, swarm subspace
+            5, ols sdr
+            6, qphd, sdr
             
         Partition types (ptype):
             0, eigenvalue gaps
@@ -61,28 +64,38 @@ class Subspaces():
         if sstype == 0:
             if df is None:
                 raise Exception('df is None')
-            e, W = active_subspace(df=df, weights=weights)
+            e, W = active_subspace(df, weights)
             ssmethod = lambda X, f, df, weights: active_subspace(df, weights)
         elif sstype == 1:
             if df is None:
                 raise Exception('df is None')
-            e, W = normalized_active_subspace(df=df, weights=weights)
+            e, W = normalized_active_subspace(df, weights)
             ssmethod = lambda X, f, df, weights: normalized_active_subspace(df, weights)
         elif sstype == 2:
             if X is None or df is None:
                 raise Exception('X or df is None')
-            e, W = active_subspace_x(X=X, df=df, weights=weights)
+            e, W = active_subspace_x(X, df, weights)
             ssmethod = lambda X, f, df, weights: active_subspace_x(X, df, weights)
         elif sstype == 3:
             if X is None or df is None:
                 raise Exception('X or df is None')            
-            e, W = normalized_active_subspace_x(X=X, df=df, weights=weights)
+            e, W = normalized_active_subspace_x(X, df, weights)
             ssmethod = lambda X, f, df, weights: normalized_active_subspace_x(X, df, weights)
         elif sstype == 4:
             if X is None or f is None:
                 raise Exception('X or f is None')
-            e, W = swarm_subspace(X=X, f=f, weights=weights)
+            e, W = swarm_subspace(X, f, weights)
             ssmethod = lambda X, f, df, weights: swarm_subspace(X, f, weights)
+        elif sstype == 5:
+            if X is None or f is None:
+                raise Exception('X or f is None')
+            e, W = ols_subspace(X, f, weights)
+            ssmethod = lambda X, f, df, weights: ols_subspace(X, f, weights)
+        elif sstype == 6:
+            if X is None or f is None:
+                raise Exception('X or f is None')
+            e, W = qphd_subspace(X, f, weights)
+            ssmethod = lambda X, f, df, weights: qphd_subspace(X, f, weights)
         else:
             e, W = None, None
             ssmethod = None
@@ -221,6 +234,47 @@ def swarm_subspace(X, f, weights):
         P = X - X[i,:]
         a = A[:,i].reshape((M, 1))
         C = C + np.dot(P.transpose(), P * a)
+    
+    return sorted_eigh(C)
+    
+def ols_subspace(X, f, weights):
+    """
+    TODO: docs
+    """
+    X, f, M, m = process_inputs_outputs(X, f)
+    
+    # solve weighted least squares
+    A = np.hstack((np.ones((M, 1)), X)) * np.sqrt(weights)
+    b = f * np.sqrt(weights)
+    u = np.linalg.lstsq(A, b)[0]
+    w = u[1:].reshape((m, 1))
+    
+    # compute rank-1 C
+    C = np.dot(w, w.transpose())
+    
+    return sorted_eigh(C)
+
+def qphd_subspace(X, f, weights):
+    """
+    TODO: docs
+    """
+    X, f, M, m = process_inputs_outputs(X, f)
+    
+    # check if the points are uniform or Gaussian, set 2nd moment
+    if np.amax(X) > 1.0 or np.amin < -1.0:
+        gamma = 1.0
+    else:
+        gamma = 1.0 / 3.0
+    
+    # compute a quadratic approximation
+    pr = PolynomialApproximation(2)
+    pr.train(X, f, weights)
+
+    # get regression coefficients
+    b, A = pr.g, pr.H
+
+    # compute C
+    C = np.outer(b, b.transpose()) + gamma*np.dot(A, A.transpose())
     
     return sorted_eigh(C)
 
