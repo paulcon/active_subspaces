@@ -6,39 +6,22 @@ import numpy as np
 
 class TestResponseSurfaces(TestCase):
 
-    writeData = False
-
     def test_index_set(self):
         I = rs.index_set(7,3)
-        if self.writeData:
-            np.savez('data/test_full_index_set_7_3.npz', I=I)
-        data = helper.load_test_npz('test_full_index_set_7_3.npz')
-        np.testing.assert_almost_equal(I, data['I'])
 
     def test_polynomial_bases(self):
-        data = helper.load_test_npz('test_points_10_2.npz')
-        X = data['X']
-
+        np.random.seed(42)
+        X = np.random.normal(size=(10,2))
         B, I = rs.polynomial_bases(X, 3)
-        if self.writeData:
-            np.savez('data/test_poly_bases_3.npz', B=B, I=I)
-        data = helper.load_test_npz('test_poly_bases_3.npz')
-        np.testing.assert_almost_equal(B, data['B'])
-        np.testing.assert_almost_equal(I, data['I'])
 
     def test_grad_polynomial_bases(self):
-        data = helper.load_test_npz('test_points_10_2.npz')
-        X = data['X']
+        np.random.seed(42)
+        X = np.random.normal(size=(10,2))
         dB = rs.grad_polynomial_bases(X, 3)
-        if self.writeData:
-            np.savez('data/test_grad_poly_bases_3.npz', dB=dB)
-        data = helper.load_test_npz('test_grad_poly_bases_3.npz')
-        np.testing.assert_almost_equal(dB, data['dB'])
 
     def test_grad_polynomial_bases_fd(self):
-        data = helper.load_test_npz('test_points_10_2.npz')
-        X0 = data['X']
-        data = helper.load_test_npz('test_grad_poly_bases_3.npz')
+        np.random.seed(42)
+        X0 = np.random.normal(size=(10,2))
 
         dB = rs.grad_polynomial_bases(X0, 3)
         e = 1e-6
@@ -56,23 +39,17 @@ class TestResponseSurfaces(TestCase):
         dB2 = (B2 - B0)/e
         np.testing.assert_array_almost_equal(dB[:,:,1], dB2, decimal=5)
 
-
     def test_exponential_squared(self):
 
-        data = helper.load_test_npz('test_points_10_2.npz')
-        X1 = data['X']
+        np.random.seed(42)
+        X1 = np.random.normal(size=(10,2))
         X2 = X1.copy()
         C = rs.exponential_squared(X1, X2, 1.0, np.array([1.0,1.0]))
-        if self.writeData:
-            np.savez('data/test_exp_cov.npz', C=C)
-        data = helper.load_test_npz('test_exp_cov.npz')
-        np.testing.assert_almost_equal(C, data['C'])
-
 
     def test_grad_exponential_squared_fd(self):
 
-        data = helper.load_test_npz('test_points_10_2.npz')
-        X1 = data['X']
+        np.random.seed(42)
+        X1 = np.random.normal(size=(10,2))
         X2 = X1.copy()
         C0 = rs.exponential_squared(X1, X2, 1.0, np.array([1.0,1.0]))
 
@@ -91,22 +68,16 @@ class TestResponseSurfaces(TestCase):
         dC2 = (C2 - C0)/e
         np.testing.assert_array_almost_equal(dC[:,:,1], dC2, decimal=5)
 
-
     def test_grad_exponential_squared(self):
 
-        data = helper.load_test_npz('test_points_10_2.npz')
-        X1 = data['X']
+        np.random.seed(42)
+        X1 = np.random.normal(size=(10,2))
         X2 = X1.copy()
         dC = rs.grad_exponential_squared(X1, X2, 1.0, np.array([1.0,1.0]))
-        if self.writeData:
-            np.savez('data/test_grad_exp_cov.npz', dC=dC)
-        data = helper.load_test_npz('test_grad_exp_cov.npz')
-        np.testing.assert_almost_equal(dC, data['dC'])
-
 
     def test_exact_polynomial_approximation_1d(self):
-        data = helper.load_test_npz('train_points_10_2.npz')
-        X = data['X']
+        np.random.seed(42)
+        X = np.random.normal(size=(10,2))
         M = X.shape[0]
         X_1d = X[:,0].copy().reshape((M,1))
         f_1d = 2 + 5*X_1d
@@ -114,8 +85,9 @@ class TestResponseSurfaces(TestCase):
         pr = rs.PolynomialApproximation(N=1)
         pr.train(X_1d, f_1d)
         print 'Rsqr: {:6.4f}'.format(pr.Rsqr)
-        data = helper.load_test_npz('test_points_10_2.npz')
-        X = data['X']
+
+        np.random.seed(42)
+        X = np.random.normal(size=(10,2))
         M = X.shape[0]
         X_1d_test = X[:,0].copy().reshape((M,1))
         f, df = pr.predict(X_1d_test, compgrad=True)
@@ -126,8 +98,8 @@ class TestResponseSurfaces(TestCase):
         pr = rs.PolynomialApproximation(N=2)
         pr.train(X_1d, f_1d)
         print 'Rsqr: {:6.4f}'.format(pr.Rsqr)
-        data = helper.load_test_npz('test_points_10_2.npz')
-        X = data['X']
+        np.random.seed(42)
+        X = np.random.normal(size=(10,2))
         M = X.shape[0]
         X_1d_test = X[:,0].copy().reshape((M,1))
         f, df = pr.predict(X_1d_test, compgrad=True)
@@ -138,16 +110,16 @@ class TestResponseSurfaces(TestCase):
 
 
     def test_exact_polynomial_approximation_2d(self):
-        data = helper.load_test_npz('train_points_10_2.npz')
-        X = data['X']
+        np.random.seed(42)
+        X = np.random.normal(size=(10,2))
         X_train = X.copy()
         f_2d = 2 + 5*X_train[:,0] - 4*X_train[:,1]
 
         pr = rs.PolynomialApproximation(N=1)
         pr.train(X_train, f_2d.reshape((f_2d.size,1)))
         print 'Rsqr: {:6.4f}'.format(pr.Rsqr)
-        data = helper.load_test_npz('test_points_10_2.npz')
-        X = data['X']
+
+        X = np.random.normal(size=(10,2))
         X_test = X.copy()
         f, df = pr.predict(X_test, compgrad=True)
         f_test = 2 + 5*X_test[:,0] - 4*X_test[:,1]
@@ -159,8 +131,8 @@ class TestResponseSurfaces(TestCase):
         pr = rs.PolynomialApproximation(N=2)
         pr.train(X_train, f_2d.reshape((f_2d.size,1)))
         print 'Rsqr: {:6.4f}'.format(pr.Rsqr)
-        data = helper.load_test_npz('test_points_10_2.npz')
-        X = data['X']
+        
+        X = np.random.normal(size=(10,2))
         X_test = X.copy()
         f, df = pr.predict(X_test, compgrad=True)
         f_test = 2 - 3*X_test[:,1] + 5*X_test[:,0]*X_test[:,1]
@@ -169,35 +141,10 @@ class TestResponseSurfaces(TestCase):
         np.testing.assert_almost_equal(f, f_test.reshape((10,1)), decimal=10)
         np.testing.assert_almost_equal(df[:,0].reshape((10,1)), df1_test.reshape((10,1)), decimal=10)
         np.testing.assert_almost_equal(df[:,1].reshape((10,1)), df2_test.reshape((10,1)), decimal=10)
-    
-    """
-    def test_polynomial_approximation_2d_sklearn(self):
-        data = helper.load_test_npz('train_points_10_2.npz')
-        X = data['X']
-        X_train = X.copy()
-        f_2d = 2 + 5*np.cos(X_train[:,0]) - 4*np.sin(X_train[:,1])
-
-        # use the PolynomialApproximation
-        pr = rs.PolynomialApproximation(N=1)
-        pr.train(X_train, f_2d.reshape((f_2d.size,1)))
-        print 'Rsqr: {:6.4f}'.format(pr.Rsqr)
-        data = helper.load_test_npz('test_points_10_2.npz')
-        X = data['X']
-        X_test = X.copy()
-        f, df = pr.predict(X_test, compgrad=True)
-
-        # use scikit-learn
-        from sklearn import linear_model
-        clf = linear_model.LinearRegression()
-        clf.fit(X_train, f_2d.reshape((f_2d.size,1)))
-        f_test = clf.predict(X_test)
-
-        np.testing.assert_almost_equal(f, f_test.reshape((10,1)), decimal=10)
-    """
 
     def test_exact_rbf_approximation_1d(self):
-        data = helper.load_test_npz('train_points_10_2.npz')
-        X = data['X']
+        np.random.seed(42)
+        X = np.random.normal(size=(10,2))
         M = X.shape[0]
         X_1d = X[:,0].copy().reshape((M,1))
         f_1d = 2 + 5*X_1d
@@ -205,8 +152,8 @@ class TestResponseSurfaces(TestCase):
         gp = rs.RadialBasisApproximation(N=1)
         gp.train(X_1d, f_1d)
         print 'Rsqr: {:6.4f}'.format(gp.Rsqr)
-        data = helper.load_test_npz('test_points_10_2.npz')
-        X = data['X']
+        np.random.seed(42)
+        X = np.random.normal(size=(10,2))
         M = X.shape[0]
         X_1d_test = X[:,0].copy().reshape((M,1))
         f, df = gp.predict(X_1d_test, compgrad=True)
@@ -217,8 +164,8 @@ class TestResponseSurfaces(TestCase):
         gp = rs.RadialBasisApproximation(N=2)
         gp.train(X_1d, f_1d)
         print 'Rsqr: {:6.4f}'.format(gp.Rsqr)
-        data = helper.load_test_npz('test_points_10_2.npz')
-        X = data['X']
+        np.random.seed(42)
+        X = np.random.normal(size=(10,2))
         M = X.shape[0]
         X_1d_test = X[:,0].copy().reshape((M,1))
         f, df = gp.predict(X_1d_test, compgrad=True)
@@ -229,16 +176,16 @@ class TestResponseSurfaces(TestCase):
 
 
     def test_exact_rbf_approximation_2d(self):
-        data = helper.load_test_npz('train_points_10_2.npz')
-        X = data['X']
+        np.random.seed(42)
+        X = np.random.normal(size=(10,2))
         X_train = X.copy()
         f_2d = 2 + 5*X_train[:,0] - 4*X_train[:,1]
 
         gp = rs.RadialBasisApproximation(N=1)
         gp.train(X_train, f_2d.reshape((f_2d.size,1)))
         print 'Rsqr: {:6.4f}'.format(gp.Rsqr)
-        data = helper.load_test_npz('test_points_10_2.npz')
-        X = data['X']
+
+        X = np.random.normal(size=(10,2))
         X_test = X.copy()
         f, df = gp.predict(X_test, compgrad=True)
         f_test = 2 + 5*X_test[:,0] - 4*X_test[:,1]
@@ -250,8 +197,8 @@ class TestResponseSurfaces(TestCase):
         gp = rs.RadialBasisApproximation(N=2)
         gp.train(X_train, f_2d.reshape((f_2d.size,1)))
         print 'Rsqr: {:6.4f}'.format(gp.Rsqr)
-        data = helper.load_test_npz('test_points_10_2.npz')
-        X = data['X']
+
+        X = np.random.normal(size=(10,2))
         X_test = X.copy()
         f, df = gp.predict(X_test, compgrad=True)
         f_test = 2 - 3*X_test[:,1] + 5*X_test[:,0]*X_test[:,1]
@@ -262,16 +209,16 @@ class TestResponseSurfaces(TestCase):
         np.testing.assert_almost_equal(df[:,1].reshape((10,1)), df2_test.reshape((10,1)), decimal=10)
 
     def test_polynomial_grad_1d(self):
-        data = helper.load_test_npz('train_points_10_2.npz')
-        X = data['X']
+        np.random.seed(42)
+        X = np.random.normal(size=(10,2))
         M = X.shape[0]
         X_1d = X[:,0].copy().reshape((M,1))
         f_1d = np.cos(X_1d)
 
         pr = rs.PolynomialApproximation(N=7)
         pr.train(X_1d, f_1d)
-        data = helper.load_test_npz('test_points_10_2.npz')
-        X = data['X']
+
+        X = np.random.normal(size=(10,2))
         M = X.shape[0]
         X_1d_test = X[:,0].copy().reshape((M,1))
         f0, df0 = pr.predict(X_1d_test, compgrad=True)
@@ -284,8 +231,8 @@ class TestResponseSurfaces(TestCase):
 
 
     def test_polynomial_grad_2d(self):
-        data = helper.load_test_npz('train_points_200_2.npz')
-        X = data['X']
+        np.random.seed(42)
+        X = np.random.normal(size=(200,2))
         X_train = X.copy()
         ff0 = np.cos(X_train[:,0]).reshape((200,1))
         ff1 = np.sin(X_train[:,1]).reshape((200,1))
@@ -293,8 +240,8 @@ class TestResponseSurfaces(TestCase):
 
         pr = rs.PolynomialApproximation(N=5)
         pr.train(X_train, f_2d)
-        data = helper.load_test_npz('test_points_10_2.npz')
-        X = data['X']
+
+        X = np.random.normal(size=(10,2))
         X_test = X.copy()
         f0, df0 = pr.predict(X_test, compgrad=True)
 
@@ -312,16 +259,16 @@ class TestResponseSurfaces(TestCase):
 
 
     def test_rbf_grad_1d(self):
-        data = helper.load_test_npz('train_points_10_2.npz')
-        X = data['X']
+        np.random.seed(42)
+        X = np.random.normal(size=(10,2))
         M = X.shape[0]
         X_1d = X[:,0].copy().reshape((M,1))
         f_1d = np.cos(X_1d)
 
         gp = rs.RadialBasisApproximation(N=0)
         gp.train(X_1d, f_1d)
-        data = helper.load_test_npz('test_points_10_2.npz')
-        X = data['X']
+        
+        X = np.random.normal(size=(10,2))
         M = X.shape[0]
         X_1d_test = X[:,0].copy().reshape((M,1))
         f0, df0 = gp.predict(X_1d_test, compgrad=True)
@@ -334,8 +281,8 @@ class TestResponseSurfaces(TestCase):
 
 
     def test_rbf_grad_2d(self):
-        data = helper.load_test_npz('train_points_200_2.npz')
-        X = data['X']
+        np.random.seed(42)
+        X = np.random.normal(size=(200,2))
         X_train = X.copy()
         ff0 = np.cos(X_train[:,0]).reshape((200,1))
         ff1 = np.sin(X_train[:,1]).reshape((200,1))
@@ -343,8 +290,8 @@ class TestResponseSurfaces(TestCase):
 
         gp = rs.RadialBasisApproximation(N=5)
         gp.train(X_train, f_2d)
-        data = helper.load_test_npz('test_points_10_2.npz')
-        X = data['X']
+
+        X = np.random.normal(size=(10,2))
         X_test = X.copy()
         f0, df0 = gp.predict(X_test, compgrad=True)
 
@@ -362,8 +309,8 @@ class TestResponseSurfaces(TestCase):
 
 
     def test_poly_order_1d(self):
-        data = helper.load_test_npz('test_points_uniform_50_2.npz')
-        X = data['X']
+        np.random.seed(42)
+        X = np.random.uniform(-1.0,1.0,size=(50,2))
         X_1d_test = X[:,0].copy().reshape((50,1))
 
         X_train = np.linspace(-1.0, 1.0, 201).reshape((201,1))
@@ -384,8 +331,8 @@ class TestResponseSurfaces(TestCase):
 
 
     def test_poly_order_2d(self):
-        data = helper.load_test_npz('test_points_uniform_50_2.npz')
-        X = data['X']
+        np.random.seed(42)
+        X = np.random.uniform(-1.0,1.0,size=(50,2))
         X_test = X.copy()
 
         xx = np.linspace(-1.0, 1.0, 21)
@@ -409,8 +356,8 @@ class TestResponseSurfaces(TestCase):
 
 
     def test_rbf_points_1d(self):
-        data = helper.load_test_npz('test_points_uniform_50_2.npz')
-        X = data['X']
+        np.random.seed(42)
+        X = np.random.uniform(-1.0,1.0,size=(50,2))
         X_1d_test = X[:,0].copy().reshape((50,1))
 
         print '\nRBF 1D POINT CONVERGENCE\n'
@@ -431,8 +378,8 @@ class TestResponseSurfaces(TestCase):
 
 
     def test_rbf_points_2d(self):
-        data = helper.load_test_npz('test_points_uniform_50_2.npz')
-        X = data['X']
+        np.random.seed(42)
+        X = np.random.uniform(-1.0,1.0,size=(50,2))
         X_test = X.copy()
 
         print '\nRBF 2D POINT CONVERGENCE\n'
@@ -455,33 +402,20 @@ class TestResponseSurfaces(TestCase):
             print 'Points: %d, Error in f: %6.4e, Error in df1: %6.4e, Error in df2: %6.4e' % ((2**N+1)**2, err_f, err_df1, err_df2)
 
     def test_rbf_as(self):
-        data = helper.load_test_npz('test_points_uniform_50_2.npz')
-        X_test = data['X'].copy()
-        data = helper.load_test_npz('train_points_200_2.npz')
-        X_train = data['X'].copy()
+        np.random.seed(42)
+        X_test = np.random.uniform(-1.0,1.0,size=(50,2))
+        np.random.seed(42)
+        X_train = np.random.uniform(-1.0,1.0,size=(200,2))
         f_train = 2 + 5*X_train[:,0] - 4*X_train[:,1] +2*X_train[:,0]*X_train[:,1]
 
         gp = rs.RadialBasisApproximation(N=1)
         e = np.array([1.0, 0.5, 0.1, 0.05, 0.01])
         gp.train(X_train, f_train.reshape((f_train.size,1)), e=e)
         f, df = gp.predict(X_test, compgrad=True)
-        if self.writeData:
-            np.savez('data/test_rbf_0.npz', f=f, df=df)
-
-        data = helper.load_test_npz('test_rbf_0.npz')
-        np.testing.assert_almost_equal(f, data['f'])
-        np.testing.assert_almost_equal(df, data['df'])
 
         v = 0.0001*np.ones(f_train.shape)
         gp.train(X_train, f_train.reshape((f_train.size,1)), e=e, v=v)
         f, df = gp.predict(X_test, compgrad=True)
-        if self.writeData:
-            np.savez('data/test_rbf_1.npz', f=f, df=df)
-
-        data = helper.load_test_npz('test_rbf_1.npz')
-        np.testing.assert_almost_equal(f, data['f'])
-        np.testing.assert_almost_equal(df, data['df'])
-
 
 if __name__ == '__main__':
     unittest.main()
