@@ -8,8 +8,9 @@ class TestGradients(TestCase):
     writeData = False    
     
     def test_local_linear_gradients(self):
-        data = helper.load_test_npz('train_points_200_2.npz')
-        X = data['X'].copy()
+
+        np.random.seed(42)
+        X = np.random.uniform(-1.0,1.0,size=(200,2))
         f = 2 - 5*X[:,0] + 4*X[:,1]
         
         df = gr.local_linear_gradients(X, f)
@@ -24,17 +25,12 @@ class TestGradients(TestCase):
         np.random.seed(1234)
         df = gr.local_linear_gradients(X, f)
         
-        if self.writeData:
-            np.savez('data/test_llm_gradients', df=df)
-        data = helper.load_test_npz('test_llm_gradients.npz')
-        np.testing.assert_almost_equal(df, data['df'])        
-
     def test_finite_difference_gradients(self):
         def myfun(x):
             return 2 - 5*x[0,0] + 4*x[0,1]
             
-        data = helper.load_test_npz('train_points_10_2.npz')
-        X = data['X'].copy()
+        np.random.seed(42)
+        X = np.random.uniform(-1.0,1.0,size=(10,2))
 
         df = gr.finite_difference_gradients(X, myfun)
         M = df.shape[0]

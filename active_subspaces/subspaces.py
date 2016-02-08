@@ -356,7 +356,7 @@ def sorted_eigh(C):
     e = e[ind[::-1]]
     W = W[:,ind[::-1]]
     W = W*np.sign(W[0,:])
-    return e, W
+    return e.reshape((e.size,1)), W
     
 def bootstrap_replicate(X, f, df, weights):
     """

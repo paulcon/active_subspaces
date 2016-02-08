@@ -4,11 +4,9 @@ import active_subspaces.response_surfaces as asm
 import active_subspaces.optimizers as aso
 import active_subspaces.subspaces as ss
 import active_subspaces.domains as dom
-import helper
 import numpy as np
 
 class TestASOptimizers(TestCase):
-    writeData = False
 
     def quad_fun(self, x):
         A = np.array([[ 0.2406659045776698, -0.3159904335007421, -0.1746908591702878],
@@ -24,102 +22,88 @@ class TestASOptimizers(TestCase):
         return np.dot(A,x.reshape((3,1)))
 
     def test_rs_ubnd_int(self):
-        data = helper.load_test_npz('test_rs_0.npz')
-        X, f, df = data['X'], data['f'], data['df']
-
+        np.random.seed(42)
+        X0 = np.random.normal(size=(50,3))
+        f0 = np.zeros((50,1))
+        df0 = np.zeros((50,3))
+        for i in range(50):
+            x = X0[i,:]
+            f0[i,0] = self.quad_fun(x)
+            df0[i,:] = self.quad_dfun(x).reshape((3, ))
+            
         sub = ss.Subspaces()
-        sub.compute(df)
+        sub.compute(df=df0)
+        sub.partition(1)
 
         avd = dom.UnboundedActiveVariableDomain(sub)
         avm = dom.UnboundedActiveVariableMap(avd)
         asrs = asm.ActiveSubspaceResponseSurface(avm)
-        asrs.train_with_data(X, f)
+        asrs.train_with_data(X0, f0)
 
-        np.random.seed(43)
-        xstar, fstar = aso.minimize(asrs, X, f)
-        if self.writeData:
-            np.savez('data/test_opt_0_1',xstar=xstar, fstar=fstar)
-        data_test = helper.load_test_npz('test_opt_0_1.npz')
-        np.testing.assert_almost_equal(xstar, data_test['xstar'])
-        np.testing.assert_almost_equal(fstar, data_test['fstar'])
-
-        print '\n'
-        print 'ubnd min: {:6.4f}'.format(fstar)
-        print 'ubnd xmin: {:6.4f}, {:6.4f}, {:6.4f}'.format(xstar[0,0],xstar[0,1],xstar[0,2])
+        xstar, fstar = aso.minimize(asrs, X0, f0)
 
     def test_rs_bnd_int(self):
-        data = helper.load_test_npz('test_rs_1.npz')
-        X, f, df = data['X'], data['f'], data['df']
+        np.random.seed(42)
+        X0 = np.random.uniform(-1.,1.,size=(50,3))
+        f0 = np.zeros((50,1))
+        df0 = np.zeros((50,3))
+        for i in range(50):
+            x = X0[i,:]
+            f0[i,0] = self.quad_fun(x)
+            df0[i,:] = self.quad_dfun(x).reshape((3, ))
 
         sub = ss.Subspaces()
-        sub.compute(df)
+        sub.compute(df=df0)
+        sub.partition(1)
 
         avd = dom.BoundedActiveVariableDomain(sub)
         avm = dom.BoundedActiveVariableMap(avd)
         asrs = asm.ActiveSubspaceResponseSurface(avm)
-        asrs.train_with_data(X, f)
+        asrs.train_with_data(X0, f0)
 
-        np.random.seed(43)
-        xstar, fstar = aso.minimize(asrs, X, f)
-        if self.writeData:
-            np.savez('data/test_opt_0_2',xstar=xstar, fstar=fstar)
-        data_test = helper.load_test_npz('test_opt_0_2.npz')
-        np.testing.assert_almost_equal(xstar, data_test['xstar'])
-        np.testing.assert_almost_equal(fstar, data_test['fstar'])
-
-        print '\n'
-        print 'bnd min: {:6.4f}'.format(fstar)
-        print 'bnd xmin: {:6.4f}, {:6.4f}, {:6.4f}'.format(xstar[0,0],xstar[0,1],xstar[0,2])
+        xstar, fstar = aso.minimize(asrs, X0, f0)
 
     def test_rs_ubnd_2d_int(self):
-        data = helper.load_test_npz('test_rs_0.npz')
-        X, f, df = data['X'], data['f'], data['df']
+        np.random.seed(42)
+        X0 = np.random.normal(size=(50,3))
+        f0 = np.zeros((50,1))
+        df0 = np.zeros((50,3))
+        for i in range(50):
+            x = X0[i,:]
+            f0[i,0] = self.quad_fun(x)
+            df0[i,:] = self.quad_dfun(x).reshape((3, ))
 
         sub = ss.Subspaces()
-        sub.compute(df)
+        sub.compute(df=df0)
         sub.partition(2)
 
         avd = dom.UnboundedActiveVariableDomain(sub)
         avm = dom.UnboundedActiveVariableMap(avd)
         asrs = asm.ActiveSubspaceResponseSurface(avm)
-        asrs.train_with_data(X, f)
+        asrs.train_with_data(X0, f0)
 
-        np.random.seed(43)
-        xstar, fstar = aso.minimize(asrs, X, f)
-        if self.writeData:
-            np.savez('data/test_opt_0_3',xstar=xstar, fstar=fstar)
-        data_test = helper.load_test_npz('test_opt_0_3.npz')
-        np.testing.assert_almost_equal(xstar, data_test['xstar'])
-        np.testing.assert_almost_equal(fstar, data_test['fstar'])
-
-        print '\n'
-        print 'ubnd 2d min: {:6.4f}'.format(fstar)
-        print 'ubnd 2d xmin: {:6.4f}, {:6.4f}, {:6.4f}'.format(xstar[0,0],xstar[0,1],xstar[0,2])
+        xstar, fstar = aso.minimize(asrs, X0, f0)
 
     def test_rs_bnd_2d_int(self):
-        data = helper.load_test_npz('test_rs_1.npz')
-        X, f, df = data['X'], data['f'], data['df']
+        np.random.seed(42)
+        X0 = np.random.uniform(-1.,1.,size=(50,3))
+        f0 = np.zeros((50,1))
+        df0 = np.zeros((50,3))
+        for i in range(50):
+            x = X0[i,:]
+            f0[i,0] = self.quad_fun(x)
+            df0[i,:] = self.quad_dfun(x).reshape((3, ))
 
         sub = ss.Subspaces()
-        sub.compute(df)
+        sub.compute(df=df0)
         sub.partition(2)
 
         avd = dom.BoundedActiveVariableDomain(sub)
         avm = dom.BoundedActiveVariableMap(avd)
         asrs = asm.ActiveSubspaceResponseSurface(avm)
-        asrs.train_with_data(X, f)
+        asrs.train_with_data(X0, f0)
 
-        np.random.seed(43)
-        xstar, fstar = aso.minimize(asrs, X, f)
-        if self.writeData:
-            np.savez('data/test_opt_0_4',xstar=xstar, fstar=fstar)
-        data_test = helper.load_test_npz('test_opt_0_4.npz')
-        np.testing.assert_almost_equal(xstar, data_test['xstar'])
-        np.testing.assert_almost_equal(fstar, data_test['fstar'])
-
-        print '\n'
-        print 'bnd 2d min: {:6.4f}'.format(fstar)
-        print 'bnd 2d xmin: {:6.4f}, {:6.4f}, {:6.4f}'.format(xstar[0,0],xstar[0,1],xstar[0,2])
+        xstar, fstar = aso.minimize(asrs, X0, f0)
 
 if __name__ == '__main__':
     unittest.main()

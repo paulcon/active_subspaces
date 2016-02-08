@@ -1,13 +1,8 @@
 from unittest import TestCase
 import unittest
 import active_subspaces.utils.plotters as plt
-import active_subspaces.subspaces as ss
-import active_subspaces.domains as dom
-from active_subspaces.response_surfaces import av_design
-from active_subspaces.integrals import av_quadrature_rule
 import numpy as np
 import matplotlib.pyplot as mplt
-import helper
 
 class TestPlotters(TestCase):
 
@@ -107,7 +102,7 @@ class TestPlotters(TestCase):
         y = np.random.uniform(-1.0,1.0,size=(20,2))
         f = np.sin(y[:,0])*np.sin(y[:,1])
         plt.sufficient_summary(y, f)
-
+"""
     def test_zonotope_0(self):
         data = helper.load_test_npz('test_spec_decomp_1.npz')
         df0 = data['df']
@@ -176,7 +171,7 @@ class TestPlotters(TestCase):
         Yp, Yw = av_quadrature_rule(bavm, 8)
 
         plt.zonotope_2d_plot(vertices, design=Y, y=Yp, f=Yw, out_label='quadrature rule')
-
+"""
 
 if __name__ == '__main__':
     mplt.close('all')
