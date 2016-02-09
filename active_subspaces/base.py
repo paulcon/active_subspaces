@@ -182,7 +182,7 @@ class ActiveSubspaceReducedModel():
 
         # compute the active subspace
         ss = Subspaces()
-        ss.compute(df)
+        ss.compute(df=df, nboot=100)
         if avdim is not None:
             if not isinstance(avdim, int):
                 raise TypeError('avdim should be an integer.')
@@ -273,7 +273,7 @@ class ActiveSubspaceReducedModel():
 
         # compute the active subspace
         ss = Subspaces()
-        ss.compute(df)
+        ss.compute(df=df, nboot=100)
 
         if avdim is not None:
             ss.partition(avdim)
@@ -323,9 +323,11 @@ class ActiveSubspaceReducedModel():
 
         """
         ss = self.as_respsurf.avmap.domain.subspaces
-        eigenvalues(ss.eigenvalues[:10,0], e_br=ss.e_br[:10,:])
-        subspace_errors(ss.sub_br[:10,:])
-        eigenvectors(ss.eigenvectors[:,:4])
+        evalmin = min(10, ss.eigenvalues.size)
+        eigenvalues(ss.eigenvalues[:evalmin,0], e_br=ss.e_br[:evalmin,:])
+        subspace_errors(ss.sub_br[:evalmin,:])
+        evecmin = min(4, ss.eigenvalues.size)
+        eigenvectors(ss.eigenvectors[:,:evecmin])
         Y = np.dot(self.X, ss.eigenvectors[:,:2])
         sufficient_summary(Y, self.f)
 

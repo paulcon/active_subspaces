@@ -9,7 +9,6 @@ import helper
 import numpy as np
 
 class TestBase(TestCase):
-    writeData = False
 
     def quad_fun(self, x):
         A = np.array([[ 0.2406659045776698, -0.3159904335007421, -0.1746908591702878],
@@ -25,37 +24,32 @@ class TestBase(TestCase):
         return np.dot(A,x.reshape((3,1)))
 
     def test_rs_ubnd_int(self):
-        data = helper.load_test_npz('test_rs_0.npz')
-        X, f, df = data['X'], data['f'], data['df']
+        np.random.seed(42)
+        X = np.random.normal(size=(50,3))
+        f = np.zeros((50,1))
+        df = np.zeros((50,3))
+        for i in range(50):
+            x = X[i,:]
+            f[i,0] = self.quad_fun(x)
+            df[i,:] = self.quad_dfun(x).reshape((3, ))
 
-        np.random.seed(43)
         model = base.ActiveSubspaceReducedModel(3, False)
         model.build_from_data(X, f, df=df)
 
         avg = model.average(20)[0]
         prob, pl, pu = model.probability(0.0, 1.0)
         fstar, xstar = model.minimum()
-        if self.writeData:
-            np.savez('data/test_base_0_0',avg=avg, prob=prob, pl=pl, pu=pu, xstar=xstar, fstar=fstar)
-        data_test = helper.load_test_npz('test_base_0_0.npz')
-        np.testing.assert_almost_equal(avg, data_test['avg'])
-        np.testing.assert_almost_equal(prob, data_test['prob'])
-        np.testing.assert_almost_equal(pl, data_test['pl'])
-        np.testing.assert_almost_equal(pu, data_test['pu'])
-        np.testing.assert_almost_equal(xstar, data_test['xstar'])
-        np.testing.assert_almost_equal(fstar, data_test['fstar'])
-
-        print '\n'
-        print 'ubnd avg: {:6.4f}'.format(avg)
-        print 'ubnd prob: {:6.4f}, {:6.4f}, {:6.4f}'.format(pl,prob,pu)
-        print 'ubnd min: {:6.4f}'.format(fstar)
-        print 'ubnd xmin: {:6.4f}, {:6.4f}, {:6.4f}'.format(xstar[0,0],xstar[0,1],xstar[0,2])
 
     def test_rs_bnd_int(self):
-        data = helper.load_test_npz('test_rs_1.npz')
-        X, f, df = data['X'], data['f'], data['df']
+        np.random.seed(42)
+        X = np.random.uniform(-1.,1.,size=(50,3))
+        f = np.zeros((50,1))
+        df = np.zeros((50,3))
+        for i in range(50):
+            x = X[i,:]
+            f[i,0] = self.quad_fun(x)
+            df[i,:] = self.quad_dfun(x).reshape((3, ))
 
-        np.random.seed(43)
         model = base.ActiveSubspaceReducedModel(3, True)
         model.build_from_data(X, f, df=df)
 
@@ -63,27 +57,16 @@ class TestBase(TestCase):
         prob, pl, pu = model.probability(0.0, 1.0)
         fstar, xstar = model.minimum()
 
-        if self.writeData:
-            np.savez('data/test_base_0_1',avg=avg, prob=prob, pl=pl, pu=pu, xstar=xstar, fstar=fstar)
-        data_test = helper.load_test_npz('test_base_0_1.npz')
-        np.testing.assert_almost_equal(avg, data_test['avg'])
-        np.testing.assert_almost_equal(prob, data_test['prob'])
-        np.testing.assert_almost_equal(pl, data_test['pl'])
-        np.testing.assert_almost_equal(pu, data_test['pu'])
-        np.testing.assert_almost_equal(xstar, data_test['xstar'])
-        np.testing.assert_almost_equal(fstar, data_test['fstar'])
-
-        print '\n'
-        print 'ubnd avg: {:6.4f}'.format(avg)
-        print 'ubnd prob: {:6.4f}, {:6.4f}, {:6.4f}'.format(pl,prob,pu)
-        print 'ubnd min: {:6.4f}'.format(fstar)
-        print 'ubnd xmin: {:6.4f}, {:6.4f}, {:6.4f}'.format(xstar[0,0],xstar[0,1],xstar[0,2])
-
     def test_rs_ubnd_2d_int(self):
-        data = helper.load_test_npz('test_rs_0.npz')
-        X, f, df = data['X'], data['f'], data['df']
+        np.random.seed(42)
+        X = np.random.normal(size=(50,3))
+        f = np.zeros((50,1))
+        df = np.zeros((50,3))
+        for i in range(50):
+            x = X[i,:]
+            f[i,0] = self.quad_fun(x)
+            df[i,:] = self.quad_dfun(x).reshape((3, ))
 
-        np.random.seed(43)
         model = base.ActiveSubspaceReducedModel(3, False)
         model.build_from_data(X, f, df=df, avdim=2)
 
@@ -91,27 +74,16 @@ class TestBase(TestCase):
         prob, pl, pu = model.probability(0.0, 1.0)
         fstar, xstar = model.minimum()
 
-        if self.writeData:
-            np.savez('data/test_base_0_2',avg=avg, prob=prob, pl=pl, pu=pu, xstar=xstar, fstar=fstar)
-        data_test = helper.load_test_npz('test_base_0_2.npz')
-        np.testing.assert_almost_equal(avg, data_test['avg'])
-        np.testing.assert_almost_equal(prob, data_test['prob'])
-        np.testing.assert_almost_equal(pl, data_test['pl'])
-        np.testing.assert_almost_equal(pu, data_test['pu'])
-        np.testing.assert_almost_equal(xstar, data_test['xstar'])
-        np.testing.assert_almost_equal(fstar, data_test['fstar'])
-
-        print '\n'
-        print 'ubnd avg: {:6.4f}'.format(avg)
-        print 'ubnd prob: {:6.4f}, {:6.4f}, {:6.4f}'.format(pl,prob,pu)
-        print 'ubnd min: {:6.4f}'.format(fstar)
-        print 'ubnd xmin: {:6.4f}, {:6.4f}, {:6.4f}'.format(xstar[0,0],xstar[0,1],xstar[0,2])
-
     def test_rs_bnd_2d_int(self):
-        data = helper.load_test_npz('test_rs_1.npz')
-        X, f, df = data['X'], data['f'], data['df']
+        np.random.seed(42)
+        X = np.random.uniform(-1.,1.,size=(50,3))
+        f = np.zeros((50,1))
+        df = np.zeros((50,3))
+        for i in range(50):
+            x = X[i,:]
+            f[i,0] = self.quad_fun(x)
+            df[i,:] = self.quad_dfun(x).reshape((3, ))
 
-        np.random.seed(43)
         model = base.ActiveSubspaceReducedModel(3, True)
         model.build_from_data(X, f, df=df, avdim=2)
 
@@ -119,37 +91,32 @@ class TestBase(TestCase):
         prob, pl, pu = model.probability(0.0, 1.0)
         fstar, xstar = model.minimum()
 
-        if self.writeData:
-            np.savez('data/test_base_0_3',avg=avg, prob=prob, pl=pl, pu=pu, xstar=xstar, fstar=fstar)
-        data_test = helper.load_test_npz('test_base_0_3.npz')
-        np.testing.assert_almost_equal(avg, data_test['avg'])
-        np.testing.assert_almost_equal(prob, data_test['prob'])
-        np.testing.assert_almost_equal(pl, data_test['pl'])
-        np.testing.assert_almost_equal(pu, data_test['pu'])
-        np.testing.assert_almost_equal(xstar, data_test['xstar'])
-        np.testing.assert_almost_equal(fstar, data_test['fstar'])
-
-        print '\n'
-        print 'ubnd avg: {:6.4f}'.format(avg)
-        print 'ubnd prob: {:6.4f}, {:6.4f}, {:6.4f}'.format(pl,prob,pu)
-        print 'ubnd min: {:6.4f}'.format(fstar)
-        print 'ubnd xmin: {:6.4f}, {:6.4f}, {:6.4f}'.format(xstar[0,0],xstar[0,1],xstar[0,2])
 
     def test_rs_diag(self):
-        data = helper.load_test_npz('test_rs_0.npz')
-        X, f, df = data['X'], data['f'], data['df']
+        np.random.seed(42)
+        X = np.random.normal(size=(50,3))
+        f = np.zeros((50,1))
+        df = np.zeros((50,3))
+        for i in range(50):
+            x = X[i,:]
+            f[i,0] = self.quad_fun(x)
+            df[i,:] = self.quad_dfun(x).reshape((3, ))
 
-        np.random.seed(43)
         model = base.ActiveSubspaceReducedModel(3, False)
         model.build_from_data(X, f, df=df)
 
         model.diagnostics()
 
     def test_rs_predict(self):
-        data = helper.load_test_npz('test_rs_0.npz')
-        X, f, df = data['X'], data['f'], data['df']
+        np.random.seed(42)
+        X = np.random.normal(size=(50,3))
+        f = np.zeros((50,1))
+        df = np.zeros((50,3))
+        for i in range(50):
+            x = X[i,:]
+            f[i,0] = self.quad_fun(x)
+            df[i,:] = self.quad_dfun(x).reshape((3, ))
 
-        np.random.seed(43)
         modelN = base.ActiveSubspaceReducedModel(3, False)
         modelN.build_from_data(X, f, df=df)
 
@@ -163,38 +130,32 @@ class TestBase(TestCase):
         modelU.predict(XU)
 
     def test_fun_rs_ubnd_int(self):
-        data = helper.load_test_npz('test_rs_0.npz')
-        X, f, df = data['X'], data['f'], data['df']
+        np.random.seed(42)
+        X = np.random.normal(size=(50,3))
+        f = np.zeros((50,1))
+        df = np.zeros((50,3))
+        for i in range(50):
+            x = X[i,:]
+            f[i,0] = self.quad_fun(x)
+            df[i,:] = self.quad_dfun(x).reshape((3, ))
 
-        np.random.seed(43)
         model = base.ActiveSubspaceReducedModel(3, False)
         model.build_from_interface(self.quad_fun, avdim=1)
 
         avg = model.average(20)[0]
         prob, pl, pu = model.probability(0.0, 1.0)
         fstar, xstar = model.minimum()
-
-        if self.writeData:
-            np.savez('data/test_base_1_0',avg=avg, prob=prob, pl=pl, pu=pu, xstar=xstar, fstar=fstar)
-        data_test = helper.load_test_npz('test_base_1_0.npz')
-        np.testing.assert_almost_equal(avg, data_test['avg'])
-        np.testing.assert_almost_equal(prob, data_test['prob'])
-        np.testing.assert_almost_equal(pl, data_test['pl'])
-        np.testing.assert_almost_equal(pu, data_test['pu'])
-        np.testing.assert_almost_equal(xstar, data_test['xstar'])
-        np.testing.assert_almost_equal(fstar, data_test['fstar'])
-
-        print '\n'
-        print 'ubnd avg: {:6.4f}'.format(avg)
-        print 'ubnd prob: {:6.4f}, {:6.4f}, {:6.4f}'.format(pl,prob,pu)
-        print 'ubnd min: {:6.4f}'.format(fstar)
-        print 'ubnd xmin: {:6.4f}, {:6.4f}, {:6.4f}'.format(xstar[0,0],xstar[0,1],xstar[0,2])
 
     def test_fun_rs_bnd_int(self):
-        data = helper.load_test_npz('test_rs_1.npz')
-        X, f, df = data['X'], data['f'], data['df']
+        np.random.seed(42)
+        X = np.random.uniform(-1.,1.,size=(100,3))
+        f = np.zeros((100,1))
+        df = np.zeros((100,3))
+        for i in range(100):
+            x = X[i,:]
+            f[i,0] = self.quad_fun(x)
+            df[i,:] = self.quad_dfun(x).reshape((3, ))
 
-        np.random.seed(43)
         model = base.ActiveSubspaceReducedModel(3, True)
         model.build_from_interface(self.quad_fun, avdim=1)
 
@@ -202,27 +163,17 @@ class TestBase(TestCase):
         prob, pl, pu = model.probability(0.0, 1.0)
         fstar, xstar = model.minimum()
 
-        if self.writeData:
-            np.savez('data/test_base_1_1',avg=avg, prob=prob, pl=pl, pu=pu, xstar=xstar, fstar=fstar)
-        data_test = helper.load_test_npz('test_base_1_1.npz')
-        np.testing.assert_almost_equal(avg, data_test['avg'])
-        np.testing.assert_almost_equal(prob, data_test['prob'])
-        np.testing.assert_almost_equal(pl, data_test['pl'])
-        np.testing.assert_almost_equal(pu, data_test['pu'])
-        np.testing.assert_almost_equal(xstar, data_test['xstar'])
-        np.testing.assert_almost_equal(fstar, data_test['fstar'])
-
-        print '\n'
-        print 'ubnd avg: {:6.4f}'.format(avg)
-        print 'ubnd prob: {:6.4f}, {:6.4f}, {:6.4f}'.format(pl,prob,pu)
-        print 'ubnd min: {:6.4f}'.format(fstar)
-        print 'ubnd xmin: {:6.4f}, {:6.4f}, {:6.4f}'.format(xstar[0,0],xstar[0,1],xstar[0,2])
 
     def test_fun_rs_ubnd_2d_int(self):
-        data = helper.load_test_npz('test_rs_0.npz')
-        X, f, df = data['X'], data['f'], data['df']
+        np.random.seed(42)
+        X = np.random.normal(size=(100,3))
+        f = np.zeros((100,1))
+        df = np.zeros((100,3))
+        for i in range(100):
+            x = X[i,:]
+            f[i,0] = self.quad_fun(x)
+            df[i,:] = self.quad_dfun(x).reshape((3, ))
 
-        np.random.seed(43)
         model = base.ActiveSubspaceReducedModel(3, False)
         model.build_from_interface(self.quad_fun, avdim=2)
 
@@ -230,27 +181,17 @@ class TestBase(TestCase):
         prob, pl, pu = model.probability(0.0, 1.0)
         fstar, xstar = model.minimum()
 
-        if self.writeData:
-            np.savez('data/test_base_1_2',avg=avg, prob=prob, pl=pl, pu=pu, xstar=xstar, fstar=fstar)
-        data_test = helper.load_test_npz('test_base_1_2.npz')
-        np.testing.assert_almost_equal(avg, data_test['avg'])
-        np.testing.assert_almost_equal(prob, data_test['prob'])
-        np.testing.assert_almost_equal(pl, data_test['pl'])
-        np.testing.assert_almost_equal(pu, data_test['pu'])
-        np.testing.assert_almost_equal(xstar, data_test['xstar'])
-        np.testing.assert_almost_equal(fstar, data_test['fstar'])
-
-        print '\n'
-        print 'ubnd avg: {:6.4f}'.format(avg)
-        print 'ubnd prob: {:6.4f}, {:6.4f}, {:6.4f}'.format(pl,prob,pu)
-        print 'ubnd min: {:6.4f}'.format(fstar)
-        print 'ubnd xmin: {:6.4f}, {:6.4f}, {:6.4f}'.format(xstar[0,0],xstar[0,1],xstar[0,2])
 
     def test_fun_rs_bnd_2d_int(self):
-        data = helper.load_test_npz('test_rs_1.npz')
-        X, f, df = data['X'], data['f'], data['df']
+        np.random.seed(42)
+        X = np.random.uniform(-1.,1.,size=(50,3))
+        f = np.zeros((50,1))
+        df = np.zeros((50,3))
+        for i in range(50):
+            x = X[i,:]
+            f[i,0] = self.quad_fun(x)
+            df[i,:] = self.quad_dfun(x).reshape((3, ))
 
-        np.random.seed(43)
         model = base.ActiveSubspaceReducedModel(3, True)
         model.build_from_interface(self.quad_fun, avdim=2)
 
@@ -258,21 +199,6 @@ class TestBase(TestCase):
         prob, pl, pu = model.probability(0.0, 1.0)
         fstar, xstar = model.minimum()
 
-        if self.writeData:
-            np.savez('data/test_base_1_3',avg=avg, prob=prob, pl=pl, pu=pu, xstar=xstar, fstar=fstar)
-        data_test = helper.load_test_npz('test_base_1_3.npz')
-        np.testing.assert_almost_equal(avg, data_test['avg'])
-        np.testing.assert_almost_equal(prob, data_test['prob'])
-        np.testing.assert_almost_equal(pl, data_test['pl'])
-        np.testing.assert_almost_equal(pu, data_test['pu'])
-        np.testing.assert_almost_equal(xstar, data_test['xstar'])
-        np.testing.assert_almost_equal(fstar, data_test['fstar'])
-
-        print '\n'
-        print 'ubnd avg: {:6.4f}'.format(avg)
-        print 'ubnd prob: {:6.4f}, {:6.4f}, {:6.4f}'.format(pl,prob,pu)
-        print 'ubnd min: {:6.4f}'.format(fstar)
-        print 'ubnd xmin: {:6.4f}, {:6.4f}, {:6.4f}'.format(xstar[0,0],xstar[0,1],xstar[0,2])
 
 if __name__ == '__main__':
     unittest.main()
