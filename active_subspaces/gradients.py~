@@ -13,7 +13,7 @@ def local_linear_gradients(X, f, p=None, weights=None):
     :param int p: How many nearest neighbors to use when constructing the
         local linear model.
     :param ndarray weights: M-by-1 matrix that contains the weights for
-        each observation.
+        each observation. ??????
 
     :return df: M-by-m matrix that contains estimated partial derivatives
         approximated by the local linear models.
