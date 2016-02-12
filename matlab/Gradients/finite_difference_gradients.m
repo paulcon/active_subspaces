@@ -24,10 +24,10 @@ if isempty(varargin)
 elseif length(varargin) == 1
     h = varargin{1};
     if (numel(h) ~= 1) || ~isnumeric(h) || (h <= 0)
-        error('ERROR: h must be positive scalar')
+        error('Input h must be positive scalar')
     end
 else
-    error('ERROR: Too many inputs')
+    error('Too many inputs')
 end
 
 [M, m] = size(X);

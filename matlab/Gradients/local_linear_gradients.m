@@ -22,20 +22,48 @@ function [df] = local_linear_gradients(X, f, varargin)
 [M, m] = size(X);
 
 if M <= m
-    error('ERROR: Not enough samples for local linear models.')
+    error('Not enough samples for local linear models.')
 end
 
 if isempty(varargin)
     p = min([floor(1.7*m), M]);
-elseif length(varargin) == 1
-    p = varargin{1};
-    if ~isnumeric(p) || rem(p,1) ~= 0
-        error('ERROR: p must be an integer.')
+    weights = ones(M, 1)/M;
+elseif (length(varargin) == 1)
+    if (numel(varargin{1}) == 1)
+        p = varargin{1};
+        if ~isnumeric(p) || (rem(p,1) ~= 0)
+            error('Input p must be an integer.')
+        elseif (p < m+1) || (p > M)
+            error('Input p must be between m+1 and M.')
+        end
+        weights = ones(M, 1)/M;
+    else
+        weights = varargin{1};
+        if any(size(weights) ~= [M, 1]) || any(weights < 0)
+            error('Input weights must be M-by-1 array with non-negative entries.')
+        end
+        p = min([floor(1.7*m), M]);
+    end
+elseif (length(varargin) == 2)
+    if (numel(varargin{1}) == 1)
+        p = varargin{1};
+        weights = varargin{2};
+    else
+        weights = varargin{1};
+        p = varargin{2};
+    end
+    
+    if ~isnumeric(p) || (rem(p,1) ~= 0)
+        error('Input p must be an integer.')
     elseif (p < m+1) || (p > M)
-        error('ERROR: p must be between m+1 and M.')
+        error('Input p must be between m+1 and M.')
+    end
+    
+    if any(size(weights) ~= [M, 1]) || any(weights < 0)
+        error('Input weights must be M-by-1 array with non-negative entries.')
     end
 else
-    error('ERROR: Too many inputs.')
+    error('Too many inputs.')
 end
 
 % Determine number of gradients that can be returned giving M samples from
@@ -49,12 +77,16 @@ for i = 1:MM
     x = X(ii,:);
     
     % Find p closest points to x.
-    [~, ind] = sort(sum((X - repmat(x, [M, 1])).^2, 2));
+    D2 = sum((X - repmat(x, [M, 1])).^2, 2);
+    [~, ind] = sort(D2);
+    ind = ind(D2(ind) ~= 0);
     
     % Create linear regression using these p points.
-    A = [ones(p, 1), X(ind(2:p+1), :)];
-    b = f(ind(2:p+1));
+    warning('off','all')
+    A = [ones(p, 1), X(ind(1:p), :)].*repmat(sqrt(weights(ind(1:p))), 1, m+1);
+    b = f(ind(1:p)).*sqrt(weights(ind(1:p)));
     u = A\b;
+    warning('on','all')
     
     % Take gradient.
     df(i, :) = u(2:m+1)';

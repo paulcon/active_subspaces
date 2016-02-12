@@ -16,11 +16,11 @@ function [N] = nzv(m, n)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if ~isnumeric(m) || (rem(m,1) ~= 0) || (m < 0)
-    error('ERROR: m should be a positive integer')
+    error('Input m should be a positive integer')
 end
 
 if ~isnumeric(n) || (rem(n,1) ~= 0) || (n < 0)
-    error('ERROR: n should be a positive integer')
+    error('Input n should be a positive integer')
 end
 
 % Compute number of zonotope vertices.

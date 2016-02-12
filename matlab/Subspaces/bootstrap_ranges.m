@@ -1,4 +1,4 @@
-function [e_br, sub_br, e_stat] = bootstrap_ranges(df, W, varargin)
+function [e_br, sub_br, li_F] = bootstrap_ranges(e, W, X, f, df, weights, ssmethod, n_boot)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -7,102 +7,60 @@ function [e_br, sub_br, e_stat] = bootstrap_ranges(df, W, varargin)
 %   corrected and accelerated percentile method.
 %
 %   Inputs:
-%          df: M-by-m array of gradient evaluations
+%           e: m-by-1 array of eigenvalues
 %           W: m-by-m array of eigenvectors
-%      n_boot: (optional) number of bootstrap replicates
-%           F: (optional) an ndarray of size M that contains evaluations of the function.
-%           X: (optional) an ndarray of size M-by-m that contains data points in the input space.
-%     c_index: (optional) an integer specifying which C matrix to compute, the default matrix is 0.
+%           X: M-by-m array that contains data points in the input space
+%           F: M-by-1 array that contains evaluations of the function
+%           df: M-by-m array of gradient evaluations
+%           weights: M-by-1 array of weights
+%           ssmethod: function handle for computing reduced dimension
+%                     subspace
+%           n_boot: number of bootstrap replicates
 %      
-%
 %  Outputs:
 %          e_br: m-by-2 array with bootstrap eigenvalue bounds
-%        sub_br: m-by-3 array of bootstrap eigenvalue ranges (first and
-%                third column) and the mean (second column)
+%          sub_br: m-by-3 array of bootstrap eigenvalue ranges (first and
+%                  third column) and the mean (second column)
+%          li_F: (m-1)-by-1 array used in computing the ladle plot
+%                partition
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% Set varable arguements
-if isempty(varargin)
-    n_boot = 200;
-    F = 0;
-    X = 0;
-    c_index = 0;
-elseif length(varargin) == 1
-    n_boot = varargin{1};
-    F = 0;
-    X = 0;
-    c_index = 0;
-    if ~isnumeric(n_boot) || rem(n_boot, 1) ~= 0 || (n_boot < 0)
-        error('ERROR: n_boot must be a non-negative integer.')
-    end
-elseif length(varargin) == 2
-    n_boot = varargin{1};
-    F = varargin{2};
-    X = 0;
-    c_index = 0;
-elseif length(varargin) == 3
-    n_boot = varargin{1};
-    F = varargin{2};
-    X = varargin{3};
-    c_index = 0;
-elseif length(varargin) == 4
-    n_boot = varargin{1};
-    F = varargin{2};
-    X = varargin{3};
-    c_index = varargin{4};
-else 
-    error('ERROR: Too many inputs.')
-end
-
-
-% M = number of samples; m = dimension of input space;
-if c_index ~= 4
-    [M,m] = size(df);
+% Setup inputs
+if ~isempty(X) && ~isempty(f)
+    m = size(X, 2);
+elseif ~isempty(df)
+    m = size(df, 2);
 else
-    [M,m] = size(X);
-    m = m/2;
+    error('One of input/output pairs (X,f) or gradients (df) must not be empty')
 end
+
+% Bootstrap
+e_boot = zeros(m, n_boot);
+sub_dist = zeros(m-1, n_boot);
+sub_det = zeros(m-1, n_boot);
+for i = 1:n_boot
+	[X0, f0, df0, weights0] = bootstrap_replicate(X, f, df, weights);
+    [e0, W0] = ssmethod(X0, f0, df0, weights0);
     
-    
-    
-%% Basic Min/Max bootstrap intervals
-    % Bootstrap indices
-    ind = randi(M,M,n_boot);
-    
-    % Bootstrap
-    e_dist = zeros(m,n_boot);
-    sub_dist = zeros(m-1,n_boot);
-    for i=1:n_boot
-        if c_index == 0
-            [e_dist(:,i),W0] = spectral_decomposition(df(ind(:,i),:));
-        elseif c_index == 1
-            [e_dist(:,i),W0] = spectral_decomposition(df(ind(:,i),:),F,X(ind(:,i),:),0,c_index,0,0);
-        elseif c_index == 2
-            [e_dist(:,i),W0] = spectral_decomposition(df(ind(:,i),:),0,0,0,c_index,0,0);
-        elseif c_index == 3
-            [e_dist(:,i),W0] = spectral_decomposition(df(ind(:,i),:),F,X(ind(:,i),:),0,c_index,0,0);
-        elseif c_index == 4
-            Fx = F(1:M);
-            Fy = F(M+1:end);
-            f_x = Fx(ind(:,i));
-            f_y = Fy(ind(:,i));
-            F =  cat(1,f_x,f_y);
-            [e_dist(:,i),W0] = spectral_decomposition(0,F,X(ind(:,i),:),0,c_index,0,0); 
-            
-        end
-        for j=1:m-1
-            sub_dist(j,i) = norm(W(:,1:j)'*W0(:,j+1:end));
-        end
-        
+    e_boot(:, i) = e0;
+    for j = 1:m-1
+        sub_dist(j, i) = norm(W(:, 1:j)'*W0(:, j+1:end), 2);
+        sub_det(j, i) = det(W(:, 1:j)'*W0(:, 1:j));
     end
     
-    % Summarize Eigenvalue Basic Stats
-    e_stat = [min(e_dist,[],2),mean(e_dist,2),max(e_dist,[],2)];
-    e_br= [e_stat(:,1),e_stat(:,3)];
-    %Summarize Eigenvector Basic Stats
-    sub_br = [min(sub_dist,[],2),mean(sub_dist,2),max(sub_dist,[],2)];
+end
+
+% Summarize Eigenvalue Basic Stats
+e_br= [min(e_boot, [], 2), max(e_boot, [], 2)];
+
+% Summarize Eigenvector Basic Stats
+sub_br = [min(sub_dist, [], 2), mean(sub_dist, 2), max(sub_dist, [], 2)];
+
+% Compute metric for Li's ladle plot
+li_F = [0; sum(1 - abs(sub_det), 2)/n_boot];
+li_F = li_F/sum(li_F);
     
 %% Advanced bootstrap methods    
 %     % Dummy indices for bootci
@@ -133,13 +91,13 @@ end
 %     
 % else
 %     disp('Error: Too many inputs');
-% end
-
-    
-    
-    % Nested function to return second output of spectral_decomposition
-    function W0 = spec_decomposition2(df2,i2,M2)
-        [~,W0] = spectral_decomposition(df2(randi(M2,M2,i2(1)),:));
-    end
-
+% % end
+% 
+%     
+%     
+%     % Nested function to return second output of spectral_decomposition
+%     function W0 = spec_decomposition2(df2,i2,M2)
+%         [~,W0] = spectral_decomposition(df2(randi(M2,M2,i2(1)),:));
+%     end
+% 
 end

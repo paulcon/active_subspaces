@@ -23,10 +23,10 @@ if isempty(varargin)
 elseif length(varargin) == 1
     maxcount = varargin{1};
     if ~isnumeric(maxcount) || rem(maxcount, 1) ~= 0 || (maxcount <= 0)
-        error('ERROR: maxcount must be a positive integer.')
+        error('Input maxcount must be a positive integer.')
     end
 else
-    error('ERROR: Too many inputs.')
+    error('Too many inputs.')
 end
 
 [m, n] = size(W1);

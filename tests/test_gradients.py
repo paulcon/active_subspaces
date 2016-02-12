@@ -1,6 +1,5 @@
 from unittest import TestCase
 import unittest
-import helper
 import numpy as np
 import active_subspaces.gradients as gr
 

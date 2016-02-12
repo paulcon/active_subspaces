@@ -4,6 +4,7 @@ import numpy as np
 from scipy.spatial import distance_matrix
 from utils.misc import process_inputs, process_inputs_outputs
 from utils.response_surfaces import PolynomialApproximation
+from gradients import local_linear_gradients
 
 SQRTEPS = np.sqrt(np.finfo(float).eps)
 
@@ -41,6 +42,11 @@ class Subspaces():
             4, swarm subspace
             5, ols sdr
             6, qphd, sdr
+            7, sir, sdr
+            8, phd, sdr
+            9, save, sdr
+            10, mave, sdr
+            11, opg, sdr
             
         Partition types (ptype):
             0, eigenvalue gaps
@@ -96,6 +102,31 @@ class Subspaces():
                 raise Exception('X or f is None')
             e, W = qphd_subspace(X, f, weights)
             ssmethod = lambda X, f, df, weights: qphd_subspace(X, f, weights)
+        elif sstype == 7:
+            if X is None or f is None:
+                raise Exception('X or f is None')
+            e, W = sir_subspace(X, f, weights)
+            ssmethod = lambda X, f, df, weights: sir_subspace(X, f, weights)
+        elif sstype == 8:
+            if X is None or f is None:
+                raise Exception('X or f is None')
+            e, W = phd_subspace(X, f, weights)
+            ssmethod = lambda X, f, df, weights: phd_subspace(X, f, weights)
+        elif sstype == 9:
+            if X is None or f is None:
+                raise Exception('X or f is None')
+            e, W = save_subspace(X, f, weights)
+            ssmethod = lambda X, f, df, weights: save_subspace(X, f, weights)
+        elif sstype == 10:
+            if X is None or f is None:
+                raise Exception('X or f is None')
+            e, W = mave_subspace(X, f, weights)
+            ssmethod = lambda X, f, df, weights: mave_subspace(X, f, weights)
+        elif sstype == 11:
+            if X is None or f is None:
+                raise Exception('X or f is None')
+            e, W = opg_subspace(X, f, weights)
+            ssmethod = lambda X, f, df, weights: opg_subspace(X, f, weights)
         else:
             e, W = None, None
             ssmethod = None
@@ -277,7 +308,114 @@ def qphd_subspace(X, f, weights):
     C = np.outer(b, b.transpose()) + gamma*np.dot(A, A.transpose())
     
     return sorted_eigh(C)
-
+    
+def sir_subspace(X, f, weights):
+    """
+    TODO: docs
+    """
+    X, f, M, m = process_inputs_outputs(X, f)
+    
+    # check if the points are uniform or Gaussian, set 2nd moment
+    if np.amax(X) > 1.0 or np.amin < -1.0:
+        gamma = 1.0
+    else:
+        gamma = 1.0 / 3.0
+    
+    # Center and normalize data
+    Z = (1.0 / np.sqrt(gamma)) * (X - np.mean(X, axis=0).reshape((1, m)))
+    
+    # Bin data according to responses
+    H = 10
+    bins = np.percentile(f, np.linspace(0, 100, H+1))
+    bins[0] = bins[0] - SQRTEPS
+    
+    # Compute C matrix
+    C = np.zeros((m, m))
+    for i in range(H):
+        in_slice = ((f > bins[i]) & (f <= bins[i+1])).reshape(M)
+        if np.any(in_slice):
+            sweights = weights[in_slice] / np.sum(weights[in_slice])
+            m_hat = np.sum(Z[in_slice, :] * sweights, axis=0).reshape((m, 1))
+            p_hat = np.sum(in_slice) / float(M)
+            C += p_hat*np.dot(m_hat, m_hat.T)
+    
+    return sorted_eigh(C)
+    
+def phd_subspace(X, f, weights):
+    """
+    TODO: docs
+    """
+    X, f, M, m = process_inputs_outputs(X, f)
+    
+    # check if the points are uniform or Gaussian, set 2nd moment
+    if np.amax(X) > 1.0 or np.amin < -1.0:
+        gamma = 1.0
+    else:
+        gamma = 1.0 / 3.0
+        
+    # Center data
+    Z = X - np.mean(X, axis=0).reshape((1, m))
+    
+    # Compute C matrix
+    C =  (1.0 / np.sqrt(gamma)) * np.dot(Z.T, (f - np.mean(f)) * weights * Z)
+    
+    return sorted_eigh(C)
+    
+def save_subspace(X, f, weights):
+    """
+    TODO: docs
+    """
+    X, f, M, m = process_inputs_outputs(X, f)
+    
+    # check if the points are uniform or Gaussian, set 2nd moment
+    if np.amax(X) > 1.0 or np.amin < -1.0:
+        gamma = 1.0
+    else:
+        gamma = 1.0 / 3.0
+    
+    # Center and normalize data
+    Z = (1.0 / np.sqrt(gamma))*(X - np.mean(X, axis=0).reshape((1, m)))
+    
+    # Bin data according to responses
+    H = 10
+    bins = np.percentile(f, np.linspace(0, 100, H+1))
+    ind = np.digitize(f.reshape(M), bins)
+    ind[ind == 0] = 1
+    ind[ind == len(bins)] = H
+    
+    # Comute C matrix
+    C = np.zeros((m, m))
+    for i in range(H):
+        in_slice = (ind == i+1)
+        if np.any(in_slice):
+            Z_tilde = Z[in_slice, :] - np.mean(Z[in_slice, :], axis=0)
+            sweights = weights[in_slice] / np.sum(weights[in_slice])
+            if sum(in_slice) > 1:
+                V = np.eye(m) - (np.dot(Z_tilde.T, sweights * Z_tilde) / (1 - np.sum(sweights**2)))
+            else:
+                V = np.eye(m)
+            C += np.dot(V, V)
+    
+    return sorted_eigh(C)
+    
+def mave_subspace(X, f, weights):
+    return None
+    
+def opg_subspace(X, f, weights):
+    """
+    TODO: docs
+    """
+    X, f, M, m = process_inputs_outputs(X, f)
+    
+    # Obtain gradient approximations using local linear regressions
+    df = local_linear_gradients(X, f, weights=weights)
+    
+    # Use gradient approximations to compute active subspace
+    opg_weights = np.ones((df.shape[0], 1)) / df.shape[0]
+    e, W = active_subspace(df, opg_weights)
+    
+    return e, W
+    
 def eig_partition(e):
     """
     TODO: docs
@@ -298,7 +436,7 @@ def errbnd_partition(e, sub_err):
     errbnd = np.zeros((m-1, 1))
     for i in range(m-1):
         errbnd[i] = np.sqrt(np.sum(e[:i+1]))*sub_err[i] + np.sqrt(np.sum(e[i+1:]))
-        
+    
     n = np.argmin(errbnd) + 1
     return n, errbnd
 
@@ -352,6 +490,7 @@ def sorted_eigh(C):
     TODO: docs
     """
     e, W = np.linalg.eigh(C)
+    e = abs(e)
     ind = np.argsort(e)
     e = e[ind[::-1]]
     W = W[:,ind[::-1]]

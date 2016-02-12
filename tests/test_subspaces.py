@@ -75,6 +75,52 @@ class TestSubspaces(TestCase):
         np.testing.assert_array_less(e[1], e[0])
         np.testing.assert_array_less(np.zeros((3,)), W[0,:])
         
+    def test_sir_subspace(self):
+        np.random.seed(42)
+        X = np.random.normal(size=(50,3))
+        f = np.random.normal(size=(50,1))
+        weights = np.ones((50,1)) / 50
+        e, W = ss.sir_subspace(X, f, weights)
+        np.testing.assert_array_less(e[1], e[0])
+        np.testing.assert_array_less(np.zeros((3,)), W[0,:])
+        
+    def test_phd_subspace(self):
+        np.random.seed(42)
+        X = np.random.normal(size=(50,3))
+        f = np.random.normal(size=(50,1))
+        weights = np.ones((50,1)) / 50
+        e, W = ss.phd_subspace(X, f, weights)
+        np.testing.assert_array_less(e[1], e[0])
+        np.testing.assert_array_less(np.zeros((3,)), W[0,:])
+        
+    def test_save_subspace(self):
+        np.random.seed(42)
+        X = np.random.normal(size=(50,3))
+        f = np.random.normal(size=(50,1))
+        weights = np.ones((50,1)) / 50
+        e, W = ss.save_subspace(X, f, weights)
+        np.testing.assert_array_less(e[1], e[0])
+        np.testing.assert_array_less(np.zeros((3,)), W[0,:])
+    
+    #### UNDER CONSTRUCTION
+    #def test_mave_subspace(self):
+    #    np.random.seed(42)
+    #    X = np.random.normal(size=(50,3))
+    #    f = np.random.normal(size=(50,1))
+    #    weights = np.ones((50,1)) / 50
+    #    e, W = ss.mave_subspace(X, f, weights)
+    #    np.testing.assert_array_less(e[1], e[0])
+    #    np.testing.assert_array_less(np.zeros((3,)), W[0,:])
+        
+    def test_opg_subspace(self):
+        np.random.seed(42)
+        X = np.random.normal(size=(50,3))
+        f = np.random.normal(size=(50,1))
+        weights = np.ones((50,1)) / 50
+        e, W = ss.opg_subspace(X, f, weights)
+        np.testing.assert_array_less(e[1], e[0])
+        np.testing.assert_array_less(np.zeros((3,)), W[0,:])
+        
     def test_bootstrap_replicate(self):
         np.random.seed(42)
         X = np.random.normal(size=(10,3))
@@ -119,6 +165,27 @@ class TestSubspaces(TestCase):
         e, W = ss.qphd_subspace(X, f, weights)
         ssmethod = lambda X, f, df, weights: ss.qphd_subspace(X, f, weights)
         d = ss.bootstrap_ranges(e, W, X, f, None, weights, ssmethod, nboot=10)
+        
+        e, W = ss.sir_subspace(X, f, weights)
+        ssmethod = lambda X, f, df, weights: ss.sir_subspace(X, f, weights)
+        d = ss.bootstrap_ranges(e, W, X, f, None, weights, ssmethod, nboot=10)
+        
+        e, W = ss.phd_subspace(X, f, weights)
+        ssmethod = lambda X, f, df, weights: ss.phd_subspace(X, f, weights)
+        d = ss.bootstrap_ranges(e, W, X, f, None, weights, ssmethod, nboot=10)
+        
+        e, W = ss.save_subspace(X, f, weights)
+        ssmethod = lambda X, f, df, weights: ss.save_subspace(X, f, weights)
+        d = ss.bootstrap_ranges(e, W, X, f, None, weights, ssmethod, nboot=10)
+        
+        #### UNDER CONSTRUCTION
+        #e, W = ss.mave_subspace(X, f, weights)
+        #ssmethod = lambda X, f, df, weights: ss.mave_subspace(X, f, weights)
+        #d = ss.bootstrap_ranges(e, W, X, f, None, weights, ssmethod, nboot=10)
+        
+        e, W = ss.opg_subspace(X, f, weights)
+        ssmethod = lambda X, f, df, weights: ss.opg_subspace(X, f, weights)
+        d = ss.bootstrap_ranges(e, W, X, f, None, weights, ssmethod, nboot=10)
 
     def test_eig_partition(self):
         np.random.seed(42)
@@ -161,6 +228,11 @@ class TestSubspaces(TestCase):
         sub.compute(X, f, df, weights, sstype=4)
         sub.compute(X, f, df, weights, sstype=5)
         sub.compute(X, f, df, weights, sstype=6)
+        sub.compute(X, f, df, weights, sstype=7)
+        sub.compute(X, f, df, weights, sstype=8)
+        sub.compute(X, f, df, weights, sstype=9)
+        #sub.compute(X, f, df, weights, sstype=10) UNDER CONSTRUCTION
+        sub.compute(X, f, df, weights, sstype=11)
         
         sub.compute(X, f, df, weights, sstype=0, nboot=10)
         sub.compute(X, f, df, weights, sstype=1, nboot=10)
@@ -169,6 +241,11 @@ class TestSubspaces(TestCase):
         sub.compute(X, f, df, weights, sstype=4, nboot=10)
         sub.compute(X, f, df, weights, sstype=5, nboot=10)
         sub.compute(X, f, df, weights, sstype=6, nboot=10)
+        sub.compute(X, f, df, weights, sstype=7, nboot=10)
+        sub.compute(X, f, df, weights, sstype=8, nboot=10)
+        sub.compute(X, f, df, weights, sstype=9, nboot=10)
+        #sub.compute(X, f, df, weights, sstype=10, nboot=10) UNDER CONSTRUCTION
+        sub.compute(X, f, df, weights, sstype=11, nboot=10)
         
         sub.compute(X, f, df, weights, sstype=0, ptype=0, nboot=100)
         sub.compute(X, f, df, weights, sstype=0, ptype=1, nboot=100)
