@@ -4,7 +4,7 @@ import logging
 from utils.misc import process_inputs
 from utils.simrunners import SimulationRunner
 
-def local_linear_gradients(X, f, p=None):
+def local_linear_gradients(X, f, p=None, weights=None):
     """
     Estimate a collection of gradients from input/output pairs.
 
@@ -12,6 +12,8 @@ def local_linear_gradients(X, f, p=None):
     :param ndarray f: M-by-1 matrix that contains scalar outputs.
     :param int p: How many nearest neighbors to use when constructing the
         local linear model.
+    :param ndarray weights: M-by-1 matrix that contains the weights for
+        each observation. ??????
 
     :return df: M-by-m matrix that contains estimated partial derivatives
         approximated by the local linear models.
@@ -32,6 +34,9 @@ def local_linear_gradients(X, f, p=None):
 
     if p < m+1 or p > M:
         raise Exception('p must be between m+1 and M')
+        
+    if weights is None:
+        weights = np.ones((M, 1)) / M
 
     MM = np.minimum(int(np.ceil(10*m*np.log(m))), M-1)
     logging.getLogger(__name__).debug('Computing {:d} local linear approximations with {:d} points in {:d} dims.'.format(MM, M, m))
@@ -39,9 +44,12 @@ def local_linear_gradients(X, f, p=None):
     for i in range(MM):
         ii = np.random.randint(M)
         x = X[ii,:]
-        ind = np.argsort(np.sum((X - x)**2, axis=1))
-        A = np.hstack((np.ones((p,1)), X[ind[1:p+1],:]))
-        u = np.linalg.lstsq(A, f[ind[1:p+1]])[0]
+        D2 = np.sum((X - x)**2, axis=1)
+        ind = np.argsort(D2)
+        ind = ind[D2 != 0]
+        A = np.hstack((np.ones((p,1)), X[ind[:p],:])) * np.sqrt(weights[ii])
+        b = f[ind[:p]] * np.sqrt(weights[ii])
+        u = np.linalg.lstsq(A, b)[0]
         df[i,:] = u[1:].T
     return df
 

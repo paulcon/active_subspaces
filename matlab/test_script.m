@@ -1,3 +1,5 @@
+% Complete test of the active subspaces matlab code
+
 clear variables
 close all
 clc
@@ -8,6 +10,7 @@ tests_passed = false(7, 1);
 [M, m] = size(X);
 [f, df] = test_function(X);
 df = df./repmat(sqrt(sum(df.^2, 2)), 1, m);
+weights = ones(M, 1)/M;
 
 %% Test Subspaces
 
@@ -15,17 +18,29 @@ restoredefaultpath
 addpath 'Subspaces'
 
 failed_subspaces = false;
-try
-    sub_test = compute(df);
-    if (size(sub.W1, 2) ~= size(sub_test.W1, 2)) || (abs(1 - norm(sub.W1'*sub_test.W1)) > sqrt(eps))
-        failed_subspaces = true;
+fail_string = '';
+for i = 0:11
+    for j = 0:2
+        for k = 0:1
+            if ((j > 0) && (k == 0)) || (i == 10) % mave_subspace.m still under cosntruction
+                continue
+            end
+            
+            try
+                sub_test = compute(X, f, df, weights, i, j, k*20);
+            catch
+                failed_subspaces = true;
+                fail_string = [fail_string, ...
+                               '(sstype=' num2str(i) ',ptype=' num2str(j) ',n_boot=' num2str(k*20) ')\n'];
+            end
+        end
     end
-catch
-    failed_subspaces = true;
 end
 
 if failed_subspaces
     disp('Subspaces testing unsuccessful. Error in computing active subspace.')
+    disp('Failed subspaces: ')
+    fprintf(fail_string)
 else
     disp('Subspaces testing successful.')
     tests_passed(1) = true;
@@ -42,7 +57,7 @@ try
     for i = 1:5
         df_loc_lin = local_linear_gradients(X, f);
         df_loc_lin = df_loc_lin./repmat(sqrt(sum(df_loc_lin.^2, 2)), 1, m);
-        sub_loc_lin = compute(df_loc_lin);
+        sub_loc_lin = compute([], [], df_loc_lin);
         temp = norm(sub.W1'*sub_loc_lin.W2);
         if temp < loc_lin_err
             loc_lin_err = temp;
@@ -60,7 +75,7 @@ try
     fun = @(X) test_function(X); h = 1e-8;
     df_fin_diff = finite_difference_gradients(X, fun, h);
     df_fin_diff = df_fin_diff./repmat(sqrt(sum(df_fin_diff.^2, 2)), 1, m);
-    sub_fin_diff = compute(df_fin_diff);
+    sub_fin_diff = compute([], [], df_fin_diff);
     if norm(sub.W1'*sub_fin_diff.W2) > sqrt(eps)
         failed_fin_diff = true;
     end
@@ -349,4 +364,5 @@ else
 end
 %% Testing complete
 disp(['TESTING COMPLETE: ' num2str(sum(tests_passed)) ' out of ' num2str(length(tests_passed)) ' tests passed successfully.'])
+restoredefaultpath
 clear all

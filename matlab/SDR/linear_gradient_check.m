@@ -30,10 +30,10 @@ if isempty(varargin)
 elseif length(varargin) == 1
     n_boot = varargin{1};
     if (numel(n_boot) ~= 1) || rem(n_boot, 1) ~= 0 || (n_boot < 0)
-        error('ERROR: n_boot must be a non-negative integer.')
+        error('Input n_boot must be a non-negative integer.')
     end
 else
-    error('ERROR: Too many inputs.')
+    error('Too many inputs.')
 end
 
 [M, m] = size(X);

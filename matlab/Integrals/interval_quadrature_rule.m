@@ -25,17 +25,17 @@ if isempty(varargin)
 elseif length(varargin) == 1
     NX = varargin{1};
     if ~isnumeric(NX) || rem(NX, 1) ~= 0 || (NX <= 0)
-        error('ERROR: NX must be a positive integer.')
+        error('Input NX must be a positive integer.')
     end
 else
-    error('ERROR: Too many inputs.')
+    error('Too many inputs.')
 end
 
 addpath 'Domains'
 
 [m, n] = size(W1);
 if (n ~= 1)
-    error('ERROR: Dimension of active subspace must be 1.')
+    error('Dimension of active subspace must be 1.')
 end
 
 % Compute quadrature points.
