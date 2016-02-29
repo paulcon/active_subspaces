@@ -36,6 +36,12 @@ The generated html can be found in `docs/buidl/html`. Open up the `index.html` y
 
 We are using Travis CI for continusous intergration testing. You can check out the current status [here](https://travis-ci.org/hmcfletch/active_subspaces).
 
+To run tests locally:
+
+```bash
+> python test.py
+```
+
 # Distribution
 
 We are following the guidelines [here](https://packaging.python.org/en/latest/distributing/) for packaging and distributing our code. Our steps:
