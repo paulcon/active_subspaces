@@ -19,6 +19,10 @@ stable. It should settle down soon. Feel free to follow development.
 
 # Installation
 
+```bash
+> pip install active-subspaces
+```
+
 # Usage
 
 # Documentation
