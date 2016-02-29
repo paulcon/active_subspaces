@@ -7,7 +7,7 @@ stable. It should settle down soon. Feel free to follow development.
 
 # Status
 
-[![Build Status](https://travis-ci.org/hmcfletch/active_subspaces.svg?branch=master)](https://travis-ci.org/hmcfletch/active_subspaces)
+[![Build Status](https://travis-ci.org/paulcon/active_subspaces.svg?branch=master)](https://travis-ci.org/paulcon/active_subspaces)
 
 # Requirements and Dependencies
 
@@ -34,7 +34,7 @@ The generated html can be found in `docs/buidl/html`. Open up the `index.html` y
 
 # Testing
 
-We are using Travis CI for continusous intergration testing. You can check out the current status [here](https://travis-ci.org/hmcfletch/active_subspaces).
+We are using Travis CI for continusous intergration testing. You can check out the current status [here](https://travis-ci.org/paulcon/active_subspaces).
 
 To run tests locally:
 

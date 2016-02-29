@@ -1,33 +1,29 @@
-# https://gist.github.com/dan-blanchard/7045057 for faster builds
+cache: apt
+sudo: false
 
 language: python
 python:
   - "2.7"
-# branches:
-#   only:
-#     - master
 
-# Setup anaconda
+addons:
+  apt:
+    packages:
+    - libatlas-dev
+    - libatlas-base-dev
+    - liblapack-dev
+
 before_install:
-  - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
-  - chmod +x miniconda.sh
-  - ./miniconda.sh -b
-  - export PATH=/home/travis/miniconda/bin:$PATH
-  - conda update --yes conda
-  # The next couple lines fix a crash with multiprocessing on Travis and are not specific to using Miniconda
-  - sudo rm -rf /dev/shm
-  - sudo ln -s /run/shm /dev/shm
-# Install packages
-install:
-  - conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy matplotlib nose dateutil pandas statsmodels
-  # Coverage packages are on my binstar channel
-  - conda install --yes -c dan_blanchard python-coveralls nose-cov
-  - python setup.py install
-# install:
-#   - pip install .
-#   - pip install -r requirements.txt
+ - travis_retry wget http://repo.continuum.io/miniconda/Miniconda-3.8.3-Linux-x86_64.sh -O miniconda.sh
+ - chmod +x miniconda.sh
+ - bash miniconda.sh -b -p $HOME/miniconda
+ - export PATH=/home/travis/miniconda/bin:$PATH
+ - conda update --yes conda
 
-# http://www.davidketcheson.info/2015/01/13/using_matplotlib_image_comparison.html
-script:
-  - cd $HOME/build/active_subspaces
-  - python test.py
+install:
+ - conda create --yes -n test python=$TRAVIS_PYTHON_VERSION
+ - source activate test
+ - conda install --yes numpy scipy matplotlib pip nose
+ - pip install setuptools
+ - python setup.py install
+
+script: python test.py
