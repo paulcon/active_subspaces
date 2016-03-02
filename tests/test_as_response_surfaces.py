@@ -5,7 +5,6 @@ import active_subspaces.subspaces as ss
 import active_subspaces.domains as dom
 import active_subspaces.utils.simrunners as srun
 import active_subspaces.utils.response_surfaces as rs
-import helper
 import numpy as np
 
 class TestASResponseSurfaces(TestCase):

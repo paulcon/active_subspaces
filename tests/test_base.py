@@ -5,7 +5,6 @@ import active_subspaces.optimizers as aso
 import active_subspaces.subspaces as ss
 import active_subspaces.domains as dom
 import active_subspaces.base as base
-import helper
 import numpy as np
 
 class TestBase(TestCase):

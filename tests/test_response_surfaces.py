@@ -1,7 +1,6 @@
 from unittest import TestCase
 import unittest
 import active_subspaces.utils.response_surfaces as rs
-import helper
 import numpy as np
 
 class TestResponseSurfaces(TestCase):

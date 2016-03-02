@@ -1,9 +1,7 @@
 from unittest import TestCase
 import unittest
 import active_subspaces.utils.quadrature as gq
-import helper
 import numpy as np
-import logging as log
 
 class TestQuadrature(TestCase):
     
