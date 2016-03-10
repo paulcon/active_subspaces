@@ -146,10 +146,10 @@ class TestResponseSurfaces(TestCase):
         np.random.seed(42)
         X = np.random.normal(size=(20,3))
         X_train = X.copy()
-        f_2d = 2 + 5*X_train[:,0] - 4*X_train[:,1] + 2*X_train[:,2]
+        f_3d = 2 + 5*X_train[:,0] - 4*X_train[:,1] + 2*X_train[:,2]
 
         pr = rs.PolynomialApproximation(N=3)
-        pr.train(X_train, f_2d.reshape((f_2d.size,1)))
+        pr.train(X_train, f_3d.reshape((f_3d.size,1)))
 
 
     def test_exact_rbf_approximation_1d(self):
