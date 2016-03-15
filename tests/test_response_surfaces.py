@@ -141,6 +141,17 @@ class TestResponseSurfaces(TestCase):
         np.testing.assert_almost_equal(df[:,0].reshape((10,1)), df1_test.reshape((10,1)), decimal=10)
         np.testing.assert_almost_equal(df[:,1].reshape((10,1)), df2_test.reshape((10,1)), decimal=10)
 
+
+    def test_exact_polynomial_approximation_3d(self):
+        np.random.seed(42)
+        X = np.random.normal(size=(20,3))
+        X_train = X.copy()
+        f_3d = 2 + 5*X_train[:,0] - 4*X_train[:,1] + 2*X_train[:,2]
+
+        pr = rs.PolynomialApproximation(N=3)
+        pr.train(X_train, f_3d.reshape((f_3d.size,1)))
+
+
     def test_exact_rbf_approximation_1d(self):
         np.random.seed(42)
         X = np.random.normal(size=(10,2))
