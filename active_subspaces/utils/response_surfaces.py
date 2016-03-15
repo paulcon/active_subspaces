@@ -108,7 +108,7 @@ class PolynomialApproximation(ResponseSurface):
         self.g = poly_weights[1:m+1].copy().reshape((m,1))
         if self.N > 1:
             H = np.zeros((m, m))
-            for i in range(m+1, indices.shape[0]):
+            for i in range(m+1, int(m+1+comb(m+1,2))):
                 ind = indices[i,:]
                 loc = np.nonzero(ind!=0)[0]
                 if loc.size==1:
