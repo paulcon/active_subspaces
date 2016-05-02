@@ -38,7 +38,7 @@ def local_linear_gradients(X, f, p=None, weights=None):
     if weights is None:
         weights = np.ones((M, 1)) / M
 
-    MM = np.minimum(int(np.ceil(10*m*np.log(m))), M-1)
+    MM = np.minimum(int(np.ceil(10*m*np.log(m))), M)
     logging.getLogger(__name__).debug('Computing {:d} local linear approximations with {:d} points in {:d} dims.'.format(MM, M, m))
     df = np.zeros((MM, m))
     for i in range(MM):
