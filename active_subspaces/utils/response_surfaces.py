@@ -94,10 +94,8 @@ class PolynomialApproximation(ResponseSurface):
         if weights is not None:
             B, f = weights*B, weights*f
 
-        Q, R = np.linalg.qr(B)
-        Qf = np.dot(Q.T, f)
-        poly_weights = np.linalg.solve(R, Qf)
-        Rsqr = 1.0 - ( np.linalg.norm(np.dot(R, poly_weights) - Qf)**2 / (M-1)*np.var(f) )
+        poly_weights = np.linalg.lstsq(B, f)[0]
+        Rsqr = 1.0 - ( np.linalg.norm(np.dot(B, poly_weights) - f)**2 / (M*np.var(f)) )
 
         # store data
         self.X, self.f = X, f
