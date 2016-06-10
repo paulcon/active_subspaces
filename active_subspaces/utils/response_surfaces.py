@@ -97,7 +97,7 @@ class PolynomialApproximation(ResponseSurface):
         Q, R = np.linalg.qr(B)
         Qf = np.dot(Q.T, f)
         poly_weights = np.linalg.solve(R, Qf)
-        Rsqr = 1.0 - ( np.linalg.norm(np.dot(R, poly_weights) - Qf)**2 / np.var(f) )
+        Rsqr = 1.0 - ( np.linalg.norm(np.dot(R, poly_weights) - Qf)**2 / (M-1)*np.var(f) )
 
         # store data
         self.X, self.f = X, f
