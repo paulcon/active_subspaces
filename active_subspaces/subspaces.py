@@ -494,7 +494,9 @@ def sorted_eigh(C):
     ind = np.argsort(e)
     e = e[ind[::-1]]
     W = W[:,ind[::-1]]
-    W = W*np.sign(W[0,:])
+    s = np.sign(W[0,:])
+    s[s==0] = 1
+    W = W*s
     return e.reshape((e.size,1)), W
     
 def bootstrap_replicate(X, f, df, weights):
