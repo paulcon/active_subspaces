@@ -12,5 +12,5 @@ The notebook will also use the animate.py file to make animations demonstrating 
 input dimension is low enough and there are few enough outputs. These will be saved as .mp4's and this requires
 installation of ffmpeg or mencoder.
 
-The folders in this directory contain examples; copy/paste the data files, alter the top part of the notebook, 
-and run the notebook to see it in action.
+The folders in this directory contain examples; copy/paste the data files into the directory with the notebook,
+alter the top part of the notebook, and run the notebook to see it in action.
