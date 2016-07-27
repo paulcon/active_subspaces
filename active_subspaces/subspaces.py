@@ -306,7 +306,7 @@ def qphd_subspace(X, f, weights):
 
     # compute C
     C = np.outer(b, b.transpose()) + gamma*np.dot(A, A.transpose())
-    
+
     return sorted_eigh(C)
     
 def sir_subspace(X, f, weights):
