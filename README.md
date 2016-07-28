@@ -1,6 +1,9 @@
 # Description
 
-Python utilities for working with active subspaces.
+*Active Subspaces* is a method for discovering low-dimensional subspaces of input parameters 
+that accurately characterize the output of high-dimensional models. This dimension reduction 
+can make otherwise infeasible parameter studies possible. This library contains 
+python utilities for constructing and exploiting active subspaces.
 
 WARNING: Development is very active right now, so the interfaces are far from
 stable. It should settle down soon. Feel free to follow development.
@@ -24,6 +27,21 @@ stable. It should settle down soon. Feel free to follow development.
 ```
 
 # Usage
+
+For detailed examples of usage and results, see the Jupyter notebooks contained in the [active subspaces website]
+(http://activesubspaces.org/applications/), the 'tutorials/test_functions' and 'tutorials/AS_tutorial' 
+folders in this repo, and the [as-data-sets repo](https://github.com/paulcon/as-data-sets).
+
+The core class used in this library is the Subspaces class contained in the 'subspaces.py' file. An instance of this class can compute 
+the active subspace with a variety of methods that take either an array of gradients or input/output pairs. It contains the estimated 
+eigenvalues (and bootstrap ranges), subspace errors (and bootstrap ranges), eigenvectors, and an array of the eigenvectors defining the 
+active subspace. The 'utils/plotters.py' file contains functions to make plots of these quantities and summary plots that show model 
+output against the first 1 or 2 active variables. The 'utils/response_surfaces.py' file contains classes for polynomial and radial-basis 
+approximations that can be trained with input/output pairs. Both classes can predict the value and gradient at input points and have an 
+Rsqr value that measures goodness-of-fit. The 'integrals.py' and 'optimizers.py' files contain functions for integrating and optimizing 
+functions of the active variables, and rely on classes from the 'domains.py' file. The 'base.py' file contains the ActiveSubspaceReducedModel 
+class, which has a simple interface for the functionality just described, but does not give the user as much freedom in the construction of 
+the active subspace and surrogate models.
 
 # Documentation
 
@@ -65,6 +83,7 @@ https://groups.google.com/forum/#!searchin/gurobi/canopy/gurobi/ArCkf4a40uU/R9U1
 
 Right now I'm using [Enthought's Python Distribution](https://www.enthought.com/products/epd/) and [Canopy](https://www.enthought.com/products/canopy/) for development. You'll need numpy and scipy for these tools.
 
-# Contact
+# Community Guidelines
 
-*Paul Constantine* at [Colorado School of Mines](https://www.mines.edu/). Google me for contact info.
+If you have contributions, questions, or feedback, use the [Github repo](https://github.com/paulcon/active_subspaces) or contact 
+[*Paul Constantine*](http://inside.mines.edu/~pconstan/) at [Colorado School of Mines](https://www.mines.edu/).
