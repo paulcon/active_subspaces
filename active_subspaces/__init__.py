@@ -1,5 +1,5 @@
 ''' This is the init file.'''
-from active_subspaces.base import *
+#from active_subspaces.base import *
 
 # Set default logging handler to avoid "No handler found" warnings.
 import logging
