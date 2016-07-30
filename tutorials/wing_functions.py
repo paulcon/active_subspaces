@@ -37,5 +37,3 @@ def wing_grad(xx):
     dfdWp = (Sw)[:,None]
         
     return np.hstack((dfdSw, dfdWfw, dfdA, dfdL, dfdq, dfdl, dfdtc, dfdNz, dfdWdg, dfdWp))
-    
-    

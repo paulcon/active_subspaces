@@ -1,6 +1,5 @@
 """Utilities for building the domains and maps for active variables."""
 import numpy as np
-import logging
 from utils.misc import process_inputs, BoundedNormalizer
 from scipy.spatial import ConvexHull
 from scipy.misc import comb
@@ -194,8 +193,6 @@ class ActiveVariableMap():
         if not isinstance(N, int):
             raise TypeError('N must be an int')
 
-        logging.getLogger(__name__).debug('Inverting {:d} y\'s with {:d} z\'s per y.'.format(NY, N))
-
         Z = self.regularize_z(Y, N)
         W = self.domain.subspaces.eigenvectors
         X, ind = _rotate_x(Y, Z, W)
@@ -345,8 +342,6 @@ def interval_endpoints(W1):
     :rtype: ndarray
     """
 
-    logging.getLogger(__name__).debug('Interval domain.')
-
     m = W1.shape[0]
     y0 = np.dot(W1.T, np.sign(W1))[0]
     if y0 < -y0:
@@ -384,7 +379,6 @@ def zonotope_vertices(W1, Nsamples=1e4, maxcount=1e5):
 
     m, n = W1.shape
     totalverts = nzv(m,n)
-    logging.getLogger(__name__).debug('Zonotope domain in {:d} dims with {:d} vertices.'.format(n, totalverts))
 
     # initialize
     Z = np.random.normal(size=(Nsamples, n))
@@ -455,7 +449,6 @@ def sample_z(N, y, W1, W2):
 
     Z = rejection_sampling_z(N, y, W1, W2)
     if Z is None:
-        logging.getLogger(__name__).warn('Rejection sampling has failed miserably. Will try hit and run sampling.')
         Z = hit_and_run_z(N, y, W1, W2)
     return Z
 
@@ -502,7 +495,6 @@ def hit_and_run_z(N, y, W1, W2):
             bad_dir = np.any(np.dot(A, z0 + eps0*d) <= b)
             count += 1
             if count >= maxcount:
-                logging.getLogger(__name__).warn('There are no more directions worth pursuing in hit and run. Got {:d} samples.'.format(i))
                 Z[i:,:] = np.tile(z0, (1,N-i)).transpose()
                 return Z
 

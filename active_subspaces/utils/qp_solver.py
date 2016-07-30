@@ -1,6 +1,5 @@
 """Solvers for the linear and quadratic programs in active subspaces."""
 import numpy as np
-import logging
 from scipy.optimize import linprog, minimize
 
 # checking to see if system has gurobi
@@ -42,7 +41,6 @@ class QPSolver():
         elif solver=='SCIPY':
             self.solver = solver_SCIPY
         else:
-            logging.getLogger(__name__).debug('QP solver {} is not available. Using scipy optimization package.'.format(solver))
             self.solver = solver_SCIPY
 
 
@@ -71,7 +69,6 @@ class QPSolver():
         subject to  A x = b
         lb <= x <= ub
         """
-        logging.getLogger(__name__).debug('Linear program with {:d} variables and {:d} equality constraints using {}'.format(A.shape[1], A.shape[0], self.solver))
         if self.solver == solver_SCIPY:
             return _scipy_linear_program_eq(c, A, b, lb, ub)
         elif self.solver == solver_GUROBI:
@@ -99,7 +96,6 @@ class QPSolver():
         minimize  c^T x
         subject to  A x >= b
         """
-        logging.getLogger(__name__).debug('Linear program with {:d} variables and {:d} inequality constraints using {}'.format(A.shape[1], A.shape[0], self.solver))
         if self.solver == solver_SCIPY:
             return _scipy_linear_program_ineq(c, A, b)
         elif self.solver == solver_GUROBI:
@@ -130,7 +126,6 @@ class QPSolver():
         minimize  c^T x + x^T Q x
         subject to  lb <= x <= ub
         """
-        logging.getLogger(__name__).debug('Quadratic program with {:d} variables using {}'.format(Q.shape[0], self.solver))
         if self.solver == solver_SCIPY:
             return _scipy_quadratic_program_bnd(c, Q, lb, ub)
         elif self.solver == solver_GUROBI:
@@ -161,7 +156,6 @@ class QPSolver():
         minimize  c^T x + x^T Q x
         subject to  A x >= b
         """
-        logging.getLogger(__name__).debug('Quadratic program with {:d} variables and {:d} inequality constraints using {}'.format(A.shape[1], A.shape[0], self.solver))
         if self.solver == solver_SCIPY:
             return _scipy_quadratic_program_ineq(c, Q, A, b)
         elif self.solver == solver_GUROBI:

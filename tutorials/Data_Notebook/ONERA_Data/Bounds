@@ -1,3 +1,0 @@
-Bounds are:
-xl = -0.05*np.ones((1, 50))
-xu = 0.05*np.ones((1, 50))

@@ -29,7 +29,7 @@ class Subspaces():
     W1, W2 = None, None
     e_br, sub_br = None, None
 
-    def compute(self, X=None, f=None, df=None, weights=None, sstype=0, ptype=0, nboot=0):
+    def compute(self, X=None, f=None, df=None, weights=None, sstype='AS', ptype='EVG', nboot=0):
         """
         TODO: docs
         
@@ -81,7 +81,7 @@ class Subspaces():
         else:
             e, W = None, None
             ssmethod = None
-            raise Exception('Unrecognized subspace type: {:d}'.format(sstype))
+            raise Exception('Unrecognized subspace type: {}'.format(sstype))
         
         self.eigenvalues, self.eigenvectors = e, W    
         
@@ -90,7 +90,7 @@ class Subspaces():
             e_br, sub_br, li_F = bootstrap_ranges(e, W, X, f, df, weights, ssmethod, nboot)
         else:
             if ptype == 1 or ptype == 2:
-                raise Exception('Need to run bootstrap for partition type {:d}'.format(ptype))
+                raise Exception('Need to run bootstrap for partition type {}'.format(ptype))
             
             e_br, sub_br = None, None
             
@@ -105,7 +105,7 @@ class Subspaces():
         elif ptype == 'LI':
             n = ladle_partition(e, li_F)[0]
         else:
-            raise Exception('Unrecognized partition type: {:d}'.format(ptype))
+            raise Exception('Unrecognized partition type: {}'.format(ptype))
         
         self.partition(n)
 
