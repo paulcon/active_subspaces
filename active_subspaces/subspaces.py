@@ -8,24 +8,31 @@ from gradients import local_linear_gradients
 SQRTEPS = np.sqrt(np.finfo(float).eps)
 
 class Subspaces():
-    """
-    A class for computing active and inactive subspaces.
-
-    :cvar ndarray eigenvalues: m-by-1 matrix where m is the dimension of the input space.
-    :cvar ndarray eigenvectors: m-by-m matrix that contains the eigenvectors oriented column-wise.
-    :cvar ndarray W1: m-by-n matrix that contains the basis for the active subspace.
-    :cvar ndarray W2: m-by-(m-n) matix that contains the basis for the inactive subspaces.
-    :cvar ndarray e_br: m-by-2 matrix that contains the bootstrap ranges for the eigenvalues.
-    :cvar ndarray sub_br: m-by-3 matrix that contains the bootstrap ranges (first and third column) 
-    and the mean (second column) of the error in the estimated subspaces approximated by bootstrap
-
-    **Notes**
-
+    """A class for computing active and inactive subspaces.
+    
     The attributes `W1` and `W2` are convenience variables. They are identical
-    to the first n and last (m-n) columns of `eigenvectors`, respectively.
+    to the first n and last (m-n) columns of `eigenvecs`, respectively.
+    
+    Attributes
+    ----------
+        eigenvals : ndarray 
+            m-by-1 matrix of eigenvalues
+        eigenvecs : ndarray
+            m-by-m matrix, eigenvectors oriented column-wise
+        W1 : ndarray
+            m-by-n matrix, basis for the active subspace
+        W2 : ndarray
+            m-by-(m-n) matrix, basis for the inactive subspace
+        e_br : ndarray
+            m-by-2 matrix, bootstrap ranges for the eigenvalues
+        sub_br : ndarray
+            m-by-3 matrix, bootstrap ranges (first and third column) and the 
+            mean (second column) of the error in the estimated active subspace 
+            approximated by bootstrap
+
     """
 
-    eigenvalues, eigenvectors = None, None
+    eigenvals, eigenvecs = None, None
     W1, W2 = None, None
     e_br, sub_br = None, None
 
@@ -83,7 +90,7 @@ class Subspaces():
             ssmethod = None
             raise Exception('Unrecognized subspace type: {}'.format(sstype))
         
-        self.eigenvalues, self.eigenvectors = e, W    
+        self.eigenvals, self.eigenvecs = e, W    
         
         # Compute bootstrap ranges and partition
         if nboot > 0:
@@ -117,11 +124,11 @@ class Subspaces():
         if not isinstance(n, int):
             raise TypeError('n should be an integer')
 
-        m = self.eigenvectors.shape[0]
+        m = self.eigenvecs.shape[0]
         if n<1 or n>m:
             raise ValueError('n must be positive and less than the dimension of the eigenvectors.')
 
-        self.W1, self.W2 = self.eigenvectors[:,:n], self.eigenvectors[:,n:]
+        self.W1, self.W2 = self.eigenvecs[:,:n], self.eigenvecs[:,n:]
 
 def active_subspace(df, weights):
     """
