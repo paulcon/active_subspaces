@@ -1,7 +1,6 @@
 """Utilities for running several simulations at different inputs."""
 
 import numpy as np
-import logging
 import time
 from misc import process_inputs
 
@@ -64,15 +63,14 @@ class SimulationRunner():
         X, M, m = process_inputs(X)
         F = np.zeros((M, 1))
 
-        logger = logging.getLogger(__name__)
-
-        start = time.time()
+        # TODO: provide some timing information
+        # start = time.time()
+        
         for i in range(M):
             F[i] = self.fun(X[i,:].reshape((1,m)))
-            if ((i+1) % 10) == 0:
-                logger.debug('\t{:d} of {:d}'.format(i+1, M))
-        end = time.time() - start
-        logger.info('Completed {:d} function evaluations in {:4.2f} seconds.'.format(M, end))
+            
+        # TODO: provide some timing information
+        # end = time.time() - start
 
         return F
 
@@ -138,14 +136,14 @@ class SimulationGradientRunner():
         X, M, m = process_inputs(X)
         dF = np.zeros((M, m))
 
-        logger = logging.getLogger(__name__)
-
-        start = time.time()
+        # TODO: provide some timing information
+        # start = time.time()
+        
         for i in range(M):
             df = self.dfun(X[i,:].reshape((1,m)))
             dF[i,:] = df.reshape((1,m))
-            logger.debug('Completed {:d} of {:d} gradient evaluations.'.format(i+1, M))
-        end = time.time() - start
-        logger.info('Completed {:d} gradient evaluations in {:4.2f} seconds.'.format(M, end))
+        
+        # TODO: provide some timing information
+        # end = time.time() - start
 
         return dF
