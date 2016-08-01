@@ -1,6 +1,5 @@
 """Miscellaneous utilities."""
 import numpy as np
-import logging
 
 class Normalizer():
     """
@@ -221,8 +220,6 @@ def conditional_expectations(f, ind):
     """
 
     n = int(np.amax(ind)) + 1
-    NMC = np.sum(ind==0)
-    logging.getLogger(__name__).debug('Computing {:d} conditional averages with {:d} MC samples.'.format(n, NMC))
 
     Ef, Vf = np.zeros((n, 1)), np.zeros((n, 1))
     for i in range(n):

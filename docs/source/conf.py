@@ -31,6 +31,7 @@ sys.path.insert(0, os.path.abspath('../..'))
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.napoleon',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -49,7 +50,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'active_subspaces'
-copyright = u'2015, Paul Constantine'
+copyright = u'2016, Paul Constantine'
 author = u'Paul Constantine'
 
 # The version info for the project you're documenting, acts as replacement for

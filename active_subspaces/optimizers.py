@@ -1,6 +1,5 @@
 """Utilities for exploiting active subspaces when optimizing."""
 import numpy as np
-import logging
 from domains import UnboundedActiveVariableDomain, BoundedActiveVariableDomain, \
                 ActiveVariableMap
 import scipy.optimize as scopt
@@ -46,9 +45,6 @@ class MinVariableMap(ActiveVariableMap):
             p = n+2
         else:
             p = n+1
-
-        logging.getLogger(__name__).debug('Training a MinVariableMap on {:d} active variables out of {:d} for a {:d}-dim active subspace.'\
-                                .format(p, m, n))
 
         Yp = np.dot(X, W[:,:p])
         pr = PolynomialApproximation(N=2)
@@ -188,8 +184,6 @@ def minimize(asrs, X, f):
     # ActiveVariableDomain
     avdom = asrs.avmap.domain
 
-    logging.getLogger(__name__).debug('Minimizing a {:d}-variate function exploiting a {:d}-dim active subspace.'\
-                                .format(m, avdom.subspaces.W1.shape[1]))
     # wrappers
     def avfun(y):
         f = asrs.predict_av(y.reshape((1,y.size)))[0]
@@ -267,8 +261,6 @@ def interval_minimize(avfun, avdom):
     This function wraps the scipy.optimize function fminbound.
     """
 
-    logging.getLogger(__name__).debug('Interval minimization.')
-
     yl, yu = avdom.vertY[0,0], avdom.vertY[1,0]
     result = scopt.fminbound(avfun, yl, yu, xtol=1e-9, maxfun=1e4, full_output=1)
     if result[2]:
@@ -306,8 +298,6 @@ def zonotope_minimize(avfun, avdom, avdfun):
 
     n = avdom.subspaces.W1.shape[1]
 
-    logging.getLogger(__name__).debug('Zonotope minimization in {:d} vars.'.format(n))
-
     opts = {'disp':False, 'maxiter':1e4, 'ftol':1e-9}
 
     # a bit of globalization
@@ -325,7 +315,6 @@ def zonotope_minimize(avfun, avdom, avdfun):
         if result.fun < minf:
             minf = result.fun
             minres = result
-            logging.getLogger(__name__).debug('\tMinimum {:6.4f}.'.format(minf))
 
     np.random.set_state(curr_state)
     ystar, fstar = minres.x, minres.fun
@@ -376,7 +365,6 @@ def unbounded_minimize(avfun, avdom, avdfun):
         if result.fun < minf:
             minf = result.fun
             minres = result
-            logging.getLogger(__name__).debug('\tMinimum {:6.4f}.'.format(minf))
     np.random.set_state(curr_state)
     ystar, fstar = minres.x, minres.fun
     return ystar, fstar

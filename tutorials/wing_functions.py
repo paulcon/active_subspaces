@@ -8,11 +8,6 @@ def wing(xx):
     x = np.atleast_2d(x)
     M = x.shape[0]
     
-    #Unnormalize inputs
-    xl = np.array([150, 220, 6, -10, 16, .5, .08, 2.5, 1700, .025])
-    xu = np.array([200, 300, 10, 10, 45, 1, .18, 6, 2500, .08])
-    x = ac.utils.misc.BoundedNormalizer(xl, xu).unnormalize(x)
-    
     Sw = x[:,0]; Wfw = x[:,1]; A = x[:,2]; L = x[:,3]*np.pi/180.; q = x[:,4]
     l = x[:,5]; tc = x[:,6]; Nz = x[:,7]; Wdg = x[:,8]; Wp = x[:,9]
     
@@ -24,11 +19,6 @@ def wing_grad(xx):
     
     x = xx.copy()
     x = np.atleast_2d(x)
-    
-    #Unnormalize inputs
-    xl = np.array([150, 220, 6, -10, 16, .5, .08, 2.5, 1700, .025])
-    xu = np.array([200, 300, 10, 10, 45, 1, .18, 6, 2500, .08])
-    x = ac.utils.misc.BoundedNormalizer(xl, xu).unnormalize(x)
     
     Sw = x[:,0]; Wfw = x[:,1]; A = x[:,2]; L = x[:,3]*np.pi/180.; q = x[:,4]
     l = x[:,5]; tc = x[:,6]; Nz = x[:,7]; Wdg = x[:,8]; Wp = x[:,9]
@@ -45,9 +35,5 @@ def wing_grad(xx):
     dfdNz = (.49*Q/Nz)[:,None]
     dfdWdg = (.49*Q/Wdg)[:,None]
     dfdWp = (Sw)[:,None]
-    
-    #The gradient components must be scaled in accordance with the chain rule: df/dx = df/dy*dy/dx
-    return np.hstack((dfdSw*(200 - 150)/2., dfdWfw*(300 - 220)/2., dfdA*(10 - 6)/2., dfdL*(10 + 10)*np.pi/(2.*180), dfdq*(45 - 16)/2.,\
-        dfdl*(1 - .5)/2., dfdtc*(.18 - .08)/2., dfdNz*(6 - 2.5)/2., dfdWdg*(2500 - 1700)/2., dfdWp*(.08 - .025)/2.))
-    
-    
+        
+    return np.hstack((dfdSw, dfdWfw, dfdA, dfdL, dfdq, dfdl, dfdtc, dfdNz, dfdWdg, dfdWp))

@@ -1,10 +1,8 @@
 """Utilities for building response surface approximations."""
 import numpy as np
-import logging
 from scipy.optimize import fminbound
 from scipy.misc import comb
 from misc import process_inputs, process_inputs_outputs
-import pdb
 
 class ResponseSurface():
     """
@@ -86,8 +84,6 @@ class PolynomialApproximation(ResponseSurface):
         # check that there are enough points to train the polynomial
         if M < comb(self.N + m, m):
             raise Exception('Not enough points to fit response surface of order {:d}'.format(self.N))
-
-        logging.getLogger(__name__).debug('Training a degree {:d} polynomial in {:d} dims with {:d} points.'.format(self.N, m, M))
 
         B, indices = polynomial_bases(X,  self.N)
         p = B.shape[1]
@@ -215,8 +211,6 @@ class RadialBasisApproximation(ResponseSurface):
         # check that there are enough points to train the polynomial
         if M < comb(self.N + m, m):
             raise Exception('Not enough points to fit response surface of order {:d}'.format(self.N))
-
-        logging.getLogger(__name__).debug('Training an RBF surface with degree {:d} polynomial in {:d} dims with {:d} points.'.format(self.N, m, M))
 
         # use maximum likelihood to tune parameters
         log10g = fminbound(rbf_objective, -10.0, 1.0, args=(X, f, v, self.N, e, ))
