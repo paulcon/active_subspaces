@@ -19,7 +19,7 @@ def local_linear_gradients(X, f, p=None, weights=None):
     p : int, optional
         how many nearest neighbors to use when constructing the local linear 
         model (default 1)
-    weights : ndarray
+    weights : ndarray, optional
         M-by-1 matrix that contains the weights for each observation (default 
         None)
 

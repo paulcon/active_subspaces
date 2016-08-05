@@ -5,18 +5,20 @@ import time
 from misc import process_inputs
 
 class SimulationRunner():
-    """
-    A class for running several simulations at different input values.
+    """A class for running several simulations at different input values.
 
-    :cvar function fun: Runs the simulation for a fixed value of the input
-        parameters, given as an ndarray.
+    Attributes
+    ----------
+    fun : function 
+        runs the simulation for a fixed value of the input parameters, given as
+        an ndarray
 
-    **See Also**
-
+    See Also
+    --------
     utils.simrunners.SimulationGradientRunner
 
-    **Notes**
-
+    Notes
+    -----
     The function fun should take an ndarray of size 1-by-m and return a float.
     This float is the quantity of interest from the simulation. Often, the
     function is a wrapper to a larger simulation code.
@@ -24,13 +26,15 @@ class SimulationRunner():
     fun = None
 
     def __init__(self, fun):
-        """
-        Initialize a SimulationRunner.
+        """Initialize a SimulationRunner.
 
-        :param function fun: A function that runs the simulation for a fixed
-            value of the input parameters, given as an ndarray. This function
-            returns the quantity of interest from the model. Often, this
-            function is a wrapper to a larger simulation code.
+        Parameters
+        ----------
+        fun : function  
+            a function that runs the simulation for a fixed value of the input 
+            parameters, given as an ndarray. This function returns the quantity 
+            of interest from the model. Often, this function is a wrapper to a 
+            larger simulation code.
         """
         if not hasattr(fun, '__call__'):
             raise TypeError('fun should be a callable function.')
@@ -38,19 +42,23 @@ class SimulationRunner():
         self.fun = fun
 
     def run(self, X):
-        """
-        Run the simulation at several input values.
+        """Run the simulation at several input values.
+        
+        Parameters
+        ----------
+        X : ndarray
+            contains all input points where one wishes to run the simulation. If
+            the simulation takes m inputs, then `X` must have shape M-by-m, 
+            where M is the number of simulations to run.
 
-        :param ndarray X: Contains all input points where one wishes to run the
-            simulation. If the simulation takes m inputs, then `X` must have
-            shape M-by-m, where M is the number of simulations to run.
+        Returns
+        -------
+        F : ndarray 
+            contains the simulation output at each given input point. The shape 
+            of `F` is M-by-1.
 
-        :return: F, Contains the simulation output at each given input point.
-            The shape of `F` is M-by-1.
-        :rtype: ndarray
-
-        **Notes**
-
+        Notes
+        -----
         In principle, the simulation calls can be executed independently and in
         parallel. Right now this function uses a sequential for-loop. Future
         development will take advantage of multicore architectures to
@@ -75,20 +83,25 @@ class SimulationRunner():
         return F
 
 class SimulationGradientRunner():
-    """
+    """Evaluates gradients at several input values.
+    
+    
     A class for running several simulations at different input values that
     return the gradients of the quantity of interest.
 
-    :cvar function dfun: A function that runs the simulation for a fixed value
-        of the input parameters, given as an ndarray. It returns the gradient of
-        the quantity of interest at the given input.
+    Attributes
+    ----------
+    dfun : function 
+        a function that runs the simulation for a fixed value of the input 
+        parameters, given as an ndarray. It returns the gradient of the quantity
+        of interest at the given input.
 
-    **See Also**
-
+    See Also
+    --------
     utils.simrunners.SimulationRunner
 
-    **Notes**
-
+    Notes
+    -----
     The function dfun should take an ndarray of size 1-by-m and return an
     ndarray of shape 1-by-m. This ndarray is the gradient of the quantity of
     interest from the simulation. Often, the function is a wrapper to a larger
@@ -97,12 +110,14 @@ class SimulationGradientRunner():
     dfun = None
 
     def __init__(self, dfun):
-        """
-        Initialize a SimulationGradientRunner.
+        """Initialize a SimulationGradientRunner.
 
-        :param function dfun: A function that runs the simulation for a fixed
-            value of the input parameters, given as an ndarray. It returns the
-            gradient of the quantity of interest at the given input.
+        Parameters
+        ----------
+        dfun : function 
+            a function that runs the simulation for a fixed value of the input 
+            parameters, given as an ndarray. It returns the gradient of the 
+            quantity of interest at the given input.
         """
         if not hasattr(dfun, '__call__'):
             raise TypeError('fun should be a callable function.')
@@ -110,20 +125,26 @@ class SimulationGradientRunner():
         self.dfun = dfun
 
     def run(self, X):
-        """
+        """Run at several input values.
+        
         Run the simulation at several input values and return the gradients of
         the quantity of interest.
 
-        :param ndarray X: Contains all input points where one wishes to run the
-            simulation. If the simulation takes m inputs, then `X` must have
-            shape M-by-m, where M is the number of simulations to run.
+        Parameters
+        ----------
+        X : ndarray 
+            contains all input points where one wishes to run the simulation. 
+            If the simulation takes m inputs, then `X` must have shape M-by-m, 
+            where M is the number of simulations to run.
 
-        :return: dF, ontains the gradient of the quantity of interest at each
-            given input point. The shape of `dF` is M-by-m.
-        :rtype: ndarray
+        Returns
+        -------
+        dF : ndarray 
+            contains the gradient of the quantity of interest at each given 
+            input point. The shape of `dF` is M-by-m.
 
-        **Notes**
-
+        Notes
+        -----
         In principle, the simulation calls can be executed independently and in
         parallel. Right now this function uses a sequential for-loop. Future
         development will take advantage of multicore architectures to

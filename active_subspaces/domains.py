@@ -214,7 +214,7 @@ class ActiveVariableMap():
             raise TypeError('N must be an int')
 
         Z = self.regularize_z(Y, N)
-        W = self.domain.subspaces.eigenvectors
+        W = self.domain.subspaces.eigenvecs
         X, ind = _rotate_x(Y, Z, W)
         return X, ind
 
