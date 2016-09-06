@@ -22,9 +22,24 @@ stable. It should settle down soon. Feel free to follow development.
 
 # Installation
 
-```bash
-> pip install active-subspaces
-```
+### The Active Subspaces Package
+
+To install the active subspaces package, download the [GitHub repository](https://github.com/paulcon/active_subspaces) and extract the contents of the zip file where you want them. 
+There are two methods for installing the code. First, if you have the 'setuptools' module installed, you can open the command line or terminal, 
+navigate to the 'active_subspaces-master' folder, and run the command 'python setup.py install'. Alternatively, you can start a Python 
+interpreter and run the commands 'import sys' and 'print sys.path'; this prints a list of folders in which Python looks for modules. 
+Copy the 'active_subspaces' folder (inside the 'active_subspaces-master' folder) into any directory listed in sys.path. Restart the 
+python kernel and you should be able to import the package with 'import active_subspaces'. These methods were tested on Windows 7 Professional 64-bit and Ubuntu 14.04 LTS 
+64-bit with the [Enthought](https://www.enthought.com/) Python distrubution (Python 2.7.11, NumPy 1.10.4, SciPy 0.17.0, and matplotlib 1.5.1), available with their [Canopy](https://www.enthought.com/products/canopy/) development environment.
+ 
+### Gurobi
+
+Gurobi is an _optional_ dependency of the active subspaces library; if you don't have it, the exact same functionality will be accomplished 
+using SciPy. If you wish to use Gurobi, you will need to install it separately by following the instructions contained in their quick-start 
+guides for [Windows](http://www.gurobi.com/documentation/6.5/quickstart_windows.pdf) or [Linux](http://www.gurobi.com/documentation/6.5/quickstart_linux.pdf). Generally, you will need to obtain a license, download and install the Gurobi software, and download the license. 
+For Linux, you will need to manually alter some environment variables (done in different ways depending on distribution); if you are 
+not knowledgable about this process, you may wish to rely on SciPy instead of Gurobi. To test your installation of Gurobi, start a python 
+interpreter and execute the command 'import gurobipy'; if there is no import exception, the active subspaces library will be able to use Gurobi.
 
 # Usage
 
@@ -39,9 +54,7 @@ active subspace. The 'utils/plotters.py' file contains functions to make plots o
 output against the first 1 or 2 active variables. The 'utils/response_surfaces.py' file contains classes for polynomial and radial-basis 
 approximations that can be trained with input/output pairs. Both classes can predict the value and gradient at input points and have an 
 Rsqr value that measures goodness-of-fit. The 'integrals.py' and 'optimizers.py' files contain functions for integrating and optimizing 
-functions of the active variables, and rely on classes from the 'domains.py' file. The 'base.py' file contains the ActiveSubspaceReducedModel 
-class, which has a simple interface for the functionality just described, but does not give the user as much freedom in the construction of 
-the active subspace and surrogate models.
+functions of the active variables, and rely on classes from the 'domains.py' file.
 
 # Documentation
 
