@@ -17,29 +17,34 @@ stable. It should settle down soon. Feel free to follow development.
 * [numpy](http://www.numpy.org/)
 * [scipy](http://www.scipy.org/), >= 0.15.0
 * [matplotlib](http://matplotlib.org/)
-* linear and quadratic program solvers
-    - This package will look for [Gurobi](#gurobi) first and fall back to scipy, see [qp_solver.py](https://github.com/paulcon/active_subspaces/blob/master/active_subspaces/utils/qp_solver.py)
+* [Gurobi](http://www.gurobi.com/) is an _optional_ dependency of the active subspaces library; if you don't have it, the exact same functionality will be accomplished 
+using SciPy. 
 
 # Installation
 
 ### The Active Subspaces Package
 
-To install the active subspaces package, download the [GitHub repository](https://github.com/paulcon/active_subspaces) and extract the contents of the zip file where you want them. 
-There are two methods for installing the code. First, if you have the 'setuptools' module installed, you can open the command line or terminal, 
-navigate to the 'active_subspaces-master' folder, and run the command 'python setup.py install'. Alternatively, you can start a Python 
-interpreter and run the commands 'import sys' and 'print sys.path'; this prints a list of folders in which Python looks for modules. 
-Copy the 'active_subspaces' folder (inside the 'active_subspaces-master' folder) into any directory listed in sys.path. Restart the 
-python kernel and you should be able to import the package with 'import active_subspaces'. These methods were tested on Windows 7 Professional 64-bit and Ubuntu 14.04 LTS 
+To install the active subspaces package, open the terminal/command line and clone the repository with the command
+
+```bash
+git clone https://github.com/paulcon/active_subspaces.git
+```
+
+Navigate into the 'active_subspaces' folder (where the 'setup.py' file is located) and run the command
+
+```bash
+python setup.py install
+```
+
+You should now be able to import the active subspaces library in Python scripts and interpreters with the command 'import active_subspaces'. 
+This method was tested on Windows 7 Professional 64-bit and Ubuntu 14.04 LTS 
 64-bit with the [Enthought](https://www.enthought.com/) Python distrubution (Python 2.7.11, NumPy 1.10.4, SciPy 0.17.0, and matplotlib 1.5.1), available with their [Canopy](https://www.enthought.com/products/canopy/) development environment.
  
 ### Gurobi
 
-Gurobi is an _optional_ dependency of the active subspaces library; if you don't have it, the exact same functionality will be accomplished 
-using SciPy. If you wish to use Gurobi, you will need to install it separately by following the instructions contained in their quick-start 
-guides for [Windows](http://www.gurobi.com/documentation/6.5/quickstart_windows.pdf) or [Linux](http://www.gurobi.com/documentation/6.5/quickstart_linux.pdf). Generally, you will need to obtain a license, download and install the Gurobi software, and download the license. 
-For Linux, you will need to manually alter some environment variables (done in different ways depending on distribution); if you are 
-not knowledgable about this process, you may wish to rely on SciPy instead of Gurobi. To test your installation of Gurobi, start a python 
-interpreter and execute the command 'import gurobipy'; if there is no import exception, the active subspaces library will be able to use Gurobi.
+If you wish to use Gurobi, you will need to install it separately by following the instructions contained in their quick-start 
+guides for [Windows](http://www.gurobi.com/documentation/6.5/quickstart_windows.pdf) or [Linux](http://www.gurobi.com/documentation/6.5/quickstart_linux.pdf). To test your installation of Gurobi, start a python 
+interpreter and execute the command 'import gurobipy'. If there is no import exception, the active subspaces library will be able to use Gurobi.
 
 # Usage
 
