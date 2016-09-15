@@ -30,13 +30,13 @@ To install the active subspaces package, open the terminal/command line and clon
 git clone https://github.com/paulcon/active_subspaces.git
 ```
 
-Navigate into the 'active_subspaces' folder (where the 'setup.py' file is located) and run the command
+Navigate into the `active_subspaces` folder (where the `setup.py` file is located) and run the command
 
 ```bash
 python setup.py install
 ```
 
-You should now be able to import the active subspaces library in Python scripts and interpreters with the command 'import active_subspaces'. 
+You should now be able to import the active subspaces library in Python scripts and interpreters with the command `import active_subspaces`. 
 This method was tested on Windows 7 Professional 64-bit and Ubuntu 14.04 LTS 
 64-bit with the [Enthought](https://www.enthought.com/) Python distrubution (Python 2.7.11, NumPy 1.10.4, SciPy 0.17.0, and matplotlib 1.5.1), available with their [Canopy](https://www.enthought.com/products/canopy/) development environment.
  
@@ -44,33 +44,26 @@ This method was tested on Windows 7 Professional 64-bit and Ubuntu 14.04 LTS
 
 If you wish to use Gurobi, you will need to install it separately by following the instructions contained in their quick-start 
 guides for [Windows](http://www.gurobi.com/documentation/6.5/quickstart_windows.pdf) or [Linux](http://www.gurobi.com/documentation/6.5/quickstart_linux.pdf). To test your installation of Gurobi, start a python 
-interpreter and execute the command 'import gurobipy'. If there is no import exception, the active subspaces library will be able to use Gurobi.
+interpreter and execute the command `import gurobipy`. If there is no import exception, the active subspaces library will be able to use Gurobi.
 
 # Usage
 
 For detailed examples of usage and results, see the Jupyter notebooks contained in the [active subspaces website]
-(http://activesubspaces.org/applications/), the 'tutorials/test_functions' and 'tutorials/AS_tutorial' 
+(http://activesubspaces.org/applications/), the `tutorials/test_functions` and `tutorials/AS_tutorial` 
 folders in this repo, and the [as-data-sets repo](https://github.com/paulcon/as-data-sets).
 
-The core class used in this library is the Subspaces class contained in the 'subspaces.py' file. An instance of this class can compute 
+The core class used in this library is the Subspaces class contained in the `subspaces.py` file. An instance of this class can compute 
 the active subspace with a variety of methods that take either an array of gradients or input/output pairs. It contains the estimated 
 eigenvalues (and bootstrap ranges), subspace errors (and bootstrap ranges), eigenvectors, and an array of the eigenvectors defining the 
-active subspace. The 'utils/plotters.py' file contains functions to make plots of these quantities and summary plots that show model 
-output against the first 1 or 2 active variables. The 'utils/response_surfaces.py' file contains classes for polynomial and radial-basis 
+active subspace. The `utils/plotters.py` file contains functions to make plots of these quantities and summary plots that show model 
+output against the first 1 or 2 active variables. The `utils/response_surfaces.py` file contains classes for polynomial and radial-basis 
 approximations that can be trained with input/output pairs. Both classes can predict the value and gradient at input points and have an 
-Rsqr value that measures goodness-of-fit. The 'integrals.py' and 'optimizers.py' files contain functions for integrating and optimizing 
-functions of the active variables, and rely on classes from the 'domains.py' file.
+Rsqr value that measures goodness-of-fit. The `integrals.py` and `optimizers.py` files contain functions for integrating and optimizing 
+functions of the active variables, and rely on classes from the `domains.py` file.
 
 # Documentation
 
-`active_subspaces` uses [Sphinx](http://www.sphinx-doc.org/en/stable/) for code documentation. To build the html versions of the docs simply:
-
-```bash
-> cd docs
-> make html
-```
-
-The generated html can be found in `docs/buidl/html`. Open up the `index.html` you find there to browse
+Documentation can be found on [ReadTheDocs](http://active-subspaces.readthedocs.io/en/latest/).
 
 # Testing
 
