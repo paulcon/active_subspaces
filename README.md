@@ -43,8 +43,8 @@ This method was tested on Windows 7 Professional, and Ubuntu 14.04 LTS, and Mac 
 
 # Usage
 
-For detailed examples of usage and results, see the Jupyter notebooks contained in the `tutorials/test_functions` and `tutorials/AS_tutorial` directories, the [active subspaces website]
-(http://activesubspaces.org/applications/), and the Active Subspaces data sets [repo](https://github.com/paulcon/as-data-sets).
+For detailed examples of usage and results, see the Jupyter notebooks contained in the `tutorials` directory, the [active subspaces website]
+(http://activesubspaces.org/applications/), and the Active Subspaces Data Sets [repo](https://github.com/paulcon/as-data-sets).
 
 The core class is the Subspaces class contained in the `subspaces.py` file. An instance of this class can compute the active subspace with a variety of methods that take either an array of gradients or input/output pairs. It contains the estimated eigenvalues (and bootstrap ranges), subspace errors (and bootstrap ranges), eigenvalues, and an array of the eigenvectors defining the active subspace. The `utils/plotters.py` file contains functions to plot these quantities and produce summary plots that show model output against the first 1 or 2 active variables. The `utils/response_surfaces.py` file contains classes for polynomial and radial-basis approximations that can be trained with input/output pairs. Both classes can predict the value and gradient at input points and have a coefficient of deterimination (R-squared) value that measures goodness-of-fit. The `integrals.py` and `optimizers.py` files contain functions for integrating and optimizing functions of the active variables; these rely on classes from the `domains.py` file.
 
@@ -65,3 +65,7 @@ To run tests locally:
 
 If you have contributions, questions, or feedback, use the [Github repo](https://github.com/paulcon/active_subspaces) or contact 
 [*Paul Constantine*](http://inside.mines.edu/~pconstan/).
+
+# Acknowledgments
+
+This material is based upon work supported by the U.S. Department of Energy Office of Science, Office of Advanced Scientific Computing Research, Applied Mathematics program under Award Number DE-SC-0011077.
