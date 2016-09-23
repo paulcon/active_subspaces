@@ -20,7 +20,6 @@ authors:
  - name: Paul Diaz
    affiliation: University of Colorado Boulder, Boulder, CO
  - name: Leslie Fletcher
-   affiliation: Later, Vancouver, Canada
 date: 19 September 2016
 bibliography: paper.bib
 ---
