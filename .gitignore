@@ -49,3 +49,4 @@ nosetests.xml
 
 # Jupyter Checkpoints
 *.ipynb_checkpoints*
+*checkpoint.ipynb
