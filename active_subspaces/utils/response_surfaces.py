@@ -378,7 +378,8 @@ def _rbf_objective(log10g, X, f, v, N, e):
     res = f - np.dot(B, beta)
 
     # variance
-    sig2 = np.dot(res.T, np.linalg.solve(K, res))/M
+    sig2 = np.max([np.dot(res.T, np.linalg.solve(K, res))/M, 5*np.finfo(float).eps])
+    
 
     r = np.sum(np.log(np.diag(L))) + M*np.log(sig2)
     return r
