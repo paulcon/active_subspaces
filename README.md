@@ -23,8 +23,6 @@ We had some initial trouble getting the Gurobi Python interface working with Ent
 
 # Installation
 
-### The Active Subspaces Package
-
 To install the active subspaces package, open the terminal/command line and clone the repository with the command
 
 ```bash
@@ -39,14 +37,14 @@ python setup.py install
 
 You should now be able to import the active subspaces library in Python scripts and interpreters with the command `import active_subspaces`.
 
-This method was tested on Windows 7 Professional, and Ubuntu 14.04 LTS, and Mac OSX El Capitan with the [Enthought](https://www.enthought.com/) Python distrubution (Python 2.7.11, NumPy 1.10.4, SciPy 0.17.0, and matplotlib 1.5.1).
+This method was tested on Windows 7 Professional, and Ubuntu 14.04 LTS, and Mac OSX El Capitan with the [Enthought](https://www.enthought.com/) Python distribution (Python 2.7.11, NumPy 1.10.4, SciPy 0.17.0, and matplotlib 1.5.1).
 
 # Usage
 
 For detailed examples of usage and results, see the Jupyter notebooks contained in the `tutorials` directory, the [active subspaces website]
 (http://activesubspaces.org/applications/), and the Active Subspaces Data Sets [repo](https://github.com/paulcon/as-data-sets).
 
-The core class is the Subspaces class contained in the `subspaces.py` file. An instance of this class can compute the active subspace with a variety of methods that take either an array of gradients or input/output pairs. It contains the estimated eigenvalues (and bootstrap ranges), subspace errors (and bootstrap ranges), eigenvalues, and an array of the eigenvectors defining the active subspace. The `utils/plotters.py` file contains functions to plot these quantities and produce summary plots that show model output against the first 1 or 2 active variables. The `utils/response_surfaces.py` file contains classes for polynomial and radial-basis approximations that can be trained with input/output pairs. Both classes can predict the value and gradient at input points and have a coefficient of deterimination (R-squared) value that measures goodness-of-fit. The `integrals.py` and `optimizers.py` files contain functions for integrating and optimizing functions of the active variables; these rely on classes from the `domains.py` file.
+The core class is the Subspaces class contained in the `subspaces.py` file. An instance of this class can compute the active subspace with a variety of methods that take either an array of gradients or input/output pairs. It contains the estimated eigenvalues (and bootstrap ranges), subspace errors (and bootstrap ranges), eigenvalues, and an array of the eigenvectors defining the active subspace. The `utils/plotters.py` file contains functions to plot these quantities and produce summary plots that show model output against the first 1 or 2 active variables. The `utils/response_surfaces.py` file contains classes for polynomial and radial-basis approximations that can be trained with input/output pairs. Both classes can predict the value and gradient at input points and have a coefficient of determination (R-squared) value that measures goodness-of-fit. The `integrals.py` and `optimizers.py` files contain functions for integrating and optimizing functions of the active variables; these rely on classes from the `domains.py` file.
 
 # Documentation
 
@@ -54,17 +52,29 @@ Documentation can be found on [ReadTheDocs](http://active-subspaces.readthedocs.
 
 # Testing
 
-We are using Travis CI for continusous intergration testing. You can check out the current status [here](https://travis-ci.org/paulcon/active_subspaces).
+We are using Travis CI for continuous integration testing. You can check out the current status [here](https://travis-ci.org/paulcon/active_subspaces).
 
 To run tests locally:
 
 ```bash
 > python test.py
 ```
+
 # Community Guidelines
 
-If you have contributions, questions, or feedback, use the [Github repo](https://github.com/paulcon/active_subspaces) or contact 
-[*Paul Constantine*](http://inside.mines.edu/~pconstan/).
+To contribute to this project, please follow these steps. Thanks to [Marco Tezzele](https://github.com/mtezzele) for providing this helpful template.
+
+## Submitting a patch
+
+1. Open a new issue describing the bug to fix or feature to add. Even if you think it's relatively minor, it's helpful to know what people are working on.
+2. Follow the normal process of [forking][] the project, and set up a new branch to work in.  It's important that each group of changes be done in separate branches to ensure that a pull request only includes the commits related to that bug or feature.
+3. Significant changes should be accompanied by tests. The project already has good test coverage, so look at some of the existing tests if you're unsure how to go about it. 
+4. Push the commits to your fork and submit a [pull request][]. Please, remember to rebase properly in order to maintain a clean, linear git history.
+
+[forking]: https://help.github.com/articles/fork-a-repo
+[pull request]: https://help.github.com/articles/creating-a-pull-request
+
+If you have questions or feedback, contact [*Paul Constantine*](http://inside.mines.edu/~pconstan/).
 
 # Acknowledgments
 
