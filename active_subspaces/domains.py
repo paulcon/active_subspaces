@@ -496,7 +496,7 @@ def sample_z(N, y, W1, W2):
     Returns
     -------
     Z : ndarray
-        N-by-(m-n) matrix that contains values of the active variable that 
+        N-by-(m-n) matrix that contains values of the inactive variable that 
         correspond to the given `y`
 
     Notes
@@ -532,9 +532,33 @@ def sample_z(N, y, W1, W2):
 def hit_and_run_z(N, y, W1, W2):
     """A hit and run method for sampling the inactive variables from a polytope.
 
+    Parameters
+    ----------
+    N : int 
+        the number of inactive variable samples
+    y : ndarray 
+        the value of the active variables
+    W1 : ndarray 
+        m-by-n matrix that contains the eigenvector bases of the n-dimensional 
+        active subspace
+    W2 : ndarray 
+        m-by-(m-n) matrix that contains the eigenvector bases of the 
+        (m-n)-dimensional inactive subspace
+
+    Returns
+    -------
+    Z : ndarray
+        N-by-(m-n) matrix that contains values of the inactive variable that 
+        correspond to the given `y`    
+    
     See Also
     --------
     domains.sample_z
+    
+    Notes
+    -----
+    The interface for this implementation is written specifically for 
+    `domains.sample_z`.
     """
     m, n = W1.shape
 
@@ -600,9 +624,33 @@ def hit_and_run_z(N, y, W1, W2):
 def rejection_sampling_z(N, y, W1, W2):
     """A rejection sampling method for sampling the from a polytope.
 
+    Parameters
+    ----------
+    N : int 
+        the number of inactive variable samples
+    y : ndarray 
+        the value of the active variables
+    W1 : ndarray 
+        m-by-n matrix that contains the eigenvector bases of the n-dimensional 
+        active subspace
+    W2 : ndarray 
+        m-by-(m-n) matrix that contains the eigenvector bases of the 
+        (m-n)-dimensional inactive subspace
+
+    Returns
+    -------
+    Z : ndarray
+        N-by-(m-n) matrix that contains values of the inactive variable that 
+        correspond to the given `y`    
+    
     See Also
     --------
     domains.sample_z
+    
+    Notes
+    -----
+    The interface for this implementation is written specifically for 
+    `domains.sample_z`.
     """
     m, n = W1.shape
     s = np.dot(W1, y).reshape((m, 1))
@@ -632,9 +680,33 @@ def rejection_sampling_z(N, y, W1, W2):
 def random_walk_z(N, y, W1, W2):
     """A random walk method for sampling from a polytope.
 
+    Parameters
+    ----------
+    N : int 
+        the number of inactive variable samples
+    y : ndarray 
+        the value of the active variables
+    W1 : ndarray 
+        m-by-n matrix that contains the eigenvector bases of the n-dimensional 
+        active subspace
+    W2 : ndarray 
+        m-by-(m-n) matrix that contains the eigenvector bases of the 
+        (m-n)-dimensional inactive subspace
+
+    Returns
+    -------
+    Z : ndarray
+        N-by-(m-n) matrix that contains values of the inactive variable that 
+        correspond to the given `y`    
+    
     See Also
     --------
     domains.sample_z
+    
+    Notes
+    -----
+    The interface for this implementation is written specifically for 
+    `domains.sample_z`.
     """
     m, n = W1.shape
     s = np.dot(W1, y).reshape((m, 1))
@@ -672,6 +744,9 @@ def random_walk_z(N, y, W1, W2):
     return Z.reshape((N, m-n))
 
 def _rotate_x(Y, Z, W):
+    """A convenience function for rotating subspace coordinates to x space.
+    
+    """
     NY, n = Y.shape
     N = Z.shape[2]
     m = n + Z.shape[1]

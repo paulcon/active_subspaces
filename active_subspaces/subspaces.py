@@ -357,6 +357,9 @@ def errbnd_partition(e, sub_err):
     ----------
     e : ndarray
         m-by-1 vector of eigenvalues
+    sub_err : ndarray
+        m-by-1 vector of estimates of subspace error
+        
         
     Returns
     -------

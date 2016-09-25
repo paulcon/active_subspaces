@@ -6,9 +6,43 @@ class Normalizer():
     
     """
     def normalize(self, X):
+        """Return corresponding points in normalized domain.
+
+        Parameters
+        ----------
+        X : ndarray
+            contains all input points one wishes to normalize
+
+        Returns
+        -------
+        X_norm : ndarray
+            contains the normalized inputs corresponding to `X`
+            
+        Notes
+        -----
+        Points in `X` should be oriented as an m-by-n ndarray, where each row
+        corresponds to an m-dimensional point in the problem domain.
+        """
         raise NotImplementedError()
 
     def unnormalize(self, X):
+        """Return corresponding points shifted and scaled to [-1,1]^m.
+
+        Parameters
+        ----------
+        X : ndarray 
+            contains all input points one wishes to unnormalize
+
+        Returns
+        -------
+        X_unnorm : ndarray 
+            contains the unnormalized inputs corresponding to `X`
+            
+        Notes
+        -----
+        Points in `X` should be oriented as an m-by-n ndarray, where each row
+        corresponds to an m-dimensional point in the normalized domain.
+        """
         raise NotImplementedError()
 
 class BoundedNormalizer(Normalizer):
@@ -66,7 +100,7 @@ class BoundedNormalizer(Normalizer):
         return X_norm
 
     def unnormalize(self, X):
-        """Return corresponding points shifted and scaled to [-1,1]^m.
+        """Return corresponding points shifted and scaled to `[lb, ub]`.
 
         Parameters
         ----------
@@ -271,16 +305,20 @@ def conditional_expectations(f, ind):
 
 # thanks to Trent for these functions!!!
 def atleast_2d_col(A):
-    """Return the input `A` as a 2d column array.
+    """Wrapper for `atleast_2d(A, 'col')`
     
+    Notes
+    -----
     Thanks to Trent Lukaczyk for these functions!
-    
     """
     return atleast_2d(A,'col')
 
 def atleast_2d_row(A):
-    """
-    Return the input `A` as a 2d row array.
+    """Wrapper for `atleast_2d(A, 'row')`
+    
+    Notes
+    -----
+    Thanks to Trent Lukaczyk for these functions!
     """
     return atleast_2d(A,'row')
 
