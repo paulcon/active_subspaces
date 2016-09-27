@@ -1,6 +1,7 @@
 """Utilities for running several simulations at different inputs."""
 
 import numpy as np
+import multiprocessing as mp
 import time
 from misc import process_inputs
 
@@ -41,7 +42,7 @@ class SimulationRunner():
 
         self.fun = fun
 
-    def run(self, X):
+    def run(self, X, parallel=True, num_cores=mp.cpu_count()-1):
         """Run the simulation at several input values.
         
         Parameters
@@ -50,6 +51,12 @@ class SimulationRunner():
             contains all input points where one wishes to run the simulation. If
             the simulation takes m inputs, then `X` must have shape M-by-m, 
             where M is the number of simulations to run.
+        parallel : bool
+            boolean value indicating whether to use parallel computation (True) 
+            or not (False). Defaults to True.
+        num_cores : int
+            The number of cores to use for parallel computation. Defaults to the 
+            number of cpu's available minus 1.
 
         Returns
         -------
@@ -65,11 +72,18 @@ class SimulationRunner():
         parallelize this for-loop.
         """
 
-        # right now this just wraps a sequential for-loop.
-        # should be parallelized
-
         X, M, m = process_inputs(X)
         F = np.zeros((M, 1))
+        
+        # Use parallel computing if desired and num_cores makes sense
+        if parallel and isinstance(num_cores, int)\
+        and num_cores >= 1 and num_cores <= mp.cpu_count():
+            pool = mp.Pool(processes=num_cores)
+            F = np.array(pool.map(self.fun, X)).reshape((M, 1))
+            pool.close()
+            pool.join()
+            return F
+
 
         # TODO: provide some timing information
         # start = time.time()
@@ -124,7 +138,7 @@ class SimulationGradientRunner():
 
         self.dfun = dfun
 
-    def run(self, X):
+    def run(self, X, parallel=True, num_cores=mp.cpu_count()-1):
         """Run at several input values.
         
         Run the simulation at several input values and return the gradients of
@@ -136,6 +150,13 @@ class SimulationGradientRunner():
             contains all input points where one wishes to run the simulation. 
             If the simulation takes m inputs, then `X` must have shape M-by-m, 
             where M is the number of simulations to run.
+        parallel : bool
+            boolean value indicating whether to use parallel computation (True) 
+            or not (False). Defaults to True.
+        num_cores : int
+            The number of cores to use for parallel computation. Defaults to the 
+            number of cpu's available minus 1.
+
 
         Returns
         -------
@@ -151,11 +172,17 @@ class SimulationGradientRunner():
         parallelize this for-loop.
         """
 
-        # right now this just wraps a sequential for-loop.
-        # should be parallelized
-
         X, M, m = process_inputs(X)
         dF = np.zeros((M, m))
+
+        # Use parallel computing if desired and num_cores makes sense
+        if parallel and isinstance(num_cores, int)\
+        and num_cores >= 1 and num_cores <= mp.cpu_count():
+            pool = mp.Pool(processes=num_cores)
+            dF = np.array(pool.map(self.dfun, X)).squeeze()
+            pool.close()
+            pool.join()
+            return dF
 
         # TODO: provide some timing information
         # start = time.time()
