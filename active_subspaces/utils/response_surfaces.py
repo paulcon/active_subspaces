@@ -250,7 +250,10 @@ class RadialBasisApproximation(ResponseSurface):
             ell = g*np.sum(e)/e[:m]
             if v is None:
                 v = g*np.sum(e[m:])*np.ones(f.shape)
-
+        
+        # ensure conditioning
+        v = np.amax([v, 1e-6*np.ones(f.shape)], axis=0)
+    
         # covariance matrix of observations
         K = exponential_squared(X, X, 1.0, ell)
         K += np.diag(v.reshape((M,)))

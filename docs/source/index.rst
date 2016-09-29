@@ -38,16 +38,16 @@ For a quickstart, consider a bivariate quadratic function
 	 import numpy as np
 	 
 	 def fun(x):
-	     A = np.array([[4,2],[2,1]])
-	     return 0.5*np.dot(x,np.dot(A,x))
+	     A = np.array([[4., 2.], [2., 1.1]])
+	     return 0.5*np.dot(x.ravel(), np.dot(A, x.ravel()))
 
 with gradient function
 
 ::
 	 
 	 def dfun(x):
-	     A = np.array([[4,2],[2,1]])
-	     return np.dot(A,x).reshape((2, 1))
+	     A = np.array([[4., 2.], [2., 1.1]])
+	     return np.dot(A, x.ravel()).reshape((2, 1))
 
 Draw 50 samples from the function's domain, assumed to be the [-1,1]^2 box equipped with a uniform probability density function,
 
@@ -74,7 +74,7 @@ Compute the active subspace with the gradients.
 ::
 	 
 	 ss = acs.subspaces.Subspaces()
-	 ss.compute(df=df, stype='AS')
+	 ss.compute(df=df, sstype='AS')
 
 See the documentation for ``Subspaces.compute()`` for more details. Use the plotting routines to examine the estimated eigenvalues.
 
