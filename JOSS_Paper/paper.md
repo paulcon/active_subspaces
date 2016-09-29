@@ -10,18 +10,25 @@ tags:
 authors:
  - name: Paul Constantine
    orcid: 0000-0003-3726-6307
-   affiliation: Colorado School of Mines, Golden, CO
+   affiliation: 1
  - name: Ryan Howard
-   affiliation: Colorado School of Mines, Golden, CO
+   affiliation: 1
  - name: Andrew Glaws
-   affiliation: Colorado School of Mines, Golden, CO
+   affiliation: 1
  - name: Zachary Grey
-   affiliation: Colorado School of Mines, Golden, CO
+   affiliation: 1
  - name: Paul Diaz
-   affiliation: University of Colorado Boulder, Boulder, CO
+   affiliation: 2
  - name: Leslie Fletcher
-date: 19 September 2016
+affiliations:
+ - name: Colorado School of Mines, Golden, CO
+   index: 1
+ - name: University of Colorado Boulder, Boulder, CO
+   index: 2
+date: 29 September 2016
 bibliography: paper.bib
+repository: https://github.com/paulcon/active_subspaces
+archive_doi: https://doi.org/10.5281/zenodo.158941
 ---
 
 # Summary
