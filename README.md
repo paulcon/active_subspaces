@@ -50,6 +50,8 @@ The core class is the Subspaces class contained in the `subspaces.py` file. An i
 
 # Documentation
 
+[![Documentation Status](https://readthedocs.org/projects/active-subspaces/badge/?version=latest)](http://active-subspaces.readthedocs.io/en/latest/?badge=latest)
+
 Documentation can be found on [ReadTheDocs](http://active-subspaces.readthedocs.io/en/latest/).
 
 # Testing
