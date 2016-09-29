@@ -34,6 +34,7 @@ The ``tutorials`` directory contains several Jupyter notebooks with examples of 
 For a quickstart, consider a bivariate quadratic function
 
 ::
+
 	 import numpy as np
 	 
 	 def fun(x):
