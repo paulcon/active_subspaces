@@ -8,9 +8,17 @@ This library contains Python tools for discovering and exploiting a given model'
 
 To see active subspace in action on real science and engineering applications, see the [Active Subspaces Data Sets](https://github.com/paulcon/as-data-sets) repository, which contains several Jupyter notebooks applying the methods to study input/output relationships in complex models.
 
-# Status
+# Testing
 
 [![Build Status](https://travis-ci.org/paulcon/active_subspaces.svg?branch=master)](https://travis-ci.org/paulcon/active_subspaces)
+
+We are using Travis CI for continuous integration testing. You can check out the current status [here](https://travis-ci.org/paulcon/active_subspaces).
+
+To run tests locally:
+
+```bash
+> python test.py
+```
 
 # Requirements and Dependencies
 
@@ -53,16 +61,6 @@ The core class is the Subspaces class contained in the `subspaces.py` file. An i
 [![Documentation Status](https://readthedocs.org/projects/active-subspaces/badge/?version=latest)](http://active-subspaces.readthedocs.io/en/latest/?badge=latest)
 
 Documentation can be found on [ReadTheDocs](http://active-subspaces.readthedocs.io/en/latest/).
-
-# Testing
-
-We are using Travis CI for continuous integration testing. You can check out the current status [here](https://travis-ci.org/paulcon/active_subspaces).
-
-To run tests locally:
-
-```bash
-> python test.py
-```
 
 # Community Guidelines
 
