@@ -5,23 +5,27 @@ Library.
 
 import numpy as np
 import misc as mi
-import logging
 
 def r_hermite(N):
     """Recurrence coefficients for the Hermite orthogonal polynomials.
 
-    :param int N: The number of recurrence coefficients.
+    Parameters
+    ----------
+    N : int 
+        the number of recurrence coefficients
 
-    :return: ab, An `N`-by-2 array of the recurrence coefficients.
-    :rtype: ndarray
+    Returns
+    -------
+    ab : ndarray 
+        an `N`-by-2 array of the recurrence coefficients
 
-    **See Also**
-
+    See Also
+    --------
     utils.quadrature.jacobi_matrix
     utils.quadrature.gauss_hermite
 
-    **Notes**
-
+    Notes
+    -----
     This computation is inspired by Walter Gautschi's code at
     https://www.cs.purdue.edu/archives/2002/wxg/codes/OPQ.html.
     """
@@ -44,22 +48,31 @@ def r_hermite(N):
 def r_jacobi(N,l,r,a,b):
     """Recurrence coefficients for the Legendre orthogonal polynomials.
 
-    :param int N: The number of recurrence coefficients.
-    :param float l: The left endpoint of the interval.
-    :param float r: The right endpoint of the interval.
-    :param float a: Jacobi weight parameter
-    :param float b: Jacobi weight parameter
+    Parameters
+    ----------
+    N : int 
+        the number of recurrence coefficients
+    l : float
+        the left endpoint of the interval
+    r : float
+        the right endpoint of the interval
+    a : float
+        Jacobi weight parameter
+    b : float
+        Jacobi weight parameter
 
-    :return: ab, An `N`-by-2 array of the recurrence coefficients.
-    :rtype: ndarray
+    Returns
+    -------
+    ab : ndarray 
+        an `N`-by-2 array of the recurrence coefficients
 
-    **See Also**
-
+    See Also
+    --------
     utils.quadrature.jacobi_matrix
     utils.quadrature.gauss_legendre
 
-    **Notes**
-
+    Notes
+    -----
     This computation is inspired by Walter Gautschi's code at
     https://www.cs.purdue.edu/archives/2002/wxg/codes/OPQ.html.
     """
@@ -88,22 +101,26 @@ def r_jacobi(N,l,r,a,b):
     return ab
 
 def jacobi_matrix(ab):
-    """
-    Tri-diagonal Jacobi matrix of recurrence coefficients.
+    """Tri-diagonal Jacobi matrix of recurrence coefficients.
 
-    :param ndarray ab: N-by-2 array of recurrence coefficients
+    Parameters
+    ----------
+    ab : ndarray
+        N-by-2 array of recurrence coefficients
 
-    :return: J, (N-1)-by-(N-1) symmetric, tridiagonal Jacobi matrix associated
-        with the orthogonal polynomials.
-    :rtype: ndarray
+    Returns
+    -------
+    J : ndarray 
+        (N-1)-by-(N-1) symmetric, tridiagonal Jacobi matrix associated with the 
+        orthogonal polynomials
 
-    **See Also**
-
+    See Also
+    --------
     utils.quadrature.r_hermite
     utils.quadrature.gauss_hermite
 
-    **Notes**
-
+    Notes
+    -----
     This computation is inspired by Walter Gautschi's code at
     https://www.cs.purdue.edu/archives/2002/wxg/codes/OPQ.html.
     """
@@ -130,23 +147,26 @@ def jacobi_matrix(ab):
         return J
 
 def gl1d(N):
-    """
-    One-dimensional Gauss-Legendre quadrature rule.
+    """One-dimensional Gauss-Legendre quadrature rule.
 
-    :param int N: Number of nodes in the quadrature rule
+    Parameters
+    ----------
+    N : int 
+        number of nodes in the quadrature rule
 
-    :return: x, N-by-1 array of quadrature nodes
-    :rtype: ndarray
+    Returns
+    -------
+    x : ndarray 
+        N-by-1 array of quadrature nodes
+    w : ndarray 
+        N-by-1 array of quadrature weights
 
-    :return: w, N-by-1 array of quadrature weights
-    :rtype: ndarray
-
-    **See Also**
-
+    See Also
+    --------
     utils.quadrature.gauss_legendre
 
-    **Notes**
-
+    Notes
+    -----
     This computation is inspired by Walter Gautschi's code at
     https://www.cs.purdue.edu/archives/2002/wxg/codes/OPQ.html.
     """
@@ -154,23 +174,26 @@ def gl1d(N):
     return g1d(N, 'Legendre')
     
 def gh1d(N):
-    """
-    One-dimensional Gauss-Hermite quadrature rule.
+    """One-dimensional Gauss-Hermite quadrature rule.
 
-    :param int N: Number of nodes in the quadrature rule
+    Parameters
+    ----------
+    N : int
+        number of nodes in the quadrature rule
 
-    :return: x, N-by-1 array of quadrature nodes
-    :rtype: ndarray
+    Returns
+    -------
+    x : ndarray
+        N-by-1 array of quadrature nodes
+    w : ndarray
+        N-by-1 array of quadrature weights
 
-    :return: w, N-by-1 array of quadrature weights
-    :rtype: ndarray
-
-    **See Also**
-
+    See Also
+    --------
     utils.quadrature.gauss_hermite
 
-    **Notes**
-
+    Notes
+    -----
     This computation is inspired by Walter Gautschi's code at
     https://www.cs.purdue.edu/archives/2002/wxg/codes/OPQ.html.
     """
@@ -178,24 +201,28 @@ def gh1d(N):
     return g1d(N, 'Hermite')
 
 def g1d(N, quadtype):
-    """
-    One-dimensional Gaussian quadrature rule.
+    """One-dimensional Gaussian quadrature rule.
 
-    :param int N: Number of nodes in the quadrature rule
-    :param str quadtype: Type of quadrature rule {'Legendre', 'Hermite'}
+    Parameters
+    ----------
+    N : int
+        number of nodes in the quadrature rule
+    quadtype : str 
+        type of quadrature rule {'Legendre', 'Hermite'}
 
-    :return: x, N-by-1 array of quadrature nodes
-    :rtype: ndarray
+    Returns
+    -------
+    x : ndarray 
+        N-by-1 array of quadrature nodes
+    w : ndarray 
+        N-by-1 array of quadrature weights
 
-    :return: w, N-by-1 array of quadrature weights
-    :rtype: ndarray
-
-    **See Also**
-
+    See Also
+    --------
     utils.quadrature.gauss_hermite
 
-    **Notes**
-
+    Notes
+    -----
     This computation is inspired by Walter Gautschi's code at
     https://www.cs.purdue.edu/archives/2002/wxg/codes/OPQ.html.
     """
@@ -219,19 +246,22 @@ def g1d(N, quadtype):
     return x, w
 
 def gauss_hermite(N):
-    """
-    Tensor product Gauss-Hermite quadrature rule.
+    """Tensor product Gauss-Hermite quadrature rule.
 
-    :param int[] N: Number of nodes in each dimension of the quadrature rule
+    Parameters
+    ----------
+    N : int[] 
+        number of nodes in each dimension of the quadrature rule
 
-    :return: x, N-by-1 array of quadrature nodes
-    :rtype: ndarray
+    Returns
+    -------
+    x : ndarray 
+        N-by-1 array of quadrature nodes
+    w : ndarray 
+        N-by-1 array of quadrature weights
 
-    :return: w, N-by-1 array of quadrature weights
-    :rtype: ndarray
-
-    **Notes**
-
+    Notes
+    -----
     This computation is inspired by Walter Gautschi's code at
     https://www.cs.purdue.edu/archives/2002/wxg/codes/OPQ.html.
     """
@@ -241,9 +271,6 @@ def gauss_hermite(N):
 
     if type(N) is not list:
         raise TypeError('N must be a list.')
-
-    Npts = int(np.prod(np.array(N)))
-    logging.getLogger(__name__).debug('Making a tensor product Gauss-Hermite rule with {:d} points in {:d} dimensions.'.format(Npts, len(N)))
 
     if len(N) == 1:
         x, w = gh1d(N[0])
@@ -262,19 +289,22 @@ def gauss_hermite(N):
     return x, w
 
 def gauss_legendre(N):
-    """
-    Tensor product Gauss-Legendre quadrature rule.
+    """Tensor product Gauss-Legendre quadrature rule.
 
-    :param int[] N: Number of nodes in each dimension of the quadrature rule
+    Parameters
+    ----------
+    N : int[] 
+        number of nodes in each dimension of the quadrature rule
 
-    :return: x, N-by-1 array of quadrature nodes
-    :rtype: ndarray
+    Returns
+    -------
+    x : ndarray
+        N-by-1 array of quadrature nodes
+    w : ndarray 
+        N-by-1 array of quadrature weights
 
-    :return: w, N-by-1 array of quadrature weights
-    :rtype: ndarray
-
-    **Notes**
-
+    Notes
+    -----
     This computation is inspired by Walter Gautschi's code at
     https://www.cs.purdue.edu/archives/2002/wxg/codes/OPQ.html.
     """
@@ -284,9 +314,6 @@ def gauss_legendre(N):
 
     if type(N) is not list:
         raise TypeError('N must be a list.')
-
-    Npts = int(np.prod(np.array(N)))
-    logging.getLogger(__name__).debug('Making a tensor product Gauss-Legendre rule with {:d} points in {:d} dimensions.'.format(Npts, len(N)))
 
     if len(N) == 1:
         x, w = gl1d(N[0])
