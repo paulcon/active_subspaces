@@ -137,7 +137,7 @@ class Subspaces():
         if nboot > 0:
             e_br, sub_br, li_F = _bootstrap_ranges(e, W, X, f, df, weights, ssmethod, nboot)
         else:
-            if ptype == 1 or ptype == 2:
+            if ptype == 'RS' or ptype == 'LI':
                 raise Exception('Need to run bootstrap for partition type {}'.format(ptype))
             
             e_br, sub_br = None, None
