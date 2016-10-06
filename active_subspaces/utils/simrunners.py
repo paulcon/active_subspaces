@@ -4,6 +4,14 @@ import numpy as np
 import time
 from misc import process_inputs
 
+# checking to see if system has gurobi
+try:
+    HAS_MP = True
+    import multiprocessing as mp
+except ImportError, e:
+    HAS_MP = False
+    pass
+
 class SimulationRunner():
     """A class for running several simulations at different input values.
 
@@ -41,7 +49,7 @@ class SimulationRunner():
 
         self.fun = fun
 
-    def run(self, X):
+    def run(self, X, parallel=True, num_cores=None):
         """Run the simulation at several input values.
         
         Parameters
@@ -50,6 +58,12 @@ class SimulationRunner():
             contains all input points where one wishes to run the simulation. If
             the simulation takes m inputs, then `X` must have shape M-by-m, 
             where M is the number of simulations to run.
+        parallel : bool
+            boolean value indicating whether to use parallel computation (True) 
+            or not (False). Defaults to True.
+        num_cores : int
+            The number of cores to use for parallel computation. Defaults to the 
+            number of cpu's available minus 1.
 
         Returns
         -------
@@ -65,18 +79,27 @@ class SimulationRunner():
         parallelize this for-loop.
         """
 
-        # right now this just wraps a sequential for-loop.
-        # should be parallelized
-
         X, M, m = process_inputs(X)
         F = np.zeros((M, 1))
 
         # TODO: provide some timing information
         # start = time.time()
         
-        for i in range(M):
-            F[i] = self.fun(X[i,:].reshape((1,m)))
-            
+        # Set num_cores to its default value if multiprocessing is present
+        # and the user hasn't specified a value.
+        if parallel and HAS_MP and num_cores is None: num_cores = mp.cpu_count() - 1
+        
+        # Use parallel computing if desired and num_cores makes sense.
+        if parallel and HAS_MP and isinstance(num_cores, int)\
+        and num_cores >= 1 and num_cores <= mp.cpu_count():
+            pool = mp.Pool(processes=num_cores)
+            F = np.array(pool.map(self.fun, X)).reshape((M, 1))
+            pool.close()
+            pool.join()
+        else: # Otherwise use a serial loop.        
+            for i in range(M):
+                F[i] = self.fun(X[i,:].reshape((1,m)))
+                
         # TODO: provide some timing information
         # end = time.time() - start
 
@@ -124,7 +147,7 @@ class SimulationGradientRunner():
 
         self.dfun = dfun
 
-    def run(self, X):
+    def run(self, X, parallel=True, num_cores=None):
         """Run at several input values.
         
         Run the simulation at several input values and return the gradients of
@@ -136,6 +159,13 @@ class SimulationGradientRunner():
             contains all input points where one wishes to run the simulation. 
             If the simulation takes m inputs, then `X` must have shape M-by-m, 
             where M is the number of simulations to run.
+        parallel : bool
+            boolean value indicating whether to use parallel computation (True) 
+            or not (False). Defaults to True.
+        num_cores : int
+            The number of cores to use for parallel computation. Defaults to the 
+            number of cpu's available minus 1.
+
 
         Returns
         -------
@@ -151,18 +181,27 @@ class SimulationGradientRunner():
         parallelize this for-loop.
         """
 
-        # right now this just wraps a sequential for-loop.
-        # should be parallelized
-
         X, M, m = process_inputs(X)
         dF = np.zeros((M, m))
 
         # TODO: provide some timing information
         # start = time.time()
-        
-        for i in range(M):
-            df = self.dfun(X[i,:].reshape((1,m)))
-            dF[i,:] = df.reshape((1,m))
+
+        # Set num_cores to its default value if multiprocessing is present
+        # and the user hasn't specified a value.
+        if parallel and HAS_MP and num_cores is None: num_cores = mp.cpu_count() - 1
+
+        # Use parallel computing if desired and num_cores makes sense
+        if parallel and HAS_MP and isinstance(num_cores, int)\
+        and num_cores >= 1 and num_cores <= mp.cpu_count():
+            pool = mp.Pool(processes=num_cores)
+            dF = np.array(pool.map(self.dfun, X)).squeeze()
+            pool.close()
+            pool.join()
+        else: # Otherwise use a serial loop.        
+            for i in range(M):
+                df = self.dfun(X[i,:].reshape((1,m)))
+                dF[i,:] = df.reshape((1,m))
         
         # TODO: provide some timing information
         # end = time.time() - start
