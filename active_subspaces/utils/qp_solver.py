@@ -1,6 +1,5 @@
 """Solvers for the linear and quadratic programs in active subspaces."""
 import numpy as np
-import logging
 from scipy.optimize import linprog, minimize
 
 # checking to see if system has gurobi
@@ -16,13 +15,15 @@ solver_SCIPY = 'SCIPY'
 solver_GUROBI = 'GUROBI'
 
 class QPSolver():
-    """
-    A class for solving linear and quadratic programs.
+    """A class for solving linear and quadratic programs.
 
-    :cvar str solver: Identifies which linear program software to use.
+    Attributes
+    ----------
+    solver : str 
+        identifies which linear program software to use
 
-    **Notes**
-
+    Notes
+    -----
     The class checks to see if Gurobi is present. If it is, it uses Gurobi to
     solve the linear and quadratic programs. Otherwise, it uses scipy
     implementations to solve the linear and quadratic programs.
@@ -30,11 +31,13 @@ class QPSolver():
     solver = None
 
     def __init__(self, solver='GUROBI'):
-        """
-        Initialize a QPSolver.
+        """Initialize a QPSolver.
 
-        :param str solver: Identifies which linear program software to use.
-            Options are 'GUROBI' and 'SCIPY'.
+        Parameters
+        ----------
+        solver : str, optional 
+            identifies which linear program software to use. Options are 
+            'GUROBI' and 'SCIPY'. (default 'GUROBI')
         """
 
         if solver==solver_GUROBI and HAS_GUROBI:
@@ -42,36 +45,38 @@ class QPSolver():
         elif solver=='SCIPY':
             self.solver = solver_SCIPY
         else:
-            logging.getLogger(__name__).debug('QP solver {} is not available. Using scipy optimization package.'.format(solver))
             self.solver = solver_SCIPY
 
 
     def linear_program_eq(self, c, A, b, lb, ub):
-        """
-        Solves an equality constrained linear program with variable bounds.
-
-        :param ndarray c: m-by-1 matrix for the linear objective function.
-        :param ndarray A: M-by-m matrix that contains the coefficients of the
-            linear equality constraints.
-        :param ndarray b: M-by-1 matrix that is the right hand side of the
-            equality constraints.
-        :param ndarray lb: m-by-1 matrix that contains the lower bounds on the
-            variables.
-        :param ndarray ub: m-by-1 matrix that contains the upper bounds on the
-            variables.
-
-        :return: x, m-by-1 matrix that is the minimizer of the linear program.
-        :rtype: ndarray
-
-        **Notes**
+        """Solves an equality constrained linear program with variable bounds.
 
         This method returns the minimizer of the following linear program.
 
         minimize  c^T x
         subject to  A x = b
         lb <= x <= ub
+
+        Parameters
+        ----------
+        c : ndarray 
+            m-by-1 matrix for the linear objective function
+        A : ndarray 
+            M-by-m matrix that contains the coefficients of the linear equality 
+            constraints
+        b : ndarray
+            M-by-1 matrix that is the right hand side of the equality 
+            constraints
+        lb : ndarray
+            m-by-1 matrix that contains the lower bounds on the variables
+        ub : ndarray
+            m-by-1 matrix that contains the upper bounds on the variables
+
+        Returns
+        -------
+        x : ndarray
+            m-by-1 matrix that is the minimizer of the linear program
         """
-        logging.getLogger(__name__).debug('Linear program with {:d} variables and {:d} equality constraints using {}'.format(A.shape[1], A.shape[0], self.solver))
         if self.solver == solver_SCIPY:
             return _scipy_linear_program_eq(c, A, b, lb, ub)
         elif self.solver == solver_GUROBI:
@@ -80,26 +85,30 @@ class QPSolver():
             raise ValueError('QP solver {} not available'.format(self.solver))
 
     def linear_program_ineq(self, c, A, b):
-        """
-        Solves an inequality constrained linear program.
-
-        :param ndarray c: m-by-1 matrix for the linear objective function.
-        :param ndarray A: M-by-m matrix that contains the coefficients of the
-            linear equality constraints.
-        :param ndarray b: size M-by-1 matrix that is the right hand side of the
-            equality constraints.
-
-        :return: x, m-by-1 matrix that is the minimizer of the linear program.
-        :rtype: ndarray
-
-        **Notes**
+        """Solves an inequality constrained linear program.
 
         This method returns the minimizer of the following linear program.
 
         minimize  c^T x
         subject to  A x >= b
+
+        Parameters
+        ----------
+        c : ndarray
+            m-by-1 matrix for the linear objective function
+        A : ndarray
+            M-by-m matrix that contains the coefficients of the linear equality 
+            constraints
+        b : ndarray 
+            size M-by-1 matrix that is the right hand side of the equality 
+            constraints
+
+        Returns
+        -------
+        x : ndarray
+            m-by-1 matrix that is the minimizer of the linear program
+        
         """
-        logging.getLogger(__name__).debug('Linear program with {:d} variables and {:d} inequality constraints using {}'.format(A.shape[1], A.shape[0], self.solver))
         if self.solver == solver_SCIPY:
             return _scipy_linear_program_ineq(c, A, b)
         elif self.solver == solver_GUROBI:
@@ -108,29 +117,32 @@ class QPSolver():
             raise ValueError('QP solver {} not available'.format(self.solver))
 
     def quadratic_program_bnd(self, c, Q, lb, ub):
-        """
-        Solves a quadratic program with variable bounds.
+        """Solves a quadratic program with variable bounds.
 
-        :param ndarray c: m-by-1 matrix that contains the coefficients of the
-            linear term in the objective function.
-        :param ndarray Q: m-by-m matrix that contains the coefficients of the
-            quadratic term in the objective function.
-        :param ndarray lb: m-by-1 matrix that contains the lower bounds on the
-            variables.
-        :param ndarray ub: m-by-1 matrix that contains the upper bounds on the
-            variables.
-
-        :return: x, m-by-1 matrix that is the minimizer of the quadratic program.
-        :rtype: ndarray
-
-        **Notes**
-
-        This method returns the minimizer of the following linear program.
+	This method returns the minimizer of the following linear program.
 
         minimize  c^T x + x^T Q x
         subject to  lb <= x <= ub
+
+        Parameters
+        ----------
+        c : ndarray
+            m-by-1 matrix that contains the coefficients of the linear term in 
+            the objective function
+        Q : ndarray
+            m-by-m matrix that contains the coefficients of the quadratic term 
+            in the objective function
+        lb : ndarray
+            m-by-1 matrix that contains the lower bounds on the variables
+        ub : ndarray
+            m-by-1 matrix that contains the upper bounds on the variables
+
+        Returns
+        -------
+        x : ndarray 
+            m-by-1 matrix that is the minimizer of the quadratic program
+        
         """
-        logging.getLogger(__name__).debug('Quadratic program with {:d} variables using {}'.format(Q.shape[0], self.solver))
         if self.solver == solver_SCIPY:
             return _scipy_quadratic_program_bnd(c, Q, lb, ub)
         elif self.solver == solver_GUROBI:
@@ -139,29 +151,35 @@ class QPSolver():
             raise ValueError('QP solver {} not available'.format(self.solver))
 
     def quadratic_program_ineq(self, c, Q, A, b):
-        """
-        Solves an inequality constrained quadratic program with variable bounds.
+        """Solves an inequality constrained quadratic program.
 
-        :param ndarray c: m-by-1 matrix that contains the coefficients of the
-            linear term in the objective function.
-        :param ndarray Q: m-by-m matrix that contains the coefficients of the
-            quadratic term in the objective function.
-        :param ndarray A: M-by-m matrix that contains the coefficients of the
-            linear equality constraints.
-        :param ndarray b: M-by-1 matrix that is the right hand side of the
-            equality constraints.
-
-        :return: x, m-by-1 matrix that is the minimizer of the quadratic program.
-        :rtype: ndarray
-
-        **Notes**
-
-        This method returns the minimizer of the following linear program.
+        
+        This method returns the minimizer of the following quadratic program.
 
         minimize  c^T x + x^T Q x
         subject to  A x >= b
+
+        Parameters
+        ----------
+        c : ndarray
+            m-by-1 matrix that contains the coefficients of the linear term in 
+            the objective function
+        Q : ndarray
+            m-by-m matrix that contains the coefficients of the quadratic term 
+            in the objective function
+        A : ndarray 
+            M-by-m matrix that contains the coefficients of the linear equality 
+            constraints
+        b : ndarray
+            M-by-1 matrix that is the right hand side of the equality 
+            constraints
+
+        Returns
+        -------
+        x : ndarray
+            m-by-1 matrix that is the minimizer of the quadratic program.
+
         """
-        logging.getLogger(__name__).debug('Quadratic program with {:d} variables and {:d} inequality constraints using {}'.format(A.shape[1], A.shape[0], self.solver))
         if self.solver == solver_SCIPY:
             return _scipy_quadratic_program_ineq(c, Q, A, b)
         elif self.solver == solver_GUROBI:

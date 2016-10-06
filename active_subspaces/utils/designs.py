@@ -4,39 +4,48 @@ import misc as mi
 from quadrature import gauss_hermite
 from scipy.spatial import ConvexHull, distance_matrix
 from scipy.optimize import minimize
-import logging
 
 def interval_design(a, b, N):
-    """
-    Equally spaced points on an interval.
+    """Equally spaced points on an interval.
 
-    :param float a: The left endpoint of the interval.
-    :param flaot b: The right endpoint of the interval.
-    :param int N: int The number of points in the design.
+    Parameters
+    ----------
+    a : float
+        the left endpoint of the interval
+    b : float
+        the right endpoint of the interval
+    N : int
+        the number of points in the design
 
-    :return: design, N-by-1 matrix that contains the design points in the
-        interval. It does not contain the endpoints.
-    :rtype: ndarray
+    Returns
+    -------
+    design, ndarray
+        N-by-1 matrix that contains the design points in the interval. It does 
+        not contain the endpoints.
     """
-    logging.getLogger(__name__).debug('Interval design with {:d} points.'.format(N))
     y = np.linspace(a, b, N+2)
     design = mi.atleast_2d_col(y[1:-1])
     return design
 
 def maximin_design(vert, N):
-    """
-    Multivariate maximin design constrained by a polytope.
+    """Multivariate maximin design constrained by a polytope.
 
-    :param ndarray vert: The vertices that define the m-dimensional polytope.
-        The shape of `vert` is M-by-m, where M is the number of vertices.
-    :param int N: The number of points in the design.
+    Parameters
+    ----------
+    vert : ndarray
+        the vertices that define the m-dimensional polytope. The shape of `vert`
+        is M-by-m, where M is the number of vertices.
+    N : int 
+        the number of points in the design
 
-    :return: design, N-by-m matrix that contains the design points in the
-        polytope. It does not contain the vertices.
-    :rtype: ndarray
-
-    **Notes**
-
+    Returns
+    -------
+    design : ndarray
+        N-by-m matrix that contains the design points in the polytope. It does 
+        not contain the vertices.
+        
+    Notes
+    -----
     The objective function used to find the design is the negative of the
     minimum distance between points in the design and the given vertices. The
     routine uses the scipy.minimize function with the SLSQP method to minimize
@@ -64,7 +73,6 @@ def maximin_design(vert, N):
     minf = 1e10
     minres = []
 
-    logging.getLogger(__name__).debug('Maximin design with {:d} points in {:d} dimensions.'.format(N, n))
     for i in range(3):
         y0 = np.random.normal(size=(N, n))
         res = minimize(_maximin_design_obj, y0, args=(vert, ), jac=_maximin_design_grad, constraints=cons,
@@ -74,37 +82,40 @@ def maximin_design(vert, N):
         if res.fun < minf:
             minf = res.fun
             minres = res
-            logging.getLogger(__name__).debug('\tMax distance {:6.4f}.'.format(minf))
 
     np.random.set_state(curr_state)
     design = minres.x.reshape((N, n))
     return design
 
 def gauss_hermite_design(N):
-    """
-    Tensor product Gauss-Hermite quadrature points.
+    """Tensor product Gauss-Hermite quadrature points.
 
-    :param int[] N: Contains the number of points per dimension in the tensor
-        product design.
+    Parameters
+    ----------
+    N : int[]
+        contains the number of points per dimension in the tensor product design
 
-    :return: design, N-by-m matrix that contains the design points.
-    :rtyp: ndarray
+    Returns
+    -------
+    design : ndarray
+        N-by-m matrix that contains the design points
     """
-    Npts = int(np.prod(np.array(N)))
-    logging.getLogger(__name__).debug('Gauss-Hermite design with {:d} points in {:d} dimensions.'.format(Npts, len(N)))
     design = gauss_hermite(N)[0]
     return design
 
 def _maximin_design_obj(y, vert=None):
-    """
-    Objective function for the maximin design optimization.
+    """Objective function for the maximin design optimization.
 
-    :param ndarray y: Contains the coordinates of the points in the design. If
-        there are N points in n dimensions then `y` is shape ((Nn, )).
-    :param ndarray vert: Contains the fixed vertices defining the zonotope.
+    Parameters
+    ----------
+    y : ndarray
+        contains the coordinates of the points in the design. If there are N 
+        points in n dimensions then `y` is shape ((Nn, )).
+    vert : ndarray, optional
+        contains the fixed vertices defining the zonotope
 
-    **Notes**
-
+    Notes
+    -----
     This function returns the minimum squared distance between all points in
     the design and between points and vertices.
     """
@@ -125,12 +136,15 @@ def _maximin_design_obj(y, vert=None):
     return -dstar
 
 def _maximin_design_grad(y, vert=None):
-    """
-    Gradient of objective function for the maximin design optimization.
+    """Gradient of objective function for the maximin design optimization.
 
-    :param ndarray y: Contains the coordinates of the points in the design. If
-        there are N points in n dimensions then `y` is shape ((Nn, )).
-    :param ndarray vert: Contains the fixed vertices defining the zonotope.
+    Parameters
+    ----------
+    y : ndarray
+        contains the coordinates of the points in the design. If there are N 
+        points in n dimensions then `y` is shape ((Nn, )).
+    vert : ndarray
+        contains the fixed vertices defining the zonotope
     """
     Ny, n = vert.shape
     v = vert.reshape((Ny*n, ))
