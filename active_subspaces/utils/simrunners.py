@@ -12,6 +12,10 @@ except ImportError, e:
     HAS_MP = False
     pass
 
+#These are for parallel computation with a class method
+def target(): pass
+def target_star(args): return target(*args)
+
 class SimulationRunner():
     """A class for running several simulations at different input values.
 
@@ -73,10 +77,11 @@ class SimulationRunner():
 
         Notes
         -----
-        In principle, the simulation calls can be executed independently and in
-        parallel. Right now this function uses a sequential for-loop. Future
-        development will take advantage of multicore architectures to
-        parallelize this for-loop.
+        To use parallel computation, it is recommended that the function used to initialize the 
+        SimulationRunner object be a top-level function in the script creating it. It can also 
+        be a class method, but performance is worse in this case. Additionally, due to the 
+        implementation of the multiprocessing module, complex functions may not be passable to 
+        worker processes, in which case a serial loop is used for the computation.
         """
 
         X, M, m = process_inputs(X)
@@ -92,10 +97,27 @@ class SimulationRunner():
         # Use parallel computing if desired and num_cores makes sense.
         if parallel and HAS_MP and isinstance(num_cores, int)\
         and num_cores >= 1 and num_cores <= mp.cpu_count():
-            pool = mp.Pool(processes=num_cores)
-            F = np.array(pool.map(self.fun, X)).reshape((M, 1))
-            pool.close()
-            pool.join()
+            try:# Try using parallel computing
+                if hasattr(self.fun, 'im_class'): # This executes if the function is a class method
+                    import itertools
+                    arg_list_objects = []
+                    arg_list_inputs = []
+                    for i in range(M):
+                        arg_list_objects.append(self.fun.im_self)
+                        arg_list_inputs.append(X[i])
+                    target.__code__ = self.fun.im_func.__code__
+                    pool = mp.Pool(processes=num_cores)
+                    F = np.array(pool.map(target_star, itertools.izip(arg_list_objects, arg_list_inputs))).reshape((M, 1))
+                    pool.close()
+                    pool.join()
+                else: # This executes otherwise
+                    pool = mp.Pool(processes=num_cores)
+                    F = np.array(pool.map(self.fun, X)).reshape((M, 1))
+                    pool.close()
+                    pool.join()
+            except:# If there is an error, use a serial loop
+                for i in range(M):
+                    F[i] = self.fun(X[i,:].reshape((1,m)))
         else: # Otherwise use a serial loop.        
             for i in range(M):
                 F[i] = self.fun(X[i,:].reshape((1,m)))
@@ -175,10 +197,11 @@ class SimulationGradientRunner():
 
         Notes
         -----
-        In principle, the simulation calls can be executed independently and in
-        parallel. Right now this function uses a sequential for-loop. Future
-        development will take advantage of multicore architectures to
-        parallelize this for-loop.
+        To use parallel computation, it is recommended that the function used to initialize the 
+        SimulationRunner object be a top-level function in the script creating it. It can also 
+        be a class method, but performance is worse in this case. Additionally, due to the 
+        implementation of the multiprocessing module, complex functions may not be passable to 
+        worker processes, in which case a serial loop is used for the computation.
         """
 
         X, M, m = process_inputs(X)
@@ -194,10 +217,28 @@ class SimulationGradientRunner():
         # Use parallel computing if desired and num_cores makes sense
         if parallel and HAS_MP and isinstance(num_cores, int)\
         and num_cores >= 1 and num_cores <= mp.cpu_count():
-            pool = mp.Pool(processes=num_cores)
-            dF = np.array(pool.map(self.dfun, X)).squeeze()
-            pool.close()
-            pool.join()
+            try: # Try using parallel computing
+                if hasattr(self.dfun, 'im_class'): # This executes if the fucntion is a class method
+                    import itertools
+                    arg_list_objects = []
+                    arg_list_inputs = []
+                    for i in range(M):
+                        arg_list_objects.append(self.dfun.im_self)
+                        arg_list_inputs.append(X[i])
+                    target.__code__=self.dfun.im_func.__code__
+                    pool = mp.Pool(processes=num_cores)
+                    dF = np.array(pool.map(target_star, itertools.izip(arg_list_objects, arg_list_inputs))).squeeze()
+                    pool.close()
+                    pool.join()
+                else: # This executes otherwise
+                    pool = mp.Pool(processes=num_cores)
+                    dF = np.array(pool.map(self.dfun, X)).squeeze()
+                    pool.close()
+                    pool.join()
+            except: # If there is an error, use a serial loop
+                for i in range(M):
+                    df = self.dfun(X[i,:].reshape((1,m)))
+                    dF[i,:] = df.reshape((1,m))
         else: # Otherwise use a serial loop.        
             for i in range(M):
                 df = self.dfun(X[i,:].reshape((1,m)))
