@@ -323,12 +323,12 @@ class ActiveSubspaceReducedModel():
 
         """
         ss = self.as_respsurf.avmap.domain.subspaces
-        evalmin = min(10, ss.eigenvalues.size)
-        eigenvalues(ss.eigenvalues[:evalmin,0], e_br=ss.e_br[:evalmin,:])
+        evalmin = min(10, ss.eigenvals.size)
+        eigenvalues(ss.eigenvals[:evalmin,0], e_br=ss.e_br[:evalmin,:])
         subspace_errors(ss.sub_br[:evalmin,:])
-        evecmin = min(4, ss.eigenvalues.size)
-        eigenvectors(ss.eigenvectors[:,:evecmin])
-        Y = np.dot(self.X, ss.eigenvectors[:,:2])
+        evecmin = min(4, ss.eigenvals.size)
+        eigenvectors(ss.eigenvecs[:,:evecmin])
+        Y = np.dot(self.X, ss.eigenvecs[:,:2])
         sufficient_summary(Y, self.f)
 
     def predict(self, X, compgrad=False):
