@@ -4,6 +4,7 @@ import numpy as np
 from utils.misc import process_inputs_outputs, process_inputs
 from utils.simrunners import SimulationRunner, SimulationGradientRunner
 from utils.plotters import eigenvalues, subspace_errors, eigenvectors, sufficient_summary
+from utils.est_noise import estimate_noise
 from response_surfaces import ActiveSubspaceResponseSurface
 from integrals import integrate, av_integrate
 from optimizers import minimize
