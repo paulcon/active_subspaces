@@ -2,9 +2,9 @@
 from __future__ import division
 import numpy as np
 from simrunners import SimulationRunner
+import warnings
 
-
-def estimate_noise(f, x, p = None, nf = 9, h = 1e-2, max_recursion = 5): 
+def estimate_noise(f, x, p = None, nf = 9, h = 1e-2, max_recursion = 5, previous_h = None): 
 	"""Estimate the noise in a function near x in direction p 
 
 	This code follows the work of More and Wild, in particular, 
@@ -40,6 +40,11 @@ def estimate_noise(f, x, p = None, nf = 9, h = 1e-2, max_recursion = 5):
 	"""
 
 
+	if previous_h is None:
+		previous_h = [h]
+	else:
+		previous_h.append(h)
+
 	n = x.shape[0]
 
 	if p is None:
@@ -58,16 +63,25 @@ def estimate_noise(f, x, p = None, nf = 9, h = 1e-2, max_recursion = 5):
 	
 	# Check that the range of function values is sufficiently small
 	fmin, fmax = min(F), max(F)
-	if (fmax - fmin)/max(abs(fmax), abs(fmin)) > 1. and max_recursion > 0:
+	# This may trigger a divide by zero warning, so we ignore it, being OK with infinite values
+	with warnings.catch_warnings():
+		warnings.simplefilter('ignore', RuntimeWarning)
+		# np.errstate(divide = 'ignore', invalid = 'ignore' ):
+		norm_range = (fmax - fmin)/max(abs(fmax), abs(fmin))
+	if norm_range > 1. and len(previous_h) < max_recursion:
 		# In this case More and Wild consider that noise has not been detected (inform=3)
 		# and recommend retrying with h = h/100
-		print "h too large, re-running with smaller h"
-		return estimate_noise(f, x, p = p, nf = nf, h = h/100., max_recursion = max_recursion - 1)
+		if h/100. not in previous_h:
+			print "h too large, re-running with smaller h"
+			return estimate_noise(f, x, p = p, nf = nf, h = h/100., 
+						max_recursion = max_recursion, previous_h = previous_h)
 	
 	# h is too small if half the function values are equal
 	if np.sum(np.diff(F.flatten()) == 0) >= nf/2. and max_recursion > 0:
-		print "h too small, re-running with larger h"
-		return estimate_noise(f, x, p = p, nf = nf, h = h*100., max_recursion = max_recursion - 1)
+		if h*100. not in previous_h:
+			print "h too small, re-running with larger h"
+			return estimate_noise(f, x, p = p, nf = nf, h = h*100., 
+				max_recursion = max_recursion, previous_h = previous_h)
 
 
 	# Construct the finite difference table
@@ -94,13 +108,12 @@ def estimate_noise(f, x, p = None, nf = 9, h = 1e-2, max_recursion = 5):
 		emax = max(noise_at_level[k:k+2])
 		if (emax < 4*emin and sign_change[k]):
 			return noise_at_level[k]
-	
-
 
 	# If none works, shrink the interval 
-	if max_recursion > 0:
-		print "h too large, re-running with smaller h"
-		return estimate_noise(f, x, p = p, nf = 2*nf, h = h/10., max_recursion = max_recurison - 1)	
+	if len(previous_h) < max_recursion:
+		print "h too large, re-running with smaller h (post-eval check)"
+		return estimate_noise(f, x, p = p, nf = 2*nf, h = h/10., max_recursion = max_recursion, 
+				previous_h = previous_h)	
 	else:
 		raise StandardError('Could not find an appropreate step size for the More-Wild algorithm')
 		print DF_table
