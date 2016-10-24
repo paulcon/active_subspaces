@@ -45,15 +45,16 @@ class TestEstimateNoise(TestCase):
 		assert isclose_order_of_magnitude(true_noise, est_noise, atol = 0.2)
 	
 	# This test currently fails
-	#def test_normal_small_h(self):
-	#	def f(x):
-	#		return np.round(x, 2)
-	#
-	#	sr = SimulationRunner(f)
-	#	x = np.array([0])
-	#	est_noise = estimate_noise(sr, x, h = 1e-2)
-	#	print true_noise, est_noise
-	#	assert isclose_order_of_magnitude(true_noise, est_noise, atol = 1)
+	def test_normal_small_h(self):
+		def f(x):
+			return np.round(x, 2)
+	
+		sr = SimulationRunner(f)
+		x = np.array([0])
+		est_noise = estimate_noise(sr, x, h = 1e-2)
+		true_noise = 1e-2
+		print true_noise, est_noise
+		assert isclose_order_of_magnitude(true_noise, est_noise, atol = 1)
 
 
 if __name__ == '__main__':

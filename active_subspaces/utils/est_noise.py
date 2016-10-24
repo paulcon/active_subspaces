@@ -1,10 +1,10 @@
 """Utility for estimating the noise in a function at a point"""
-
+from __future__ import division
 import numpy as np
 from simrunners import SimulationRunner
 
 
-def estimate_noise(f, x, p = None, nf = 9, h = 1e-2): 
+def estimate_noise(f, x, p = None, nf = 9, h = 1e-2, max_recursion = 5): 
 	"""Estimate the noise in a function near x in direction p 
 
 	This code follows the work of More and Wild, in particular, 
@@ -29,12 +29,16 @@ def estimate_noise(f, x, p = None, nf = 9, h = 1e-2):
 			Number of function evaluations to perform (default 9)
 		h: float
 			Starting stepsize
+		max_recursion : int
+			Maximum number or recursions allowed. This is used internally
+			to prevent infinite recursion.
 
 	Returns:
 	-------	
 		sigma: float
 			Estimation of the standard deviation of the nosie	
 	"""
+
 
 	n = x.shape[0]
 
@@ -51,21 +55,20 @@ def estimate_noise(f, x, p = None, nf = 9, h = 1e-2):
 	# Run the simulation 
 	# TODO: Running in parallel breaks the test b/c each instatiation starts with the same seed.
 	F = f.run(X, parallel = False)
-
+	
 	# Check that the range of function values is sufficiently small
 	fmin, fmax = min(F), max(F)
-	if (fmax - fmin)/max(abs(fmax), abs(fmin)) > 1.:
+	if (fmax - fmin)/max(abs(fmax), abs(fmin)) > 1. and max_recursion > 0:
 		# In this case More and Wild consider that noise has not been detected (inform=3)
 		# and recommend retrying with h = h/100
 		print "h too large, re-running with smaller h"
-		return estimate_noise(f, x, p = p, nf = nf, h = h/100.)
+		return estimate_noise(f, x, p = p, nf = nf, h = h/100., max_recursion = max_recursion - 1)
 	
 	# h is too small if half the function values are equal
-	if np.sum(np.diff(F.flatten()) == 0) >= nf/2.:
+	if np.sum(np.diff(F.flatten()) == 0) >= nf/2. and max_recursion > 0:
 		print "h too small, re-running with larger h"
-		return estimate_noise(f, x, p = p, nf = nf, h = h*100.)
-		
-		
+		return estimate_noise(f, x, p = p, nf = nf, h = h*100., max_recursion = max_recursion - 1)
+
 
 	# Construct the finite difference table
 	DF_table = np.nan * np.ones((nf, nf), dtype = np.float)
@@ -91,14 +94,18 @@ def estimate_noise(f, x, p = None, nf = 9, h = 1e-2):
 		emax = max(noise_at_level[k:k+2])
 		if (emax < 4*emin and sign_change[k]):
 			return noise_at_level[k]
+	
+
 
 	# If none works, shrink the interval 
-	print "h too large, re-running with smaller h"
-	return estimate_noise(f, x, p = p, nf = nf, h = h/100.)	
-
-	print DF_table
-	print sign_change
-	print noise_at_level
+	if max_recursion > 0:
+		print "h too large, re-running with smaller h"
+		return estimate_noise(f, x, p = p, nf = 2*nf, h = h/10., max_recursion = max_recurison - 1)	
+	else:
+		raise StandardError('Could not find an appropreate step size for the More-Wild algorithm')
+		print DF_table
+		print sign_change
+		print noise_at_level
 		
 	
 
