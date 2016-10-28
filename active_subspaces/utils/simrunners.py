@@ -3,248 +3,220 @@
 import numpy as np
 import time
 from misc import process_inputs
-
+import warnings
+import itertools
 # checking to see if system has multiprocessing
 try:
-    HAS_MP = True
-    import multiprocessing as mp
+	import multiprocessing as mp
+	HAS_MP = True
 except ImportError, e:
-    HAS_MP = False
-    pass
+	HAS_MP = False
+	pass
 
-#These are for parallel computation with a class method
-def target(): pass
-def target_star(args): return target(*args)
+try: 
+	from celery_runner import celery_runner
+	import marshal
+	HAS_CELERY = True
+except ImportError, e:
+	HAS_CELERY = False	
+
+
 
 class SimulationRunner():
-    """A class for running several simulations at different input values.
+	"""A class for running several simulations at different input values.
 
-    Attributes
-    ----------
-    fun : function 
-        runs the simulation for a fixed value of the input parameters, given as
-        an ndarray
+	Attributes
+	----------
+	fun : function 
+		runs the simulation for a fixed value of the input parameters, given as
+		an ndarray
+	
+	backend : {'loop', 'multiprocessing', 'celery'}
+		Specifies how each evaluation of the function f should be run.
+		
+		* loop - use a for loop over fun
+		* multiprocessing - distribute the function across multiple cores using 
+			the multiprocessing library
+		* celery - use the Celery distributed task queue to split up function
+			evaluations
 
-    See Also
-    --------
-    utils.simrunners.SimulationGradientRunner
+	See Also
+	--------
+	utils.simrunners.SimulationGradientRunner
 
-    Notes
-    -----
-    The function fun should take an ndarray of size 1-by-m and return a float.
-    This float is the quantity of interest from the simulation. Often, the
-    function is a wrapper to a larger simulation code.
-    """
-    fun = None
+	Notes
+	-----
+	The function fun should take an ndarray of size 1-by-m and return a float.
+	This float is the quantity of interest from the simulation. Often, the
+	function is a wrapper to a larger simulation code.
+	"""
 
-    def __init__(self, fun):
-        """Initialize a SimulationRunner.
+	def __init__(self, fun, backend = None, num_cores = None):
+		"""Initialize a SimulationRunner.
 
-        Parameters
-        ----------
-        fun : function  
-            a function that runs the simulation for a fixed value of the input 
-            parameters, given as an ndarray. This function returns the quantity 
-            of interest from the model. Often, this function is a wrapper to a 
-            larger simulation code.
-        """
-        if not hasattr(fun, '__call__'):
-            raise TypeError('fun should be a callable function.')
+		Parameters
+		----------
+		fun : function  
+			a function that runs the simulation for a fixed value of the input 
+			parameters, given as an ndarray. This function returns the quantity 
+			of interest from the model. Often, this function is a wrapper to a 
+			larger simulation code.
+		"""
+		if not hasattr(fun, '__call__'):
+			raise TypeError('fun should be a callable function.')
 
-        self.fun = fun
+		self.fun = fun
 
-    def run(self, X, parallel=True, num_cores=None):
-        """Run the simulation at several input values.
-        
-        Parameters
-        ----------
-        X : ndarray
-            contains all input points where one wishes to run the simulation. If
-            the simulation takes m inputs, then `X` must have shape M-by-m, 
-            where M is the number of simulations to run.
-        parallel : bool
-            boolean value indicating whether to use parallel computation (True) 
-            or not (False). Defaults to True.
-        num_cores : int
-            The number of cores to use for parallel computation. Defaults to the 
-            number of cpu's available minus 1.
+		# Default backend
+		if backend is None:
+			backend = 'loop'
 
-        Returns
-        -------
-        F : ndarray 
-            contains the simulation output at each given input point. The shape 
-            of `F` is M-by-1.
+		# Check the user has specified a valid backend
+		if backend not in ['loop', 'multiprocessing', 'celery']:
+			raise TypeError('Invalid backend chosen')
 
-        Notes
-        -----
-        To use parallel computation, it is recommended that the function used to initialize the 
-        SimulationRunner object be a top-level function in the script creating it. It can also 
-        be a class method, but performance is worse in this case. Additionally, due to the 
-        implementation of the multiprocessing module, complex functions may not be passable to 
-        worker processes, in which case a serial loop is used for the computation.
-        """
+		# Check if the backend selected is avalible
+		if backend == 'multiprocessing' and HAS_MP is False:
+			backend = 'loop'
+			warnings.warn('multiprocessing not avalible, defaulting to "loop" backend')
+		elif backend == 'celery' and HAS_CELERY is False:
+			backend = 'loop'
+			warnings.warn('celery not avalible, defaulting to "loop" backend')
 
-        X, M, m = process_inputs(X)
-        F = np.zeros((M, 1))
+		self.backend = backend
 
-        # TODO: provide some timing information
-        # start = time.time()
-        
-        # Set num_cores to its default value if multiprocessing is present
-        # and the user hasn't specified a value.
-        if parallel and HAS_MP and num_cores is None: num_cores = mp.cpu_count() - 1
-        
-        # Use parallel computing if desired and num_cores makes sense.
-        if parallel and HAS_MP and isinstance(num_cores, int)\
-        and num_cores >= 1 and num_cores <= mp.cpu_count():
-            try:# Try using parallel computing
-                if hasattr(self.fun, 'im_class'): # This executes if the function is a class method
-                    import itertools
-                    arg_list_objects = []
-                    arg_list_inputs = []
-                    for i in range(M):
-                        arg_list_objects.append(self.fun.im_self)
-                        arg_list_inputs.append(X[i])
-                    target.__code__ = self.fun.im_func.__code__
-                    pool = mp.Pool(processes=num_cores)
-                    F = np.array(pool.map(target_star, itertools.izip(arg_list_objects, arg_list_inputs))).reshape((M, 1))
-                    pool.close()
-                    pool.join()
-                else: # This executes otherwise
-                    pool = mp.Pool(processes=num_cores)
-                    F = np.array(pool.map(self.fun, X)).reshape((M, 1))
-                    pool.close()
-                    pool.join()
-            except:# If there is an error, use a serial loop
-                for i in range(M):
-                    F[i] = self.fun(X[i,:].reshape((1,m)))
-        else: # Otherwise use a serial loop.        
-            for i in range(M):
-                F[i] = self.fun(X[i,:].reshape((1,m)))
-                
-        # TODO: provide some timing information
-        # end = time.time() - start
-
-        return F
-
-class SimulationGradientRunner():
-    """Evaluates gradients at several input values.
-    
-    
-    A class for running several simulations at different input values that
-    return the gradients of the quantity of interest.
-
-    Attributes
-    ----------
-    dfun : function 
-        a function that runs the simulation for a fixed value of the input 
-        parameters, given as an ndarray. It returns the gradient of the quantity
-        of interest at the given input.
-
-    See Also
-    --------
-    utils.simrunners.SimulationRunner
-
-    Notes
-    -----
-    The function dfun should take an ndarray of size 1-by-m and return an
-    ndarray of shape 1-by-m. This ndarray is the gradient of the quantity of
-    interest from the simulation. Often, the function is a wrapper to a larger
-    simulation code.
-    """
-    dfun = None
-
-    def __init__(self, dfun):
-        """Initialize a SimulationGradientRunner.
-
-        Parameters
-        ----------
-        dfun : function 
-            a function that runs the simulation for a fixed value of the input 
-            parameters, given as an ndarray. It returns the gradient of the 
-            quantity of interest at the given input.
-        """
-        if not hasattr(dfun, '__call__'):
-            raise TypeError('fun should be a callable function.')
-
-        self.dfun = dfun
-
-    def run(self, X, parallel=True, num_cores=None):
-        """Run at several input values.
-        
-        Run the simulation at several input values and return the gradients of
-        the quantity of interest.
-
-        Parameters
-        ----------
-        X : ndarray 
-            contains all input points where one wishes to run the simulation. 
-            If the simulation takes m inputs, then `X` must have shape M-by-m, 
-            where M is the number of simulations to run.
-        parallel : bool
-            boolean value indicating whether to use parallel computation (True) 
-            or not (False). Defaults to True.
-        num_cores : int
-            The number of cores to use for parallel computation. Defaults to the 
-            number of cpu's available minus 1.
+		# Setup the selected backend
+		if backend == 'loop':
+			self.run = self._run_loop	
+		elif backend == 'multiprocessing':
+			if num_cores is None:
+				num_cores = mp.cpu_count() - 1
+			self.num_cores = num_cores
+			self.run = self._run_multiprocessing
+		elif backend == 'celery':
+			self.run = self._run_celery
 
 
-        Returns
-        -------
-        dF : ndarray 
-            contains the gradient of the quantity of interest at each given 
-            input point. The shape of `dF` is M-by-m.
+	def _format_output(self, output):
+		# Format and store the output
+		# We'll need to check the output size and build the matrix appropreately
+		M = len(output)
+		n_output = None
+		for i, out in enumerate(output):
+			# Find the dimenison of the output
+			if n_output is None and out is not None:
+				out = np.array(out).flatten()
+				n_output = out.shape[0]
+				F = np.zeros((M,n_output), dtype = out.dtype)
+			if n_output is not None:
+				if out is not None:
+					F[i] = np.array(out).flatten()
+				else: 
+					F[i] = np.nan
 
-        Notes
-        -----
-        To use parallel computation, it is recommended that the function used to initialize the 
-        SimulationRunner object be a top-level function in the script creating it. It can also 
-        be a class method, but performance is worse in this case. Additionally, due to the 
-        implementation of the multiprocessing module, complex functions may not be passable to 
-        worker processes, in which case a serial loop is used for the computation.
-        """
+		# If no evalution was successful
+		if n_output is None:
+			F = np.nan*np.ones((M,1))
+		return F
 
-        X, M, m = process_inputs(X)
-        dF = np.zeros((M, m))
+	def _run_loop(self, X):
+		""" Runs a simple for-loop over the target function
+		"""
+		X, M, m = process_inputs(X)
+		# We store the output in a list so that we can handle failures of the function
+		# to evaluate
+		output = []
+		for i in range(M):
+			# Try to evaluate the function
+			try:
+				out = self.fun(X[i,:].reshape((1,m)))
+			except:
+				out = None
+			output.append(out)
 
-        # TODO: provide some timing information
-        # start = time.time()
+		return self._format_output(output)
 
-        # Set num_cores to its default value if multiprocessing is present
-        # and the user hasn't specified a value.
-        if parallel and HAS_MP and num_cores is None: num_cores = mp.cpu_count() - 1
+	def _run_multiprocessing(self, X):
+		pool = mp.Pool(processes = self.num_cores)
+		try:
+			if hasattr(self.fun, 'im_class'): 	# If the function is a member of a class
+				arg_list_objects = []
+				arg_list_inputs = []
+				for i in range(M):
+					arg_list_objects.append(self.fun.im_self)
+					arg_list_inputs.append(X[i])
+				#These are for parallel computation with a class method
+				def target(): pass
+				def target_star(args): return target(*args)
+				target.__code__ = self.fun.im_func.__code__
+				output = pool.map(target_star, itertools.izip(arg_list_objects, arg_list_inputs))
+			else: 			# Just a plain function
+				output = pool.map(self.fun, X)
+		
+			pool.close()
+			pool.join()
+			return self._format_output(output)	
+		except:	# If there is a failure in multiprocessing, disable it and restart
+			self.run = self._run_loop
+			self.backend = 'loop'
+			return self.run(X)
+			
+	def _run_celery(self, X):
+		X, M, m = process_inputs(X)
+		# store the function
+		marshal_func = marshal.dumps(self.fun.func_code)
+		results = [celery_runner.delay(x, marshal_func) for x in X]
 
-        # Use parallel computing if desired and num_cores makes sense
-        if parallel and HAS_MP and isinstance(num_cores, int)\
-        and num_cores >= 1 and num_cores <= mp.cpu_count():
-            try: # Try using parallel computing
-                if hasattr(self.dfun, 'im_class'): # This executes if the fucntion is a class method
-                    import itertools
-                    arg_list_objects = []
-                    arg_list_inputs = []
-                    for i in range(M):
-                        arg_list_objects.append(self.dfun.im_self)
-                        arg_list_inputs.append(X[i])
-                    target.__code__=self.dfun.im_func.__code__
-                    pool = mp.Pool(processes=num_cores)
-                    dF = np.array(pool.map(target_star, itertools.izip(arg_list_objects, arg_list_inputs))).squeeze()
-                    pool.close()
-                    pool.join()
-                else: # This executes otherwise
-                    pool = mp.Pool(processes=num_cores)
-                    dF = np.array(pool.map(self.dfun, X)).squeeze()
-                    pool.close()
-                    pool.join()
-            except: # If there is an error, use a serial loop
-                for i in range(M):
-                    df = self.dfun(X[i,:].reshape((1,m)))
-                    dF[i,:] = df.reshape((1,m))
-        else: # Otherwise use a serial loop.        
-            for i in range(M):
-                df = self.dfun(X[i,:].reshape((1,m)))
-                dF[i,:] = df.reshape((1,m))
-        
-        # TODO: provide some timing information
-        # end = time.time() - start
+		# Time between checking for results
+		tick = 0.1
+		start_time = time.time()
+		while True:
+			# Check if everyone is done
+			status = [res.ready() for res in results]
+			if all(status):
+				break
+			else:
+				time.sleep(tick - ((time.time() - start_time) % tick ))
 
-        return dF
+		output = []
+		for res in results:
+			try:
+				output.append(res.get())
+			except:
+				output.append(None)
+
+		return self._format_output(output)
+		
+
+def SimulationGradientRunner(*args, **kwargs):
+	"""Evaluates gradients at several input values.
+	
+	
+	A class for running several simulations at different input values that
+	return the gradients of the quantity of interest.
+
+	Attributes
+	----------
+	dfun : function 
+		a function that runs the simulation for a fixed value of the input 
+		parameters, given as an ndarray. It returns the gradient of the quantity
+		of interest at the given input.
+
+	See Also
+	--------
+	utils.simrunners.SimulationRunner
+
+	Notes
+	-----
+	The function dfun should take an ndarray of size 1-by-m and return an
+	ndarray of shape 1-by-m. This ndarray is the gradient of the quantity of
+	interest from the simulation. Often, the function is a wrapper to a larger
+	simulation code.
+
+	NB JMH: This function is provided for compatability.  The output processing
+	of SimulationRunner has been upgraded such that can handle gradient outputs
+	just as well.  So, we've simply subclassed for now.
+	"""
+	from warnings import warn
+	warn("this code is depricated")
+	return SimulationRunner(*args, **kwargs)

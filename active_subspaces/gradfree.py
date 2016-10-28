@@ -163,13 +163,13 @@ def gradient_measurements(sr, X, E):
     dfm = np.zeros((M, k))
     
     # get basic runs
-    f0 = sr.run(X, False)
+    f0 = sr.run(X)
     
     h = 1e-6;
     for i in range(M):
         E0 = E[:,:,i]
         Xp = X[i,:].reshape((1,m)) + h*E0.transpose()
-        fp = sr.run(Xp, False)
+        fp = sr.run(Xp)
         dfm[i,:] = (fp - f0[i,0]).reshape((k, )) / h
         
     return dfm
