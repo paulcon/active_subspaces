@@ -59,7 +59,7 @@ def estimate_noise(f, x, p = None, nf = 9, h = 1e-2, max_recursion = 5, previous
 
 	# Run the simulation 
 	# TODO: Running in parallel breaks the test b/c each instatiation starts with the same seed.
-	F = f.run(X, parallel = False)
+	F = f.run(X)
 	
 	# Check that the range of function values is sufficiently small
 	fmin, fmax = min(F), max(F)
