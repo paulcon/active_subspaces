@@ -4,4 +4,5 @@ import matplotlib
 import nose
 matplotlib.use('agg')
 
-nose.main()
+if __name__ == '__main__':
+	nose.main()
