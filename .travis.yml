@@ -26,4 +26,4 @@ install:
  - pip install setuptools
  - python setup.py install
 
-script: nosetests -v --processes=1
+script: python test.py
