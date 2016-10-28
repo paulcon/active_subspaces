@@ -8,6 +8,7 @@ try:
 	from utils.celery_runner import celery, celery_runner
 except:
 	pass
+from utils.est_noise import estimate_noise
 from response_surfaces import ActiveSubspaceResponseSurface
 from integrals import integrate, av_integrate
 from optimizers import minimize
