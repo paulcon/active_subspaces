@@ -157,6 +157,7 @@ class SimulationRunner():
 			pool.join()
 			return self._format_output(output)	
 		except:	# If there is a failure in multiprocessing, disable it and restart
+			warnings.warn('multiprocessing failed; dropping to "loop" backend')
 			self.run = self._run_loop
 			self.backend = 'loop'
 			return self.run(X)

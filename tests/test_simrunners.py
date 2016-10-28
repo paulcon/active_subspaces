@@ -26,6 +26,13 @@ class TestSimrunners(TestCase):
         ftrue = np.array([[0.5], [0.5], [0.0]])
         f = sr.run(X)
         np.testing.assert_almost_equal(f, ftrue)
+    
+    def test_simulation_runner_multiprocessing(self):
+        X = np.array([[0.0, 1.0], [1.0, 0.0], [0.0, 0.0]])
+        sr = sruns.SimulationRunner(fun, backend = 'multiprocessing')
+        ftrue = np.array([[0.5], [0.5], [0.0]])
+        f = sr.run(X)
+        np.testing.assert_almost_equal(f, ftrue)
 
     def test_simulation_grad_runner1(self):
         X = np.array([[0.0, 1.0], [1.0, 0.0], [0.0, 0.0]])
