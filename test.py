@@ -2,7 +2,7 @@
 
 import matplotlib
 import nose
-matplotlib.use('agg')
 
 if __name__ == '__main__':
+	matplotlib.use('agg')
 	nose.main()
