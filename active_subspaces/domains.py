@@ -1,5 +1,6 @@
 """Utilities for building the domains and maps for active variables."""
 import numpy as np
+import numbers
 from utils.misc import process_inputs, BoundedNormalizer
 from scipy.spatial import ConvexHull
 from scipy.misc import comb
@@ -210,7 +211,7 @@ class ActiveVariableMap():
         # check inputs
         Y, NY, n = process_inputs(Y)
 
-        if not isinstance(N, int):
+        if not isinstance(N, numbers.Integral):
             raise TypeError('N must be an int')
 
         Z = self.regularize_z(Y, N)
@@ -356,10 +357,10 @@ def nzv(m, n):
     N : int 
         the number of vertices defining the zonotope
     """
-    if not isinstance(m, int):
+    if not isinstance(m, numbers.Integral):
         raise TypeError('m should be an integer.')
 
-    if not isinstance(n, int):
+    if not isinstance(n, numbers.Integral):
         raise TypeError('n should be an integer.')
 
     # number of zonotope vertices
@@ -449,12 +450,16 @@ def zonotope_vertices(W1, Nsamples=10000, maxcount=100000):
     Nsamples = int(Nsamples)
     maxcount = int(maxcount)
 
+    # make sure they're ints
+    Nsamples = int(Nsamples)
+    maxcount = int(maxcount)
+
     # initialize
     Z = np.random.normal(size=(Nsamples, n))
     X = unique_rows(np.sign(np.dot(Z, W1.transpose())))
     X = unique_rows(np.vstack((X, -X)))
     N = X.shape[0]
-    
+
     count = 0
     while N < totalverts:
         Z = np.random.normal(size=(Nsamples, n))
@@ -465,14 +470,14 @@ def zonotope_vertices(W1, Nsamples=10000, maxcount=100000):
         count += 1
         if count > maxcount:
             break
-    
+
     numverts = X.shape[0]
     if totalverts > numverts:
         print 'Warning: {} of {} vertices found.'.format(numverts, totalverts)
-    
+
     Y = np.dot(X, W1)
     return Y.reshape((numverts, n)), X.reshape((numverts, m))
-    
+
 
 def sample_z(N, y, W1, W2):
     """Sample inactive variables.
@@ -521,7 +526,7 @@ def sample_z(N, y, W1, W2):
     Gleich for showing me Chebyshev centers.
 
     """
-    if not isinstance(N, int):
+    if not isinstance(N, numbers.Integral):
         raise TypeError('N should be an integer.')
 
     Z = rejection_sampling_z(N, y, W1, W2)
@@ -750,7 +755,7 @@ def _rotate_x(Y, Z, W):
     NY, n = Y.shape
     N = Z.shape[2]
     m = n + Z.shape[1]
-    
+
     YY = np.tile(Y.reshape((NY, n, 1)), (1, 1, N))
     YZ = np.concatenate((YY, Z), axis=1).transpose((1, 0, 2)).reshape((m, N*NY)).transpose((1, 0))
     X = np.dot(YZ, W.T).reshape((N*NY,m))

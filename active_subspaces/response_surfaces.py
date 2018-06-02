@@ -1,5 +1,6 @@
 """Utilities for exploiting active subspaces in response surfaces."""
 import numpy as np
+import numbers
 import utils.designs as dn
 from utils.simrunners import SimulationRunner
 from utils.misc import conditional_expectations
@@ -270,10 +271,10 @@ def av_design(avmap, N, NMC=10):
         raise TypeError('avmap should be an ActiveVariableMap.')
 
     # interpret N as total number of points in the design
-    if not isinstance(N, int):
+    if not isinstance(N, numbers.Integral):
         raise Exception('N should be an integer.')
 
-    if not isinstance(NMC, int):
+    if not isinstance(NMC, numbers.Integral):
         raise Exception('NMC should be an integer.')
 
     m, n = avmap.domain.subspaces.W1.shape
@@ -295,4 +296,3 @@ def av_design(avmap, N, NMC=10):
 
     X, ind = avmap.inverse(Y, NMC)
     return Y, X, ind
-

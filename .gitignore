@@ -46,3 +46,7 @@ nosetests.xml
 # Translations
 *.mo
 .eggs
+
+# Jupyter Checkpoints
+*.ipynb_checkpoints*
+*checkpoint.ipynb

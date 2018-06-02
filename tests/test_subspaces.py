@@ -2,7 +2,6 @@ from unittest import TestCase
 import unittest
 import active_subspaces.subspaces as ss
 import numpy as np
-import pdb
 
 class TestSubspaces(TestCase):
 
@@ -12,7 +11,6 @@ class TestSubspaces(TestCase):
         C = np.dot(X.transpose(),X)
         e, W = ss.sorted_eigh(C)
         np.testing.assert_array_less(e[1], e[0])
-        np.testing.assert_array_less(np.zeros((3,)), W[0,:])
         
     def test_active_subspace(self):
         np.random.seed(42)
@@ -20,42 +18,6 @@ class TestSubspaces(TestCase):
         weights = np.ones((10,1)) / 10
         e, W = ss.active_subspace(df, weights)
         np.testing.assert_array_less(e[1], e[0])
-        np.testing.assert_array_less(np.zeros((3,)), W[0,:])
-        
-    def test_normalized_active_subspace(self):
-        np.random.seed(42)
-        df = np.random.normal(size=(10,3))
-        weights = np.ones((10,1)) / 10
-        e, W = ss.normalized_active_subspace(df, weights)
-        np.testing.assert_array_less(e[1], e[0])
-        np.testing.assert_array_less(np.zeros((3,)), W[0,:])
-        
-    def test_active_subspace_x(self):
-        np.random.seed(42)
-        df = np.random.normal(size=(10,3))
-        X = np.random.normal(size=(10,3))
-        weights = np.ones((10,1)) / 10
-        e, W = ss.active_subspace_x(X, df, weights)
-        np.testing.assert_array_less(e[1], e[0])
-        np.testing.assert_array_less(np.zeros((3,)), W[0,:])
-        
-    def test_normalized_active_subspace_x(self):
-        np.random.seed(42)
-        df = np.random.normal(size=(10,3))
-        X = np.random.normal(size=(10,3))
-        weights = np.ones((10,1)) / 10
-        e, W = ss.normalized_active_subspace_x(X, df, weights)
-        np.testing.assert_array_less(e[1], e[0])
-        np.testing.assert_array_less(np.zeros((3,)), W[0,:])
-        
-    def test_swarm_subspace(self):
-        np.random.seed(42)
-        X = np.random.normal(size=(10,3))
-        f = np.random.normal(size=(10,1))
-        weights = np.ones((10,1)) / 10
-        e, W = ss.swarm_subspace(X, f, weights)
-        np.testing.assert_array_less(e[1], e[0])
-        np.testing.assert_array_less(np.zeros((3,)), W[0,:])
         
     def test_ols_subspace(self):
         np.random.seed(42)
@@ -64,7 +26,6 @@ class TestSubspaces(TestCase):
         weights = np.ones((20,1)) / 20
         e, W = ss.ols_subspace(X, f, weights)
         np.testing.assert_array_less(e[1], e[0])
-        np.testing.assert_array_less(np.zeros((3,)), W[0,:])
         
     def test_qphd_subspace(self):
         np.random.seed(42)
@@ -73,44 +34,6 @@ class TestSubspaces(TestCase):
         weights = np.ones((50,1)) / 50
         e, W = ss.qphd_subspace(X, f, weights)
         np.testing.assert_array_less(e[1], e[0])
-        np.testing.assert_array_less(np.zeros((3,)), W[0,:])
-        
-    def test_sir_subspace(self):
-        np.random.seed(42)
-        X = np.random.normal(size=(50,3))
-        f = np.random.normal(size=(50,1))
-        weights = np.ones((50,1)) / 50
-        e, W = ss.sir_subspace(X, f, weights)
-        np.testing.assert_array_less(e[1], e[0])
-        np.testing.assert_array_less(np.zeros((3,)), W[0,:])
-        
-    def test_phd_subspace(self):
-        np.random.seed(42)
-        X = np.random.normal(size=(50,3))
-        f = np.random.normal(size=(50,1))
-        weights = np.ones((50,1)) / 50
-        e, W = ss.phd_subspace(X, f, weights)
-        np.testing.assert_array_less(e[1], e[0])
-        np.testing.assert_array_less(np.zeros((3,)), W[0,:])
-        
-    def test_save_subspace(self):
-        np.random.seed(42)
-        X = np.random.normal(size=(50,3))
-        f = np.random.normal(size=(50,1))
-        weights = np.ones((50,1)) / 50
-        e, W = ss.save_subspace(X, f, weights)
-        np.testing.assert_array_less(e[1], e[0])
-        np.testing.assert_array_less(np.zeros((3,)), W[0,:])
-    
-    #### UNDER CONSTRUCTION
-    #def test_mave_subspace(self):
-    #    np.random.seed(42)
-    #    X = np.random.normal(size=(50,3))
-    #    f = np.random.normal(size=(50,1))
-    #    weights = np.ones((50,1)) / 50
-    #    e, W = ss.mave_subspace(X, f, weights)
-    #    np.testing.assert_array_less(e[1], e[0])
-    #    np.testing.assert_array_less(np.zeros((3,)), W[0,:])
         
     def test_opg_subspace(self):
         np.random.seed(42)
@@ -119,7 +42,6 @@ class TestSubspaces(TestCase):
         weights = np.ones((50,1)) / 50
         e, W = ss.opg_subspace(X, f, weights)
         np.testing.assert_array_less(e[1], e[0])
-        np.testing.assert_array_less(np.zeros((3,)), W[0,:])
         
     def test_bootstrap_replicate(self):
         np.random.seed(42)

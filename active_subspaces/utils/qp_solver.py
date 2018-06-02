@@ -1,5 +1,6 @@
 """Solvers for the linear and quadratic programs in active subspaces."""
 import numpy as np
+import numbers
 from scipy.optimize import linprog, minimize
 
 # checking to see if system has gurobi
@@ -248,7 +249,7 @@ def _scipy_quadratic_program_bnd(c, Q, lb, ub):
 
     if res.success:
         xstar = res.x
-        if isinstance(xstar, float):
+        if isinstance(xstar, numbers.Real):
             xstar = np.array([[xstar]])
         return xstar.reshape((c.size,1))
     else:
@@ -281,7 +282,7 @@ def _scipy_quadratic_program_ineq(c, Q, A, b):
 
     if res.success:
         xstar = res.x
-        if isinstance(xstar, float):
+        if isinstance(xstar, numbers.Real):
             xstar = np.array([[xstar]])
         return xstar.reshape((c.size,1))
     else:

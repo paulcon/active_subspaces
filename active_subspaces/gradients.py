@@ -1,5 +1,6 @@
 """Utilities for approximating gradients."""
 import numpy as np
+import numbers
 from utils.misc import process_inputs
 from utils.simrunners import SimulationRunner
 
@@ -39,12 +40,12 @@ def local_linear_gradients(X, f, p=None, weights=None):
 
     if p is None:
         p = int(np.minimum(np.floor(1.7*m), M))
-    elif not isinstance(p, int):
+    elif not isinstance(p, numbers.Integral):
         raise TypeError('p must be an integer.')
 
     if p < m+1 or p > M:
         raise Exception('p must be between m+1 and M')
-        
+
     if weights is None:
         weights = np.ones((M, 1)) / M
 
