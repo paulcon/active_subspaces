@@ -13,14 +13,14 @@ def plot_opts(savefigs=True, figtype='.eps'):
     ----------
     savefigs : bool
         save figures into a separate figs director
-    figtype : str 
+    figtype : str
         a file extention for the type of image to save
-        
+
     Returns
     -------
-    opts : dict 
-        the chosen options. The keys in the dictionary are `figtype`, 
-        `savefigs`, and `font`. The `font` is a dictionary that sets the font 
+    opts : dict
+        the chosen options. The keys in the dictionary are `figtype`,
+        `savefigs`, and `font`. The `font` is a dictionary that sets the font
         properties of the figures.
     """
 
@@ -48,7 +48,7 @@ def eigenvalues(e, e_br=None, out_label=None, opts=None):
     e : ndarray
         k-by-1 matrix that contains the estimated eigenvalues
     e_br : ndarray, optional
-        lower and upper bounds for the estimated eigenvalues. These are 
+        lower and upper bounds for the estimated eigenvalues. These are
         typically computed with a bootstrap. (default None)
     out_label : str, optional
         a label for the quantity of interest (default None)
@@ -96,9 +96,9 @@ def subspace_errors(sub_br ,out_label=None, opts=None):
     sub_br : ndarray
         (k-1)-by-3 matix that contains the lower bound, mean, and upper bound of
         the subspace errors for each dimension of subspace.
-    out_label : str, optional 
+    out_label : str, optional
         a label for the quantity of interest (default None)
-    opts : dict, optional 
+    opts : dict, optional
         a dictionary with some plot options (default None)
 
     See Also
@@ -136,12 +136,12 @@ def eigenvectors(W, W_br=None, in_labels=None, out_label=None, opts=None):
     Parameters
     ----------
     W : ndarray
-        m-by-k matrix that contains k of the estimated eigenvectors from the 
+        m-by-k matrix that contains k of the estimated eigenvectors from the
         active subspace analysis.
     W_br : ndarray, optional
-        m-by-(2*k) matrix that contains estimated upper and lower bounds on the 
+        m-by-(2*k) matrix that contains estimated upper and lower bounds on the
         components of the eigenvectors (default None)
-    in_labels : str[], optional 
+    in_labels : str[], optional
         list of labels for the simulation's inputs (default None)
     out_label : str, optional
         a label for the quantity of interest (default None)
@@ -328,13 +328,13 @@ def sufficient_summary(y, f, out_label=None, opts=None):
     Parameters
     ----------
     y : ndarray
-        M-by-1 or M-by-2 matrix that contains the values of the predictors for 
+        M-by-1 or M-by-2 matrix that contains the values of the predictors for
         the summary plot.
     f : ndarray
         M-by-1 matrix that contains the corresponding responses
-    out_label : str, optional 
+    out_label : str, optional
         a label for the quantity of interest (default None)
-    opts : dict, optional 
+    opts : dict, optional
         a dictionary with some plot options (default None)
 
     Notes
@@ -376,6 +376,8 @@ def sufficient_summary(y, f, out_label=None, opts=None):
 
         plt.figure(figsize=(7,7))
         plt.rc('font', **opts['myfont'])
+        if isinstance(f, np.ndarray):
+            f = f.flatten()
         plt.scatter(y1, y2, c=f, s=150.0, vmin=np.min(f), vmax=np.max(f))
         plt.xlabel('Active variable 1')
         plt.ylabel('Active variable 2')
@@ -397,23 +399,23 @@ def zonotope_2d_plot(vertices, design=None, y=None, f=None, out_label=None, opts
 
     Parameters
     ----------
-    vertices : ndarray 
+    vertices : ndarray
         M-by-2 matrix that contains the vertices that define the zonotope
     design : ndarray, optional
         N-by-2 matrix that contains a design-of-experiments on the zonotope. The
-        plot will contain the Delaunay triangulation of the points in `design` 
+        plot will contain the Delaunay triangulation of the points in `design`
         and `vertices`. (default None)
-    y : ndarray, optional 
+    y : ndarray, optional
         K-by-2 matrix that contains points to be plotted inside the zonotope. If
         `y` is given, then `f` must be given, too. (default None)
     f: ndarray, optional
-        K-by-1 matrix that contains a color value for the associated points in 
-        `y`. This is useful for plotting function values or quadrature rules 
-        with the zonotope. If `f` is given, then `y` must be given, too. 
+        K-by-1 matrix that contains a color value for the associated points in
+        `y`. This is useful for plotting function values or quadrature rules
+        with the zonotope. If `f` is given, then `y` must be given, too.
         (default None)
-    out_label : str, optional 
+    out_label : str, optional
         a label for the quantity of interest (default None)
-    opts : dict, optional 
+    opts : dict, optional
         a dictionary with some plot options (default None)
 
     Notes
