@@ -1,6 +1,7 @@
 """ A basic class for approximation, integration, and optimization with
 active subspaces."""
 import numpy as np
+import numbers
 from utils.misc import process_inputs_outputs, process_inputs
 from utils.simrunners import SimulationRunner, SimulationGradientRunner
 from utils.plotters import eigenvalues, subspace_errors, eigenvectors, sufficient_summary
@@ -124,7 +125,7 @@ class ActiveSubspaceReducedModel():
         unbounded with some correlation. In this case, we assume that the
         inputs have been properly transformed to a standard Gaussian.
         """
-        if not isinstance(m, int):
+        if not isinstance(m, numbers.Integral):
             raise TypeError('m must be an integer.')
         else:
             self.m = m
@@ -189,7 +190,7 @@ class ActiveSubspaceReducedModel():
         ss = Subspaces()
         ss.compute(df=df, nboot=100)
         if avdim is not None:
-            if not isinstance(avdim, int):
+            if not isinstance(avdim, numbers.Integral):
                 raise TypeError('avdim should be an integer.')
             else:
                 ss.partition(avdim)
@@ -250,7 +251,7 @@ class ActiveSubspaceReducedModel():
                 raise TypeError('dfun should be a callable function.')
 
         if avdim is not None:
-            if not isinstance(avdim, int):
+            if not isinstance(avdim, numbers.Integral):
                 raise TypeError('avdim should be an integer')
 
         m = self.m
@@ -431,7 +432,7 @@ class ActiveSubspaceReducedModel():
         response surface. It's probably better to compute the average of the
         training data directly.
         """
-        if not isinstance(N, int):
+        if not isinstance(N, numbers.Integral):
             raise TypeError('N should be an integer.')
 
         if N < 1:
@@ -477,14 +478,14 @@ class ActiveSubspaceReducedModel():
         probabiliy, and it includes central limit theorem-based 99% confidence
         bounds.
         """
-        if not isinstance(lb, float):
-            if isinstance(lb, int):
+        if not isinstance(lb, numbers.Real):
+            if isinstance(lb, numbers.Integral):
                 lb = float(lb)
             else:
                 raise TypeError('lb should be a float')
 
-        if not isinstance(ub, float):
-            if isinstance(ub, int):
+        if not isinstance(ub, numbers.Real):
+            if isinstance(ub, numbers.Integral):
                 ub = float(ub)
             else:
                 raise TypeError('ub should be a float')
@@ -524,4 +525,3 @@ class ActiveSubspaceReducedModel():
         """
         xstar, fstar = minimize(self.as_respsurf, self.X, self.f)
         return fstar, xstar
-

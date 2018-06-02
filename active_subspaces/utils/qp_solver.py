@@ -1,5 +1,6 @@
 """Solvers for the linear and quadratic programs in active subspaces."""
 import numpy as np
+import numbers
 from scipy.optimize import linprog, minimize
 
 # checking to see if system has gurobi
@@ -19,7 +20,7 @@ class QPSolver():
 
     Attributes
     ----------
-    solver : str 
+    solver : str
         identifies which linear program software to use
 
     Notes
@@ -35,8 +36,8 @@ class QPSolver():
 
         Parameters
         ----------
-        solver : str, optional 
-            identifies which linear program software to use. Options are 
+        solver : str, optional
+            identifies which linear program software to use. Options are
             'GUROBI' and 'SCIPY'. (default 'GUROBI')
         """
 
@@ -59,13 +60,13 @@ class QPSolver():
 
         Parameters
         ----------
-        c : ndarray 
+        c : ndarray
             m-by-1 matrix for the linear objective function
-        A : ndarray 
-            M-by-m matrix that contains the coefficients of the linear equality 
+        A : ndarray
+            M-by-m matrix that contains the coefficients of the linear equality
             constraints
         b : ndarray
-            M-by-1 matrix that is the right hand side of the equality 
+            M-by-1 matrix that is the right hand side of the equality
             constraints
         lb : ndarray
             m-by-1 matrix that contains the lower bounds on the variables
@@ -97,17 +98,17 @@ class QPSolver():
         c : ndarray
             m-by-1 matrix for the linear objective function
         A : ndarray
-            M-by-m matrix that contains the coefficients of the linear equality 
+            M-by-m matrix that contains the coefficients of the linear equality
             constraints
-        b : ndarray 
-            size M-by-1 matrix that is the right hand side of the equality 
+        b : ndarray
+            size M-by-1 matrix that is the right hand side of the equality
             constraints
 
         Returns
         -------
         x : ndarray
             m-by-1 matrix that is the minimizer of the linear program
-        
+
         """
         if self.solver == solver_SCIPY:
             return _scipy_linear_program_ineq(c, A, b)
@@ -127,10 +128,10 @@ class QPSolver():
         Parameters
         ----------
         c : ndarray
-            m-by-1 matrix that contains the coefficients of the linear term in 
+            m-by-1 matrix that contains the coefficients of the linear term in
             the objective function
         Q : ndarray
-            m-by-m matrix that contains the coefficients of the quadratic term 
+            m-by-m matrix that contains the coefficients of the quadratic term
             in the objective function
         lb : ndarray
             m-by-1 matrix that contains the lower bounds on the variables
@@ -139,9 +140,9 @@ class QPSolver():
 
         Returns
         -------
-        x : ndarray 
+        x : ndarray
             m-by-1 matrix that is the minimizer of the quadratic program
-        
+
         """
         if self.solver == solver_SCIPY:
             return _scipy_quadratic_program_bnd(c, Q, lb, ub)
@@ -153,7 +154,7 @@ class QPSolver():
     def quadratic_program_ineq(self, c, Q, A, b):
         """Solves an inequality constrained quadratic program.
 
-        
+
         This method returns the minimizer of the following quadratic program.
 
         minimize  c^T x + x^T Q x
@@ -162,16 +163,16 @@ class QPSolver():
         Parameters
         ----------
         c : ndarray
-            m-by-1 matrix that contains the coefficients of the linear term in 
+            m-by-1 matrix that contains the coefficients of the linear term in
             the objective function
         Q : ndarray
-            m-by-m matrix that contains the coefficients of the quadratic term 
+            m-by-m matrix that contains the coefficients of the quadratic term
             in the objective function
-        A : ndarray 
-            M-by-m matrix that contains the coefficients of the linear equality 
+        A : ndarray
+            M-by-m matrix that contains the coefficients of the linear equality
             constraints
         b : ndarray
-            M-by-1 matrix that is the right hand side of the equality 
+            M-by-1 matrix that is the right hand side of the equality
             constraints
 
         Returns
@@ -248,7 +249,7 @@ def _scipy_quadratic_program_bnd(c, Q, lb, ub):
 
     if res.success:
         xstar = res.x
-        if isinstance(xstar, float):
+        if isinstance(xstar, numbers.Real):
             xstar = np.array([[xstar]])
         return xstar.reshape((c.size,1))
     else:
@@ -281,7 +282,7 @@ def _scipy_quadratic_program_ineq(c, Q, A, b):
 
     if res.success:
         xstar = res.x
-        if isinstance(xstar, float):
+        if isinstance(xstar, numbers.Real):
             xstar = np.array([[xstar]])
         return xstar.reshape((c.size,1))
     else:

@@ -1,6 +1,7 @@
 """Utilities for exploiting active subspaces when estimating integrals."""
 
 import numpy as np
+import numbers
 import utils.quadrature as gq
 from utils.misc import conditional_expectations
 from utils.designs import maximin_design
@@ -12,30 +13,30 @@ from scipy.spatial import Delaunay
 
 def integrate(fun, avmap, N, NMC=10):
     """Approximate the integral of a function of m variables.
-    
+
     Parameters
     ----------
-    fun : function 
-        an interface to the simulation that returns the quantity of interest 
+    fun : function
+        an interface to the simulation that returns the quantity of interest
         given inputs as an 1-by-m ndarray
-    avmap : ActiveVariableMap 
+    avmap : ActiveVariableMap
         a domains.ActiveVariableMap
-    N : int 
+    N : int
         the number of points in the quadrature rule
     NMC : int, optional
-        the number of points in the Monte Carlo estimates of the conditional 
+        the number of points in the Monte Carlo estimates of the conditional
         expectation and conditional variance (default 10)
 
     Returns
     -------
-    mu : float 
-        an estimate of the integral of the function computed against the weight 
+    mu : float
+        an estimate of the integral of the function computed against the weight
         function on the simulation inputs
-    lb : float 
-        a central-limit-theorem 95% lower confidence from the Monte Carlo part 
+    lb : float
+        a central-limit-theorem 95% lower confidence from the Monte Carlo part
         of the integration
-    ub : float 
-        a central-limit-theorem 95% upper confidence from the Monte Carlo part 
+    ub : float
+        a central-limit-theorem 95% upper confidence from the Monte Carlo part
         of the integration
 
     See Also
@@ -51,7 +52,7 @@ def integrate(fun, avmap, N, NMC=10):
     if not isinstance(avmap, ActiveVariableMap):
         raise TypeError('avmap should be an ActiveVariableMap.')
 
-    if not isinstance(N, int):
+    if not isinstance(N, numbers.Integral):
         raise TypeError('N should be an integer')
 
     # get the quadrature rule
@@ -84,16 +85,16 @@ def av_integrate(avfun, avmap, N):
 
     Parameters
     ----------
-    avfun : function 
+    avfun : function
         a function of the active variables
-    avmap : ActiveVariableMap 
+    avmap : ActiveVariableMap
         a domains.ActiveVariableMap
-    N : int 
+    N : int
         the number of points in the quadrature rule
 
     Returns
     -------
-    mu : float 
+    mu : float
         an estimate of the integral
 
     Notes
@@ -104,7 +105,7 @@ def av_integrate(avfun, avmap, N):
     if not isinstance(avmap, ActiveVariableMap):
         raise TypeError('avmap should be an ActiveVariableMap.')
 
-    if not isinstance(N, int):
+    if not isinstance(N, numbers.Integral):
         raise TypeError('N should be an integer.')
 
     Yp, Yw = av_quadrature_rule(avmap, N)
@@ -117,27 +118,27 @@ def av_integrate(avfun, avmap, N):
 
 def quadrature_rule(avmap, N, NMC=10):
     """Get a quadrature rule on the space of simulation inputs.
-    
+
     Parameters
     ----------
-    avmap : ActiveVariableMap 
+    avmap : ActiveVariableMap
         a domains.ActiveVariableMap
-    N : int 
+    N : int
         the number of quadrature nodes in the active variables
-    NMC : int, optional 
-        the number of samples in the simple Monte Carlo over the inactive 
+    NMC : int, optional
+        the number of samples in the simple Monte Carlo over the inactive
         variables (default 10)
 
     Returns
     -------
-    Xp : ndarray 
-        (N*NMC)-by-m matrix containing the quadrature nodes on the simulation 
+    Xp : ndarray
+        (N*NMC)-by-m matrix containing the quadrature nodes on the simulation
         input space
-    Xw : ndarray 
-        (N*NMC)-by-1 matrix containing the quadrature weights on the simulation 
+    Xw : ndarray
+        (N*NMC)-by-1 matrix containing the quadrature weights on the simulation
         input space
-    ind : ndarray 
-        array of indices identifies which rows of `Xp` correspond to the same 
+    ind : ndarray
+        array of indices identifies which rows of `Xp` correspond to the same
         fixed value of the active variables
 
     See Also
@@ -163,10 +164,10 @@ def quadrature_rule(avmap, N, NMC=10):
     if not isinstance(avmap, ActiveVariableMap):
         raise TypeError('avmap should be an ActiveVariableMap.')
 
-    if not isinstance(N, int):
+    if not isinstance(N, numbers.Integral):
         raise TypeError('N should be an integer.')
 
-    if not isinstance(NMC, int):
+    if not isinstance(NMC, numbers.Integral):
         raise TypeError('NMC should be an integer.')
 
     # get quadrature rule on active variables
@@ -182,14 +183,14 @@ def av_quadrature_rule(avmap, N):
 
     Parameters
     ----------
-    avmap : ActiveVariableMap 
+    avmap : ActiveVariableMap
         a domains.ActiveVariableMap
-    N : int 
+    N : int
         the number of quadrature nodes in the active variables
-        
+
     Returns
     -------
-    Yp : ndarray 
+    Yp : ndarray
         quadrature nodes on the active variables
     Yw : ndarray
         quadrature weights on the active variables
@@ -215,25 +216,25 @@ def av_quadrature_rule(avmap, N):
 
 def interval_quadrature_rule(avmap, N, NX=10000):
     """Quadrature rule on a one-dimensional interval.
-    
+
     Quadrature when the dimension of the active subspace is 1 and the
     simulation parameter space is bounded.
 
     Parameters
     ----------
-    avmap : ActiveVariableMap 
+    avmap : ActiveVariableMap
         a domains.ActiveVariableMap
-    N : int 
+    N : int
         the number of quadrature nodes in the active variables
-    NX : int, optional 
+    NX : int, optional
         the number of samples to use to estimate the quadrature weights (default
         10000)
 
     Returns
     -------
-    Yp : ndarray 
+    Yp : ndarray
         quadrature nodes on the active variables
-    Yw : ndarray 
+    Yw : ndarray
         quadrature weights on the active variables
 
     See Also
@@ -261,17 +262,17 @@ def interval_quadrature_rule(avmap, N, NX=10000):
 
 def zonotope_quadrature_rule(avmap, N, NX=10000):
     """Quadrature rule on a zonotope.
-    
+
     Quadrature when the dimension of the active subspace is greater than 1 and
     the simulation parameter space is bounded.
 
     Parameters
     ----------
-    avmap : ActiveVariableMap 
+    avmap : ActiveVariableMap
         a domains.ActiveVariableMap
-    N : int 
+    N : int
         the number of quadrature nodes in the active variables
-    NX : int, optional 
+    NX : int, optional
         the number of samples to use to estimate the quadrature weights (default
         10000)
 
@@ -279,7 +280,7 @@ def zonotope_quadrature_rule(avmap, N, NX=10000):
     -------
     Yp : ndarray
         quadrature nodes on the active variables
-    Yw : ndarray 
+    Yw : ndarray
         quadrature weights on the active variables
 
     See Also
@@ -310,5 +311,3 @@ def zonotope_quadrature_rule(avmap, N, NX=10000):
 
     Yp, Yw = points.reshape((T.nsimplex,n)), weights.reshape((T.nsimplex,1))
     return Yp, Yw
-
-
