@@ -12,12 +12,12 @@ def r_hermite(N):
 
     Parameters
     ----------
-    N : int
+    N : int 
         the number of recurrence coefficients
 
     Returns
     -------
-    ab : ndarray
+    ab : ndarray 
         an `N`-by-2 array of the recurrence coefficients
 
     See Also
@@ -51,7 +51,7 @@ def r_jacobi(N,l,r,a,b):
 
     Parameters
     ----------
-    N : int
+    N : int 
         the number of recurrence coefficients
     l : float
         the left endpoint of the interval
@@ -64,7 +64,7 @@ def r_jacobi(N,l,r,a,b):
 
     Returns
     -------
-    ab : ndarray
+    ab : ndarray 
         an `N`-by-2 array of the recurrence coefficients
 
     See Also
@@ -111,8 +111,8 @@ def jacobi_matrix(ab):
 
     Returns
     -------
-    J : ndarray
-        (N-1)-by-(N-1) symmetric, tridiagonal Jacobi matrix associated with the
+    J : ndarray 
+        (N-1)-by-(N-1) symmetric, tridiagonal Jacobi matrix associated with the 
         orthogonal polynomials
 
     See Also
@@ -152,14 +152,14 @@ def gl1d(N):
 
     Parameters
     ----------
-    N : int
+    N : int 
         number of nodes in the quadrature rule
 
     Returns
     -------
-    x : ndarray
+    x : ndarray 
         N-by-1 array of quadrature nodes
-    w : ndarray
+    w : ndarray 
         N-by-1 array of quadrature weights
 
     See Also
@@ -208,14 +208,14 @@ def g1d(N, quadtype):
     ----------
     N : int
         number of nodes in the quadrature rule
-    quadtype : str
+    quadtype : str 
         type of quadrature rule {'Legendre', 'Hermite'}
 
     Returns
     -------
-    x : ndarray
+    x : ndarray 
         N-by-1 array of quadrature nodes
-    w : ndarray
+    w : ndarray 
         N-by-1 array of quadrature weights
 
     See Also
@@ -251,14 +251,14 @@ def gauss_hermite(N):
 
     Parameters
     ----------
-    N : int[]
+    N : int[] 
         number of nodes in each dimension of the quadrature rule
 
     Returns
     -------
-    x : ndarray
+    x : ndarray 
         N-by-1 array of quadrature nodes
-    w : ndarray
+    w : ndarray 
         N-by-1 array of quadrature weights
 
     Notes
@@ -294,14 +294,14 @@ def gauss_legendre(N):
 
     Parameters
     ----------
-    N : int[]
+    N : int[] 
         number of nodes in each dimension of the quadrature rule
 
     Returns
     -------
     x : ndarray
         N-by-1 array of quadrature nodes
-    w : ndarray
+    w : ndarray 
         N-by-1 array of quadrature weights
 
     Notes

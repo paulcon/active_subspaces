@@ -2,6 +2,7 @@
 
 import matplotlib
 import nose
-matplotlib.use('agg')
 
-nose.main()
+if __name__ == '__main__':
+	matplotlib.use('agg')
+	nose.main(argv = ['--processes=1', '-v'])

@@ -9,24 +9,24 @@ from subspaces import Subspaces
 
 class ActiveVariableDomain():
     """A base class for the domain of functions of active variables.
-
+    
     Attributes
     ----------
     subspaces : Subspaces
         subspaces that define the domain
-    m : int
+    m : int 
         the dimension of the simulation inputs
-    n : int
+    n : int 
         the dimension of the active subspace
-    vertY : ndarray
-        n-dimensional vertices that define the boundary of the domain when the
+    vertY : ndarray 
+        n-dimensional vertices that define the boundary of the domain when the 
         m-dimensional space is a hypercube
-    vertX : ndarray
+    vertX : ndarray 
         corners of the m-dimensional hypercube that map to the points `vertY`
     convhull : scipy.spatial.ConvexHull
         the ConvexHull object defined by the vertices `vertY`
     constraints : dict
-        a dictionary of linear inequality constraints conforming to the
+        a dictionary of linear inequality constraints conforming to the 
         specifications used in the scipy.optimizer library
 
     Notes
@@ -41,7 +41,7 @@ class ActiveVariableDomain():
 
 class UnboundedActiveVariableDomain(ActiveVariableDomain):
     """Domain of functions with unbounded domains (Gaussian weight).
-
+    
     An class for the domain of functions of active variables when the space
     of simulation parameters is unbounded.
 
@@ -55,7 +55,7 @@ class UnboundedActiveVariableDomain(ActiveVariableDomain):
 
         Parameters
         ----------
-        subspaces : Subspaces
+        subspaces : Subspaces 
             a Subspaces object with the `compute` method already called
         """
         if not isinstance(subspaces, Subspaces):
@@ -69,7 +69,7 @@ class UnboundedActiveVariableDomain(ActiveVariableDomain):
 
 class BoundedActiveVariableDomain(ActiveVariableDomain):
     """Domain of functions with bounded domains (uniform on hypercube).
-
+    
     An class for the domain of functions of active variables when the space
     of simulation parameters is bounded.
 
@@ -81,10 +81,10 @@ class BoundedActiveVariableDomain(ActiveVariableDomain):
 
     def __init__(self, subspaces):
         """Initialize the BoundedActiveVariableDomain
-
+        
         Parameters
         ----------
-        subspaces : Subspaces
+        subspaces : Subspaces 
             a Subspaces object with the `compute` method already called
         """
         if not isinstance(subspaces, Subspaces):
@@ -146,7 +146,7 @@ class ActiveVariableMap():
 
     def __init__(self, domain):
         """Initialize the ActiveVariableMap.
-
+        
         Parameters
         ----------
         domain : ActiveVariableDomain
@@ -156,23 +156,23 @@ class ActiveVariableMap():
 
     def forward(self, X):
         """Map full variables to active variables.
-
+        
         Map the points in the original input space to the active and inactive
         variables.
 
         Parameters
         ----------
         X : ndarray
-            an M-by-m matrix, each row of `X` is a point in the original
+            an M-by-m matrix, each row of `X` is a point in the original 
             parameter space
 
         Returns
         -------
-        Y : ndarray
+        Y : ndarray 
             M-by-n matrix that contains points in the space of active variables.
             Each row of `Y` corresponds to a row of `X`.
-        Z : ndarray
-            M-by-(m-n) matrix that contains points in the space of inactive
+        Z : ndarray 
+            M-by-(m-n) matrix that contains points in the space of inactive 
             variables. Each row of `Z` corresponds to a row of `X`.
 
         """
@@ -183,25 +183,25 @@ class ActiveVariableMap():
 
     def inverse(self, Y, N=1):
         """Find points in full space that map to active variable points.
-
+        
         Map the points in the active variable space to the original parameter
         space.
-
+        
         Parameters
         ----------
         Y : ndarray
             M-by-n matrix that contains points in the space of active variables
         N : int, optional
-            the number of points in the original parameter space that are
+            the number of points in the original parameter space that are 
             returned that map to the given active variables (default 1)
 
         Returns
         -------
         X : ndarray
-            (M*N)-by-m matrix that contains points in the original parameter
+            (M*N)-by-m matrix that contains points in the original parameter 
             space
         ind : ndarray
-            (M*N)-by-1 matrix that contains integer indices. These indices
+            (M*N)-by-1 matrix that contains integer indices. These indices 
             identify which rows of `X` map to which rows of `Y`.
 
         Notes
@@ -221,24 +221,24 @@ class ActiveVariableMap():
 
     def regularize_z(self, Y, N):
         """Pick inactive variables associated active variables.
-
+        
         Find points in the space of inactive variables to complete the inverse
         map.
-
+        
         Parameters
         ----------
         Y : ndarray
             M-by-n matrix that contains points in the space of active variables
         N : int
-            The number of points in the original parameter space that are
+            The number of points in the original parameter space that are 
             returned that map to the given active variables
 
         Returns
         -------
-        Z : ndarray
-            (M)-by-(m-n)-by-N matrix that contains values of the inactive
+        Z : ndarray 
+            (M)-by-(m-n)-by-N matrix that contains values of the inactive 
             variables
-
+            
         Notes
         -----
         The base class does not implement `regularize_z`. Specific
@@ -250,7 +250,7 @@ class ActiveVariableMap():
 
 class BoundedActiveVariableMap(ActiveVariableMap):
     """Class for mapping between active and bounded full variables.
-
+    
     A class for the map between active/inactive and original variables when the
     original variables are bounded by a hypercube with a uniform density.
 
@@ -260,24 +260,24 @@ class BoundedActiveVariableMap(ActiveVariableMap):
     """
     def regularize_z(self, Y, N):
         """Pick inactive variables associated active variables.
-
+        
         Find points in the space of inactive variables to complete the inverse
         map.
-
+        
         Parameters
         ----------
         Y : ndarray
             M-by-n matrix that contains points in the space of active variables
         N : int
-            The number of points in the original parameter space that are
+            The number of points in the original parameter space that are 
             returned that map to the given active variables
 
         Returns
         -------
-        Z : ndarray
-            (M)-by-(m-n)-by-N matrix that contains values of the inactive
+        Z : ndarray 
+            (M)-by-(m-n)-by-N matrix that contains values of the inactive 
             variables
-
+            
         Notes
         -----
         This implementation of `regularize_z` uses the function `sample_z` to
@@ -288,18 +288,18 @@ class BoundedActiveVariableMap(ActiveVariableMap):
         m, n = W1.shape
 
         # sample the z's
-        # TODO: preallocate and organize properly
-
+        # TODO: preallocate and organize properly 
+        
         Zlist = []
         for y in Y:
             Zlist.append(sample_z(N, y, W1, W2))
-
+            
         Z = np.swapaxes(np.array(Zlist),1,2)
         return Z
 
 class UnboundedActiveVariableMap(ActiveVariableMap):
     """Class for mapping between active and unbounded full variables.
-
+    
     A class for the map between active/inactive and original variables when the
     original variables are ubbounded and the space is equipped with a standard
     Gaussian density.
@@ -310,24 +310,24 @@ class UnboundedActiveVariableMap(ActiveVariableMap):
     """
     def regularize_z(self, Y, N):
         """Pick inactive variables associated active variables.
-
+        
         Find points in the space of inactive variables to complete the inverse
         map.
-
+        
         Parameters
         ----------
         Y : ndarray
             M-by-n matrix that contains points in the space of active variables
         N : int
-            The number of points in the original parameter space that are
+            The number of points in the original parameter space that are 
             returned that map to the given active variables
 
         Returns
         -------
-        Z : ndarray
-            (M)-by-(m-n)-by-N matrix that contains values of the inactive
+        Z : ndarray 
+            (M)-by-(m-n)-by-N matrix that contains values of the inactive 
             variables
-
+            
         Notes
         -----
         This implementation of `regularize_z` samples the inactive variables
@@ -342,19 +342,19 @@ class UnboundedActiveVariableMap(ActiveVariableMap):
 
 def nzv(m, n):
     """Number of zonotope vertices.
-
+    
     Compute the number of zonotope vertices for a linear map from R^m to R^n.
-
+    
     Parameters
     ----------
     m : int
         the dimension of the hypercube
     n : int
         the dimension of the low-dimesional subspace
-
+        
     Returns
     -------
-    N : int
+    N : int 
         the number of vertices defining the zonotope
     """
     if not isinstance(m, numbers.Integral):
@@ -372,20 +372,20 @@ def nzv(m, n):
 
 def interval_endpoints(W1):
     """Compute the range of a 1d active variable.
-
+    
     Parameters
     ----------
     W1 : ndarray
-        m-by-1 matrix that contains the eigenvector that defines the first
+        m-by-1 matrix that contains the eigenvector that defines the first 
         active variable
 
     Returns
     -------
     Y : ndarray
-        2-by-1 matrix that contains the endpoints of the interval defining the
+        2-by-1 matrix that contains the endpoints of the interval defining the 
         range of the 1d active variable
     X : ndarray
-        2-by-m matrix that contains the corners of the m-dimensional hypercube
+        2-by-m matrix that contains the corners of the m-dimensional hypercube 
         that map to the active variable endpoints
     """
 
@@ -403,17 +403,17 @@ def interval_endpoints(W1):
 
 def unique_rows(S):
     """Return the unique rows from ndarray
-
+    
     Parameters
     ----------
     S : ndarray
         array with rows to reduces
-
+        
     Returns
     -------
     T : ndarray
         version of `S` with unique rows
-
+        
     Notes
     -----
     http://stackoverflow.com/questions/16970982/find-unique-rows-in-numpy-array
@@ -426,8 +426,8 @@ def zonotope_vertices(W1, Nsamples=10000, maxcount=100000):
 
     Parameters
     ----------
-    W1 : ndarray
-        m-by-n matrix that contains the eigenvector bases of the n-dimensional
+    W1 : ndarray 
+        m-by-n matrix that contains the eigenvector bases of the n-dimensional 
         active subspace
     Nsamples : int, optional
         number of samples per iteration to check (default 1e4)
@@ -436,15 +436,19 @@ def zonotope_vertices(W1, Nsamples=10000, maxcount=100000):
 
     Returns
     -------
-    Y : ndarray
+    Y : ndarray 
         nzv-by-n matrix that contains the zonotope vertices
-    X : ndarray
+    X : ndarray 
         nzv-by-m matrix that contains the corners of the m-dimensional hypercube
         that map to the zonotope vertices
     """
 
     m, n = W1.shape
     totalverts = nzv(m,n)
+    
+    # make sure they're ints
+    Nsamples = int(Nsamples)
+    maxcount = int(maxcount)
 
     # make sure they're ints
     Nsamples = int(Nsamples)
@@ -477,27 +481,27 @@ def zonotope_vertices(W1, Nsamples=10000, maxcount=100000):
 
 def sample_z(N, y, W1, W2):
     """Sample inactive variables.
-
+    
     Sample values of the inactive variables for a fixed value of the active
     variables when the original variables are bounded by a hypercube.
 
     Parameters
     ----------
-    N : int
+    N : int 
         the number of inactive variable samples
-    y : ndarray
+    y : ndarray 
         the value of the active variables
-    W1 : ndarray
-        m-by-n matrix that contains the eigenvector bases of the n-dimensional
+    W1 : ndarray 
+        m-by-n matrix that contains the eigenvector bases of the n-dimensional 
         active subspace
-    W2 : ndarray
-        m-by-(m-n) matrix that contains the eigenvector bases of the
+    W2 : ndarray 
+        m-by-(m-n) matrix that contains the eigenvector bases of the 
         (m-n)-dimensional inactive subspace
 
     Returns
     -------
     Z : ndarray
-        N-by-(m-n) matrix that contains values of the inactive variable that
+        N-by-(m-n) matrix that contains values of the inactive variable that 
         correspond to the given `y`
 
     Notes
@@ -535,30 +539,30 @@ def hit_and_run_z(N, y, W1, W2):
 
     Parameters
     ----------
-    N : int
+    N : int 
         the number of inactive variable samples
-    y : ndarray
+    y : ndarray 
         the value of the active variables
-    W1 : ndarray
-        m-by-n matrix that contains the eigenvector bases of the n-dimensional
+    W1 : ndarray 
+        m-by-n matrix that contains the eigenvector bases of the n-dimensional 
         active subspace
-    W2 : ndarray
-        m-by-(m-n) matrix that contains the eigenvector bases of the
+    W2 : ndarray 
+        m-by-(m-n) matrix that contains the eigenvector bases of the 
         (m-n)-dimensional inactive subspace
 
     Returns
     -------
     Z : ndarray
-        N-by-(m-n) matrix that contains values of the inactive variable that
-        correspond to the given `y`
-
+        N-by-(m-n) matrix that contains values of the inactive variable that 
+        correspond to the given `y`    
+    
     See Also
     --------
     domains.sample_z
-
+    
     Notes
     -----
-    The interface for this implementation is written specifically for
+    The interface for this implementation is written specifically for 
     `domains.sample_z`.
     """
     m, n = W1.shape
@@ -627,30 +631,30 @@ def rejection_sampling_z(N, y, W1, W2):
 
     Parameters
     ----------
-    N : int
+    N : int 
         the number of inactive variable samples
-    y : ndarray
+    y : ndarray 
         the value of the active variables
-    W1 : ndarray
-        m-by-n matrix that contains the eigenvector bases of the n-dimensional
+    W1 : ndarray 
+        m-by-n matrix that contains the eigenvector bases of the n-dimensional 
         active subspace
-    W2 : ndarray
-        m-by-(m-n) matrix that contains the eigenvector bases of the
+    W2 : ndarray 
+        m-by-(m-n) matrix that contains the eigenvector bases of the 
         (m-n)-dimensional inactive subspace
 
     Returns
     -------
     Z : ndarray
-        N-by-(m-n) matrix that contains values of the inactive variable that
-        correspond to the given `y`
-
+        N-by-(m-n) matrix that contains values of the inactive variable that 
+        correspond to the given `y`    
+    
     See Also
     --------
     domains.sample_z
-
+    
     Notes
     -----
-    The interface for this implementation is written specifically for
+    The interface for this implementation is written specifically for 
     `domains.sample_z`.
     """
     m, n = W1.shape
@@ -683,30 +687,30 @@ def random_walk_z(N, y, W1, W2):
 
     Parameters
     ----------
-    N : int
+    N : int 
         the number of inactive variable samples
-    y : ndarray
+    y : ndarray 
         the value of the active variables
-    W1 : ndarray
-        m-by-n matrix that contains the eigenvector bases of the n-dimensional
+    W1 : ndarray 
+        m-by-n matrix that contains the eigenvector bases of the n-dimensional 
         active subspace
-    W2 : ndarray
-        m-by-(m-n) matrix that contains the eigenvector bases of the
+    W2 : ndarray 
+        m-by-(m-n) matrix that contains the eigenvector bases of the 
         (m-n)-dimensional inactive subspace
 
     Returns
     -------
     Z : ndarray
-        N-by-(m-n) matrix that contains values of the inactive variable that
-        correspond to the given `y`
-
+        N-by-(m-n) matrix that contains values of the inactive variable that 
+        correspond to the given `y`    
+    
     See Also
     --------
     domains.sample_z
-
+    
     Notes
     -----
-    The interface for this implementation is written specifically for
+    The interface for this implementation is written specifically for 
     `domains.sample_z`.
     """
     m, n = W1.shape
@@ -746,7 +750,7 @@ def random_walk_z(N, y, W1, W2):
 
 def _rotate_x(Y, Z, W):
     """A convenience function for rotating subspace coordinates to x space.
-
+    
     """
     NY, n = Y.shape
     N = Z.shape[2]

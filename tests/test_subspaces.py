@@ -64,6 +64,22 @@ class TestSubspaces(TestCase):
         ssmethod = lambda X, f, df, weights: ss.active_subspace(df, weights)
         d = ss._bootstrap_ranges(e, W, None, None, df, weights, ssmethod, nboot=10)
         
+        e, W = ss.normalized_active_subspace(df, weights)
+        ssmethod = lambda X, f, df, weights: ss.normalized_active_subspace(df, weights)
+        d = ss._bootstrap_ranges(e, W, None, None, df, weights, ssmethod, nboot=10)
+        
+        e, W = ss.active_subspace_x(X, df, weights)
+        ssmethod = lambda X, f, df, weights: ss.active_subspace_x(X, df, weights)
+        d = ss._bootstrap_ranges(e, W, X, None, df, weights, ssmethod, nboot=10)
+        
+        e, W = ss.normalized_active_subspace(df, weights)
+        ssmethod = lambda X, f, df, weights: ss.normalized_active_subspace(df, weights)
+        d = ss._bootstrap_ranges(e, W, None, None, df, weights, ssmethod, nboot=10)
+        
+        e, W = ss.swarm_subspace(X, f, weights)
+        ssmethod = lambda X, f, df, weights: ss.swarm_subspace(X, f, weights)
+        d = ss._bootstrap_ranges(e, W, X, f, None, weights, ssmethod, nboot=10)
+        
         e, W = ss.ols_subspace(X, f, weights)
         ssmethod = lambda X, f, df, weights: ss.ols_subspace(X, f, weights)
         d = ss._bootstrap_ranges(e, W, X, f, None, weights, ssmethod, nboot=10)
@@ -71,6 +87,23 @@ class TestSubspaces(TestCase):
         e, W = ss.qphd_subspace(X, f, weights)
         ssmethod = lambda X, f, df, weights: ss.qphd_subspace(X, f, weights)
         d = ss._bootstrap_ranges(e, W, X, f, None, weights, ssmethod, nboot=10)
+        
+        e, W = ss.sir_subspace(X, f, weights)
+        ssmethod = lambda X, f, df, weights: ss.sir_subspace(X, f, weights)
+        d = ss._bootstrap_ranges(e, W, X, f, None, weights, ssmethod, nboot=10)
+        
+        e, W = ss.phd_subspace(X, f, weights)
+        ssmethod = lambda X, f, df, weights: ss.phd_subspace(X, f, weights)
+        d = ss._bootstrap_ranges(e, W, X, f, None, weights, ssmethod, nboot=10)
+        
+        e, W = ss.save_subspace(X, f, weights)
+        ssmethod = lambda X, f, df, weights: ss.save_subspace(X, f, weights)
+        d = ss._bootstrap_ranges(e, W, X, f, None, weights, ssmethod, nboot=10)
+        
+        #### UNDER CONSTRUCTION
+        #e, W = ss.mave_subspace(X, f, weights)
+        #ssmethod = lambda X, f, df, weights: ss.mave_subspace(X, f, weights)
+        #d = ss._bootstrap_ranges(e, W, X, f, None, weights, ssmethod, nboot=10)
         
         e, W = ss.opg_subspace(X, f, weights)
         ssmethod = lambda X, f, df, weights: ss.opg_subspace(X, f, weights)
@@ -111,19 +144,38 @@ class TestSubspaces(TestCase):
         
         sub = ss.Subspaces()
         sub.compute(X, f, df, weights)
-        sub.compute(X, f, df, weights, sstype='AS')
+        sub.compute(X, f, df, weights, sstype='NAS')
+        sub.compute(X, f, df, weights, sstype='ASX')
+        sub.compute(X, f, df, weights, sstype='NASX')
+        sub.compute(X, f, df, weights, sstype='SS')
         sub.compute(X, f, df, weights, sstype='OLS')
         sub.compute(X, f, df, weights, sstype='QPHD')
+        sub.compute(X, f, df, weights, sstype='SIR')
+        sub.compute(X, f, df, weights, sstype='PHD')
+        sub.compute(X, f, df, weights, sstype='SAVE')
+        #sub.compute(X, f, df, weights, sstype='MAVE') UNDER CONSTRUCTION
         sub.compute(X, f, df, weights, sstype='OPG')
         
         sub.compute(X, f, df, weights, sstype='AS', nboot=10)
+        sub.compute(X, f, df, weights, sstype='NAS', nboot=10)
+        sub.compute(X, f, df, weights, sstype='ASX', nboot=10)
+        sub.compute(X, f, df, weights, sstype='NASX', nboot=10)
+        sub.compute(X, f, df, weights, sstype='SS', nboot=10)
         sub.compute(X, f, df, weights, sstype='OLS', nboot=10)
         sub.compute(X, f, df, weights, sstype='QPHD', nboot=10)
+        sub.compute(X, f, df, weights, sstype='SIR', nboot=10)
+        sub.compute(X, f, df, weights, sstype='PHD', nboot=10)
+        sub.compute(X, f, df, weights, sstype='SAVE', nboot=10)
+        #sub.compute(X, f, df, weights, sstype='MAVE', nboot=10) UNDER CONSTRUCTION
         sub.compute(X, f, df, weights, sstype='OPG', nboot=10)
         
         sub.compute(X, f, df, weights, sstype='AS', ptype='EVG', nboot=100)
         sub.compute(X, f, df, weights, sstype='AS', ptype='RS', nboot=100)
         sub.compute(X, f, df, weights, sstype='AS', ptype='LI', nboot=100)
+        
+        sub.compute(df=df, weights=weights)
+        sub.compute(X=X, f=f, weights=weights, sstype='SS')
+        sub.compute(X=X, f=f, weights=weights, sstype='SS', nboot=10)
         
 
 if __name__ == '__main__':
