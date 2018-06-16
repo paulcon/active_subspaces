@@ -1,11 +1,11 @@
 """Utilities for exploiting active subspaces when optimizing."""
 import numpy as np
-from domains import UnboundedActiveVariableDomain, BoundedActiveVariableDomain, \
+from .domains import UnboundedActiveVariableDomain, BoundedActiveVariableDomain, \
                 ActiveVariableMap
 import scipy.optimize as scopt
-from utils.response_surfaces import PolynomialApproximation
-from utils.qp_solver import QPSolver
-from utils.misc import process_inputs_outputs
+from .utils.response_surfaces import PolynomialApproximation
+from .utils.qp_solver import QPSolver
+from .utils.misc import process_inputs_outputs
 
 class MinVariableMap(ActiveVariableMap):
     """ActiveVariableMap for optimization

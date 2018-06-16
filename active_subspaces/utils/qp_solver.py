@@ -6,7 +6,7 @@ from scipy.optimize import linprog, minimize
 try:
     HAS_GUROBI = True
     import gurobipy as gpy
-except ImportError, e:
+except ImportError as e:
     HAS_GUROBI = False
     pass
 

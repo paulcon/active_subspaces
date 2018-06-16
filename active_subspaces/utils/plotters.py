@@ -468,7 +468,7 @@ def zonotope_2d_plot(vertices, design=None, y=None, f=None, out_label=None, opts
         fig1 = delaunay_plot_2d(dtri, ax=ax)
         for l in fig1.axes[0].get_children():
             if type(l) is Line2D:
-	        l.set_color('0.75')
+	            l.set_color('0.75')
 
     if y is not None:
         plt.scatter(y[:,0], y[:,1], c=f, s=100.0, vmin=np.min(f), vmax=np.max(f))
