@@ -295,4 +295,3 @@ def av_design(avmap, N, NMC=10):
 
     X, ind = avmap.inverse(Y, NMC)
     return Y, X, ind
-
