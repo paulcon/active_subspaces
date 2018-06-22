@@ -1,13 +1,13 @@
 """Utilities for exploiting active subspaces when estimating integrals."""
 
 import numpy as np
-import utils.quadrature as gq
-from utils.misc import conditional_expectations
-from utils.designs import maximin_design
-from utils.simrunners import SimulationRunner
-from domains import UnboundedActiveVariableDomain, BoundedActiveVariableDomain, \
+from .utils import quadrature as gq
+from .utils.misc import conditional_expectations
+from .utils.designs import maximin_design
+from .utils.simrunners import SimulationRunner
+from .domains import UnboundedActiveVariableDomain, BoundedActiveVariableDomain, \
                     ActiveVariableMap
-from response_surfaces import ActiveSubspaceResponseSurface
+from .response_surfaces import ActiveSubspaceResponseSurface
 from scipy.spatial import Delaunay
 
 def integrate(fun, avmap, N, NMC=10):
@@ -310,5 +310,3 @@ def zonotope_quadrature_rule(avmap, N, NX=10000):
 
     Yp, Yw = points.reshape((T.nsimplex,n)), weights.reshape((T.nsimplex,1))
     return Yp, Yw
-
-

@@ -83,7 +83,7 @@ class TestResponseSurfaces(TestCase):
 
         pr = rs.PolynomialApproximation(N=1)
         pr.train(X_1d, f_1d)
-        print 'Rsqr: {:6.4f}'.format(pr.Rsqr)
+        print('Rsqr: {:6.4f}'.format(pr.Rsqr))
 
         np.random.seed(42)
         X = np.random.normal(size=(10,2))
@@ -96,7 +96,7 @@ class TestResponseSurfaces(TestCase):
         f_1d = 2 - 3*X_1d + 5*X_1d*X_1d
         pr = rs.PolynomialApproximation(N=2)
         pr.train(X_1d, f_1d)
-        print 'Rsqr: {:6.4f}'.format(pr.Rsqr)
+        print('Rsqr: {:6.4f}'.format(pr.Rsqr))
         np.random.seed(42)
         X = np.random.normal(size=(10,2))
         M = X.shape[0]
@@ -116,7 +116,7 @@ class TestResponseSurfaces(TestCase):
 
         pr = rs.PolynomialApproximation(N=1)
         pr.train(X_train, f_2d.reshape((f_2d.size,1)))
-        print 'Rsqr: {:6.4f}'.format(pr.Rsqr)
+        print('Rsqr: {:6.4f}'.format(pr.Rsqr))
 
         X = np.random.normal(size=(10,2))
         X_test = X.copy()
@@ -129,7 +129,7 @@ class TestResponseSurfaces(TestCase):
         f_2d = 2 - 3*X_train[:,1] + 5*X_train[:,0]*X_train[:,1]
         pr = rs.PolynomialApproximation(N=2)
         pr.train(X_train, f_2d.reshape((f_2d.size,1)))
-        print 'Rsqr: {:6.4f}'.format(pr.Rsqr)
+        print('Rsqr: {:6.4f}'.format(pr.Rsqr))
         
         X = np.random.normal(size=(10,2))
         X_test = X.copy()
@@ -161,7 +161,7 @@ class TestResponseSurfaces(TestCase):
 
         gp = rs.RadialBasisApproximation(N=1)
         gp.train(X_1d, f_1d)
-        print 'Rsqr: {:6.4f}'.format(gp.Rsqr)
+        print('Rsqr: {:6.4f}'.format(gp.Rsqr))
         np.random.seed(42)
         X = np.random.normal(size=(10,2))
         M = X.shape[0]
@@ -173,7 +173,7 @@ class TestResponseSurfaces(TestCase):
         f_1d = 2 - 3*X_1d + 5*X_1d*X_1d
         gp = rs.RadialBasisApproximation(N=2)
         gp.train(X_1d, f_1d)
-        print 'Rsqr: {:6.4f}'.format(gp.Rsqr)
+        print('Rsqr: {:6.4f}'.format(gp.Rsqr))
         np.random.seed(42)
         X = np.random.normal(size=(10,2))
         M = X.shape[0]
@@ -193,7 +193,7 @@ class TestResponseSurfaces(TestCase):
 
         gp = rs.RadialBasisApproximation(N=1)
         gp.train(X_train, f_2d.reshape((f_2d.size,1)))
-        print 'Rsqr: {:6.4f}'.format(gp.Rsqr)
+        print('Rsqr: {:6.4f}'.format(gp.Rsqr))
 
         X = np.random.normal(size=(10,2))
         X_test = X.copy()
@@ -206,7 +206,7 @@ class TestResponseSurfaces(TestCase):
         f_2d = 2 - 3*X_train[:,1] + 5*X_train[:,0]*X_train[:,1]
         gp = rs.RadialBasisApproximation(N=2)
         gp.train(X_train, f_2d.reshape((f_2d.size,1)))
-        print 'Rsqr: {:6.4f}'.format(gp.Rsqr)
+        print('Rsqr: {:6.4f}'.format(gp.Rsqr))
 
         X = np.random.normal(size=(10,2))
         X_test = X.copy()
@@ -327,7 +327,7 @@ class TestResponseSurfaces(TestCase):
         f_train = np.sin(np.pi*X_train)
 
 
-        print '\nPOLY 1D ORDER CONVERGENCE\n'
+        print('\nPOLY 1D ORDER CONVERGENCE\n')
         for N in range(3,10):
             pr = rs.PolynomialApproximation(N=N)
             pr.train(X_train, f_train)
@@ -337,7 +337,7 @@ class TestResponseSurfaces(TestCase):
             err_f = np.linalg.norm(f - f_true)/np.linalg.norm(f_true)
             df_true = np.pi*np.cos(np.pi*X_1d_test)
             err_df = np.linalg.norm(df - df_true)/np.linalg.norm(df_true)
-            print 'Order: %d, Error in f: %6.4e, Error in df: %6.4e' % (N, err_f, err_df)
+            print('Order: %d, Error in f: %6.4e, Error in df: %6.4e' % (N, err_f, err_df))
 
 
     def test_poly_order_2d(self):
@@ -350,7 +350,7 @@ class TestResponseSurfaces(TestCase):
         X_train = np.hstack((X1.reshape((441,1)), X2.reshape((441,1))))
         f_train = np.sin(np.pi*X1.reshape((441,1)))*np.cos(np.pi*X2.reshape((441,1)))
 
-        print '\nPOLY 2D ORDER CONVERGENCE\n'
+        print('\nPOLY 2D ORDER CONVERGENCE\n')
         for N in range(3,10):
             pr = rs.PolynomialApproximation(N=N)
             pr.train(X_train, f_train)
@@ -362,7 +362,7 @@ class TestResponseSurfaces(TestCase):
             err_f = np.linalg.norm(f - f_true)/np.linalg.norm(f_true)
             err_df1 = np.linalg.norm(df[:,0].reshape((50,1)) - df1_true)/np.linalg.norm(df1_true)
             err_df2 = np.linalg.norm(df[:,1].reshape((50,1)) - df2_true)/np.linalg.norm(df2_true)
-            print 'Order: %d, Error in f: %6.4e, Error in df1: %6.4e, Error in df2: %6.4e' % (N, err_f, err_df1, err_df2)
+            print('Order: %d, Error in f: %6.4e, Error in df1: %6.4e, Error in df2: %6.4e' % (N, err_f, err_df1, err_df2))
 
 
     def test_rbf_points_1d(self):
@@ -370,7 +370,7 @@ class TestResponseSurfaces(TestCase):
         X = np.random.uniform(-1.0,1.0,size=(50,2))
         X_1d_test = X[:,0].copy().reshape((50,1))
 
-        print '\nRBF 1D POINT CONVERGENCE\n'
+        print('\nRBF 1D POINT CONVERGENCE\n')
         for N in range(1,9):
             X_train = np.linspace(-1.0, 1.0, 2**N+1).reshape((2**N+1,1))
             f_train = np.sin(np.pi*X_train)
@@ -384,7 +384,7 @@ class TestResponseSurfaces(TestCase):
             err_f = np.linalg.norm(f - f_true)/np.linalg.norm(f_true)
             df_true = np.pi*np.cos(np.pi*X_1d_test)
             err_df = np.linalg.norm(df - df_true)/np.linalg.norm(df_true)
-            print 'Points: %d, Error in f: %6.4e, Error in df: %6.4e' % (2**N+1, err_f, err_df)
+            print('Points: %d, Error in f: %6.4e, Error in df: %6.4e' % (2**N+1, err_f, err_df))
 
 
     def test_rbf_points_2d(self):
@@ -392,7 +392,7 @@ class TestResponseSurfaces(TestCase):
         X = np.random.uniform(-1.0,1.0,size=(50,2))
         X_test = X.copy()
 
-        print '\nRBF 2D POINT CONVERGENCE\n'
+        print('\nRBF 2D POINT CONVERGENCE\n')
         for N in range(1,5):
             xx = np.linspace(-1.0, 1.0, 2**N+1)
             X1, X2 = np.meshgrid(xx, xx)
@@ -409,7 +409,7 @@ class TestResponseSurfaces(TestCase):
             err_f = np.linalg.norm(f - f_true)/np.linalg.norm(f_true)
             err_df1 = np.linalg.norm(df[:,0].reshape((50,1)) - df1_true)/np.linalg.norm(df1_true)
             err_df2 = np.linalg.norm(df[:,1].reshape((50,1)) - df2_true)/np.linalg.norm(df2_true)
-            print 'Points: %d, Error in f: %6.4e, Error in df1: %6.4e, Error in df2: %6.4e' % ((2**N+1)**2, err_f, err_df1, err_df2)
+            print('Points: %d, Error in f: %6.4e, Error in df1: %6.4e, Error in df2: %6.4e' % ((2**N+1)**2, err_f, err_df1, err_df2))
 
     def test_rbf_as(self):
         np.random.seed(42)

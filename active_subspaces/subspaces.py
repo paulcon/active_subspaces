@@ -1,9 +1,9 @@
 """Utilities for computing active and inactive subspaces."""
 from __future__ import division
 import numpy as np
-from utils.misc import process_inputs, process_inputs_outputs
-from utils.response_surfaces import PolynomialApproximation
-from gradients import local_linear_gradients
+from .utils.misc import process_inputs, process_inputs_outputs
+from .utils.response_surfaces import PolynomialApproximation
+from .gradients import local_linear_gradients
 
 SQRTEPS = np.sqrt(np.finfo(float).eps)
 
@@ -155,7 +155,7 @@ class Subspaces():
         else:
             raise Exception('Unrecognized partition type: {}'.format(ptype))
         
-        self.partition(n)
+        self.partition(int(n))
 
 
     def partition(self, n):
@@ -273,7 +273,7 @@ def qphd_subspace(X, f, weights):
     X, f, M, m = process_inputs_outputs(X, f)
     
     # check if the points are uniform or Gaussian, set 2nd moment
-    if np.amax(X) > 1.0 or np.amin < -1.0:
+    if np.amax(X) > 1.0 or np.amin(X) < -1.0:
         gamma = 1.0
     else:
         gamma = 1.0 / 3.0
@@ -542,4 +542,3 @@ def _bootstrap_replicate(X, f, df, weights):
     weights0 = weights[ind,:].copy()
     
     return X0, f0, df0, weights0
-    

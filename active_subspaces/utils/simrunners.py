@@ -2,7 +2,7 @@
 
 import numpy as np
 import time
-from misc import process_inputs
+from .misc import process_inputs
 
 class SimulationRunner():
     """A class for running several simulations at different input values.
