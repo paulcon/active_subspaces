@@ -4,7 +4,7 @@ import active_subspaces.utils.quadrature as gq
 import numpy as np
 
 class TestQuadrature(TestCase):
-    
+
     def test_r_hermite_type_error(self):
         self.assertRaises(TypeError, gq.r_hermite, 'string')
 

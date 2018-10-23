@@ -9,7 +9,7 @@ class SimulationRunner():
 
     Attributes
     ----------
-    fun : function 
+    fun : function
         runs the simulation for a fixed value of the input parameters, given as
         an ndarray
 
@@ -30,10 +30,10 @@ class SimulationRunner():
 
         Parameters
         ----------
-        fun : function  
-            a function that runs the simulation for a fixed value of the input 
-            parameters, given as an ndarray. This function returns the quantity 
-            of interest from the model. Often, this function is a wrapper to a 
+        fun : function
+            a function that runs the simulation for a fixed value of the input
+            parameters, given as an ndarray. This function returns the quantity
+            of interest from the model. Often, this function is a wrapper to a
             larger simulation code.
         """
         if not hasattr(fun, '__call__'):
@@ -43,18 +43,18 @@ class SimulationRunner():
 
     def run(self, X):
         """Run the simulation at several input values.
-        
+
         Parameters
         ----------
         X : ndarray
             contains all input points where one wishes to run the simulation. If
-            the simulation takes m inputs, then `X` must have shape M-by-m, 
+            the simulation takes m inputs, then `X` must have shape M-by-m,
             where M is the number of simulations to run.
 
         Returns
         -------
-        F : ndarray 
-            contains the simulation output at each given input point. The shape 
+        F : ndarray
+            contains the simulation output at each given input point. The shape
             of `F` is M-by-1.
 
         Notes
@@ -73,10 +73,10 @@ class SimulationRunner():
 
         # TODO: provide some timing information
         # start = time.time()
-        
+
         for i in range(M):
             F[i] = self.fun(X[i,:].reshape((1,m)))
-            
+
         # TODO: provide some timing information
         # end = time.time() - start
 
@@ -84,15 +84,15 @@ class SimulationRunner():
 
 class SimulationGradientRunner():
     """Evaluates gradients at several input values.
-    
-    
+
+
     A class for running several simulations at different input values that
     return the gradients of the quantity of interest.
 
     Attributes
     ----------
-    dfun : function 
-        a function that runs the simulation for a fixed value of the input 
+    dfun : function
+        a function that runs the simulation for a fixed value of the input
         parameters, given as an ndarray. It returns the gradient of the quantity
         of interest at the given input.
 
@@ -114,9 +114,9 @@ class SimulationGradientRunner():
 
         Parameters
         ----------
-        dfun : function 
-            a function that runs the simulation for a fixed value of the input 
-            parameters, given as an ndarray. It returns the gradient of the 
+        dfun : function
+            a function that runs the simulation for a fixed value of the input
+            parameters, given as an ndarray. It returns the gradient of the
             quantity of interest at the given input.
         """
         if not hasattr(dfun, '__call__'):
@@ -126,21 +126,21 @@ class SimulationGradientRunner():
 
     def run(self, X):
         """Run at several input values.
-        
+
         Run the simulation at several input values and return the gradients of
         the quantity of interest.
 
         Parameters
         ----------
-        X : ndarray 
-            contains all input points where one wishes to run the simulation. 
-            If the simulation takes m inputs, then `X` must have shape M-by-m, 
+        X : ndarray
+            contains all input points where one wishes to run the simulation.
+            If the simulation takes m inputs, then `X` must have shape M-by-m,
             where M is the number of simulations to run.
 
         Returns
         -------
-        dF : ndarray 
-            contains the gradient of the quantity of interest at each given 
+        dF : ndarray
+            contains the gradient of the quantity of interest at each given
             input point. The shape of `dF` is M-by-m.
 
         Notes
@@ -159,11 +159,11 @@ class SimulationGradientRunner():
 
         # TODO: provide some timing information
         # start = time.time()
-        
+
         for i in range(M):
             df = self.dfun(X[i,:].reshape((1,m)))
             dF[i,:] = df.reshape((1,m))
-        
+
         # TODO: provide some timing information
         # end = time.time() - start
 

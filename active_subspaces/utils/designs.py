@@ -20,7 +20,7 @@ def interval_design(a, b, N):
     Returns
     -------
     design, ndarray
-        N-by-1 matrix that contains the design points in the interval. It does 
+        N-by-1 matrix that contains the design points in the interval. It does
         not contain the endpoints.
     """
     y = np.linspace(a, b, N+2)
@@ -35,15 +35,15 @@ def maximin_design(vert, N):
     vert : ndarray
         the vertices that define the m-dimensional polytope. The shape of `vert`
         is M-by-m, where M is the number of vertices.
-    N : int 
+    N : int
         the number of points in the design
 
     Returns
     -------
     design : ndarray
-        N-by-m matrix that contains the design points in the polytope. It does 
+        N-by-m matrix that contains the design points in the polytope. It does
         not contain the vertices.
-        
+
     Notes
     -----
     The objective function used to find the design is the negative of the
@@ -109,7 +109,7 @@ def _maximin_design_obj(y, vert=None):
     Parameters
     ----------
     y : ndarray
-        contains the coordinates of the points in the design. If there are N 
+        contains the coordinates of the points in the design. If there are N
         points in n dimensions then `y` is shape ((Nn, )).
     vert : ndarray, optional
         contains the fixed vertices defining the zonotope
@@ -141,7 +141,7 @@ def _maximin_design_grad(y, vert=None):
     Parameters
     ----------
     y : ndarray
-        contains the coordinates of the points in the design. If there are N 
+        contains the coordinates of the points in the design. If there are N
         points in n dimensions then `y` is shape ((Nn, )).
     vert : ndarray
         contains the fixed vertices defining the zonotope

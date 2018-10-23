@@ -9,7 +9,7 @@ from utils.misc import process_inputs_outputs
 
 class MinVariableMap(ActiveVariableMap):
     """ActiveVariableMap for optimization
-    
+
     This subclass is an domains.ActiveVariableMap specifically for optimization.
 
     See Also
@@ -30,11 +30,11 @@ class MinVariableMap(ActiveVariableMap):
 
         Parameters
         ----------
-        X : ndarray 
-            input points used to train a global quadratic used in the 
+        X : ndarray
+            input points used to train a global quadratic used in the
             `regularize_z` function
-        f : ndarray 
-            simulation outputs used to train a global quadratic in the 
+        f : ndarray
+            simulation outputs used to train a global quadratic in the
             `regularize_z` function
         """
 
@@ -78,16 +78,16 @@ class BoundedMinVariableMap(MinVariableMap):
 
         Parameters
         ----------
-        Y : ndarray 
+        Y : ndarray
             N-by-n matrix of points in the space of active variables
         N : int, optional
-            merely there satisfy the interface of `regularize_z`. It should not 
+            merely there satisfy the interface of `regularize_z`. It should not
             be anything other than 1
 
         Returns
         -------
-        Z : ndarray 
-            N-by-(m-n)-by-1 matrix that contains a value of the inactive 
+        Z : ndarray
+            N-by-(m-n)-by-1 matrix that contains a value of the inactive
             variables for each value of the inactive variables
 
         Notes
@@ -132,16 +132,16 @@ class UnboundedMinVariableMap(MinVariableMap):
 
         Parameters
         ----------
-        Y : ndarray 
+        Y : ndarray
             N-by-n matrix of points in the space of active variables
         N : int, optional
-            merely there satisfy the interface of `regularize_z`. It should not 
+            merely there satisfy the interface of `regularize_z`. It should not
             be anything other than 1
 
         Returns
         -------
-        Z : ndarray 
-            N-by-(m-n)-by-1 matrix that contains a value of the inactive 
+        Z : ndarray
+            N-by-(m-n)-by-1 matrix that contains a value of the inactive
             variables for each value of the inactive variables
 
         Notes
@@ -166,22 +166,22 @@ class UnboundedMinVariableMap(MinVariableMap):
 
 def minimize(asrs, X, f):
     """Minimize a response surface constructed with the active subspace.
-    
+
     Parameters
     ----------
-    asrs : ActiveSubspaceResponseSurface 
+    asrs : ActiveSubspaceResponseSurface
         a trained response_surfaces.ActiveSubspaceResponseSurface
-    X : ndarray 
+    X : ndarray
         input points used to train the MinVariableMap
-    f : ndarray 
+    f : ndarray
         simulation outputs used to train the MinVariableMap
-        
+
     Returns
     -------
-    xstar : ndarray 
+    xstar : ndarray
         the estimated minimizer of the function modeled by the
         ActiveSubspaceResponseSurface `asrs`
-    fstar : float 
+    fstar : float
         the estimated minimum of the function modeled by `asrs`
 
     Notes
@@ -191,7 +191,7 @@ def minimize(asrs, X, f):
     a MinVariableMap with the given input/output pairs, which it uses to map
     the minimizer back to the space of simulation inputs.
 
-    This is very heuristic. 
+    This is very heuristic.
     """
     X, f, M, m = process_inputs_outputs(X, f)
 
@@ -223,18 +223,18 @@ def av_minimize(avfun, avdom, avdfun=None):
 
     Parameters
     ----------
-    avfun : function 
+    avfun : function
         a function of the active variables
-    avdom : ActiveVariableDomain 
+    avdom : ActiveVariableDomain
         information about the domain of `avfun`
-    avdfun : function 
+    avdfun : function
         returns the gradient of `avfun`
 
     Returns
     -------
-    ystar : ndarray 
+    ystar : ndarray
         the estimated minimizer of `avfun`
-    fstar : float 
+    fstar : float
         the estimated minimum of `avfun`
 
     See Also
@@ -262,16 +262,16 @@ def interval_minimize(avfun, avdom):
 
     Parameters
     ----------
-    avfun : function 
+    avfun : function
         a function of the active variables
-    avdom : ActiveVariableDomain 
+    avdom : ActiveVariableDomain
         contains information about the domain of `avfun`
 
     Returns
     -------
-    ystar : ndarray 
+    ystar : ndarray
         the estimated minimizer of `avfun`
-    fstar : float 
+    fstar : float
         the estimated minimum of `avfun`
 
     See Also
@@ -294,21 +294,21 @@ def interval_minimize(avfun, avdom):
 
 def zonotope_minimize(avfun, avdom, avdfun):
     """Minimize a response surface defined on a zonotope.
-    
+
     Parameters
     ----------
-    avfun : function 
+    avfun : function
         a function of the active variables
-    avdom : ActiveVariableDomain 
+    avdom : ActiveVariableDomain
         contains information about the domain of `avfun`
-    avdfun : function 
+    avdfun : function
         returns the gradient of `avfun`
 
     Returns
     -------
-    ystar : ndarray 
+    ystar : ndarray
         the estimated minimizer of `avfun`
-    fstar : float 
+    fstar : float
         the estimated minimum of `avfun`
 
     See Also
@@ -350,18 +350,18 @@ def unbounded_minimize(avfun, avdom, avdfun):
 
     Parameters
     ----------
-    avfun : function 
+    avfun : function
         a function of the active variables
-    avdom  : ActiveVariableDomain 
+    avdom  : ActiveVariableDomain
         contains information about the domain of `avfun`
-    avdfun : function 
+    avdfun : function
         returns the gradient of `avfun`
 
     Returns
     -------
-    ystar : ndarray 
+    ystar : ndarray
         the estimated minimizer of `avfun`
-    fstar : float 
+    fstar : float
         the estimated minimum of `avfun`
 
     See Also

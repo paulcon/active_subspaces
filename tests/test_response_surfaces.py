@@ -130,7 +130,7 @@ class TestResponseSurfaces(TestCase):
         pr = rs.PolynomialApproximation(N=2)
         pr.train(X_train, f_2d.reshape((f_2d.size,1)))
         print 'Rsqr: {:6.4f}'.format(pr.Rsqr)
-        
+
         X = np.random.normal(size=(10,2))
         X_test = X.copy()
         f, df = pr.predict(X_test, compgrad=True)
@@ -277,7 +277,7 @@ class TestResponseSurfaces(TestCase):
 
         gp = rs.RadialBasisApproximation(N=0)
         gp.train(X_1d, f_1d)
-        
+
         X = np.random.normal(size=(10,2))
         M = X.shape[0]
         X_1d_test = X[:,0].copy().reshape((M,1))

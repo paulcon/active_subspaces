@@ -30,7 +30,7 @@ class TestASOptimizers(TestCase):
             x = X0[i,:]
             f0[i,0] = self.quad_fun(x)
             df0[i,:] = self.quad_dfun(x).reshape((3, ))
-            
+
         sub = ss.Subspaces()
         sub.compute(df=df0)
         sub.partition(1)
