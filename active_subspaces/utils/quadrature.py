@@ -5,6 +5,7 @@ Library.
 
 import numpy as np
 import misc as mi
+from numbers import Integral
 
 def r_hermite(N):
     """Recurrence coefficients for the Hermite orthogonal polynomials.
@@ -30,7 +31,7 @@ def r_hermite(N):
     https://www.cs.purdue.edu/archives/2002/wxg/codes/OPQ.html.
     """
 
-    if not isinstance(N, int):
+    if not isinstance(N, Integral):
         raise TypeError('N must be an int')
 
     if N <= 0:
@@ -77,7 +78,7 @@ def r_jacobi(N,l,r,a,b):
     https://www.cs.purdue.edu/archives/2002/wxg/codes/OPQ.html.
     """
 
-    if not isinstance(N, int):
+    if not isinstance(N, Integral):
         raise TypeError('N must be an int')
 
     if N <= 0:
@@ -266,7 +267,7 @@ def gauss_hermite(N):
     https://www.cs.purdue.edu/archives/2002/wxg/codes/OPQ.html.
     """
 
-    if isinstance(N, int):
+    if isinstance(N, Integral):
         N = [N]
 
     if type(N) is not list:
@@ -309,7 +310,7 @@ def gauss_legendre(N):
     https://www.cs.purdue.edu/archives/2002/wxg/codes/OPQ.html.
     """
 
-    if isinstance(N, int):
+    if isinstance(N, Integral):
         N = [N]
 
     if type(N) is not list:

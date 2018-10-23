@@ -1,6 +1,7 @@
 """Utilities for computing active and inactive subspaces."""
 from __future__ import division
 import numpy as np
+from numbers import Integral
 from utils.misc import process_inputs, process_inputs_outputs
 from utils.response_surfaces import PolynomialApproximation
 from gradients import local_linear_gradients
@@ -170,7 +171,7 @@ class Subspaces():
             the dimension of the active subspace
 
         """
-        if not isinstance(n, int):
+        if not isinstance(n, Integral):
             raise TypeError('n should be an integer')
 
         m = self.eigenvecs.shape[0]

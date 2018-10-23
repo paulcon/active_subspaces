@@ -2,6 +2,7 @@
 
 import numpy as np
 import utils.quadrature as gq
+from numbers import Integral
 from utils.misc import conditional_expectations
 from utils.designs import maximin_design
 from utils.simrunners import SimulationRunner
@@ -51,7 +52,7 @@ def integrate(fun, avmap, N, NMC=10):
     if not isinstance(avmap, ActiveVariableMap):
         raise TypeError('avmap should be an ActiveVariableMap.')
 
-    if not isinstance(N, int):
+    if not isinstance(N, Integral):
         raise TypeError('N should be an integer')
 
     # get the quadrature rule
@@ -104,7 +105,7 @@ def av_integrate(avfun, avmap, N):
     if not isinstance(avmap, ActiveVariableMap):
         raise TypeError('avmap should be an ActiveVariableMap.')
 
-    if not isinstance(N, int):
+    if not isinstance(N, Integral):
         raise TypeError('N should be an integer.')
 
     Yp, Yw = av_quadrature_rule(avmap, N)
@@ -163,10 +164,10 @@ def quadrature_rule(avmap, N, NMC=10):
     if not isinstance(avmap, ActiveVariableMap):
         raise TypeError('avmap should be an ActiveVariableMap.')
 
-    if not isinstance(N, int):
+    if not isinstance(N, Integral):
         raise TypeError('N should be an integer.')
 
-    if not isinstance(NMC, int):
+    if not isinstance(NMC, Integral):
         raise TypeError('NMC should be an integer.')
 
     # get quadrature rule on active variables

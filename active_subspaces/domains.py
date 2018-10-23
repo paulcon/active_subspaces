@@ -1,5 +1,6 @@
 """Utilities for building the domains and maps for active variables."""
 import numpy as np
+from numbers import Integral
 from utils.misc import process_inputs, BoundedNormalizer
 from scipy.spatial import ConvexHull
 from scipy.misc import comb
@@ -210,7 +211,7 @@ class ActiveVariableMap():
         # check inputs
         Y, NY, n = process_inputs(Y)
 
-        if not isinstance(N, int):
+        if not isinstance(N, Integral):
             raise TypeError('N must be an int')
 
         Z = self.regularize_z(Y, N)
@@ -356,10 +357,10 @@ def nzv(m, n):
     N : int
         the number of vertices defining the zonotope
     """
-    if not isinstance(m, int):
+    if not isinstance(m, Integral):
         raise TypeError('m should be an integer.')
 
-    if not isinstance(n, int):
+    if not isinstance(n, Integral):
         raise TypeError('n should be an integer.')
 
     # number of zonotope vertices
@@ -521,7 +522,7 @@ def sample_z(N, y, W1, W2):
     Gleich for showing me Chebyshev centers.
 
     """
-    if not isinstance(N, int):
+    if not isinstance(N, Integral):
         raise TypeError('N should be an integer.')
 
     Z = rejection_sampling_z(N, y, W1, W2)
