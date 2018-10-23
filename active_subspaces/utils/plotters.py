@@ -376,6 +376,8 @@ def sufficient_summary(y, f, out_label=None, opts=None):
 
         plt.figure(figsize=(7,7))
         plt.rc('font', **opts['myfont'])
+        if isinstance(f, np.ndarray):
+            f = f.flatten()
         plt.scatter(y1, y2, c=f, s=150.0, vmin=np.min(f), vmax=np.max(f))
         plt.xlabel('Active variable 1')
         plt.ylabel('Active variable 2')
