@@ -1,3 +1,23 @@
+# Note
+
+This repository is a fork of the [`active-subspaces`](https://github.com/paulcon/active_subspaces) Python package by Paul Constantine.
+
+**I do not claim ownership or authorship.**
+
+The original package currently contains a bug which renders its use on Windows platforms unworkable.
+I have contributed a fix and submitted a [PR](https://github.com/paulcon/active_subspaces/pull/49) in June 2018, but this has yet to be merged.
+
+A working version for Windows users is provided in this repository.
+
+Install with
+
+```bash
+pip install https://github.com/ConnectedSystems/active_subspaces/zipball/master
+```
+
+The original readme is below.
+
+
 # Description
 
 *Active Subspaces* is a method for discovering low-dimensional subspaces of input parameters 
