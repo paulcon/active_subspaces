@@ -3,7 +3,7 @@ import numpy as np
 
 class Normalizer():
     """An abstract class for normalizing inputs.
-    
+
     """
     def normalize(self, X):
         """Return corresponding points in normalized domain.
@@ -17,7 +17,7 @@ class Normalizer():
         -------
         X_norm : ndarray
             contains the normalized inputs corresponding to `X`
-            
+
         Notes
         -----
         Points in `X` should be oriented as an m-by-n ndarray, where each row
@@ -30,14 +30,14 @@ class Normalizer():
 
         Parameters
         ----------
-        X : ndarray 
+        X : ndarray
             contains all input points one wishes to unnormalize
 
         Returns
         -------
-        X_unnorm : ndarray 
+        X_unnorm : ndarray
             contains the unnormalized inputs corresponding to `X`
-            
+
         Notes
         -----
         Points in `X` should be oriented as an m-by-n ndarray, where each row
@@ -46,15 +46,15 @@ class Normalizer():
         raise NotImplementedError()
 
 class BoundedNormalizer(Normalizer):
-    """A class for normalizing bounded inputs. 
-    
+    """A class for normalizing bounded inputs.
+
     Attributes
     ----------
     lb : ndarray
-        a matrix of size m-by-1 that contains lower bounds on the simulation 
+        a matrix of size m-by-1 that contains lower bounds on the simulation
         inputs
     ub : ndarray
-        a matrix of size m-by-1 that contains upper bounds on the simulation 
+        a matrix of size m-by-1 that contains upper bounds on the simulation
         inputs
 
     See Also
@@ -85,14 +85,14 @@ class BoundedNormalizer(Normalizer):
         Parameters
         ----------
         X : ndarray
-            contains all input points one wishes to normalize. The shape of `X` 
-            is M-by-m. The components of each row of `X` should be between `lb` 
+            contains all input points one wishes to normalize. The shape of `X`
+            is M-by-m. The components of each row of `X` should be between `lb`
             and `ub`.
 
         Returns
         -------
         X_norm : ndarray
-            contains the normalized inputs corresponding to `X`. The components 
+            contains the normalized inputs corresponding to `X`. The components
             of each row of `X_norm` should be between -1 and 1.
         """
         X, M, m = process_inputs(X)
@@ -104,16 +104,16 @@ class BoundedNormalizer(Normalizer):
 
         Parameters
         ----------
-        X : ndarray 
-            contains all input points one wishes to unnormalize. The shape of 
-            `X` is M-by-m. The components of each row of `X` should be between 
+        X : ndarray
+            contains all input points one wishes to unnormalize. The shape of
+            `X` is M-by-m. The components of each row of `X` should be between
             -1 and 1.
 
         Returns
         -------
-        X_unnorm : ndarray 
-            contains the unnormalized inputs corresponding to `X`. The 
-            components of each row of `X_unnorm` should be between `lb` and 
+        X_unnorm : ndarray
+            contains the unnormalized inputs corresponding to `X`. The
+            components of each row of `X_unnorm` should be between `lb` and
             `ub`.
         """
         X, M, m = process_inputs(X)
@@ -122,13 +122,13 @@ class BoundedNormalizer(Normalizer):
 
 class UnboundedNormalizer(Normalizer):
     """A class for normalizing unbounded, Gaussian inputs to standard normals.
-    
+
     Attributes
     ----------
-    mu : ndarray 
-        a matrix of size m-by-1 that contains the mean of the Gaussian 
+    mu : ndarray
+        a matrix of size m-by-1 that contains the mean of the Gaussian
         simulation inputs
-    L : ndarray 
+    L : ndarray
         a matrix size m-by-m that contains the Cholesky factor of the covariance
         matrix of the Gaussian simulation inputs.
 
@@ -149,11 +149,11 @@ class UnboundedNormalizer(Normalizer):
 
         Parameters
         ----------
-        mu : ndarray 
-            a matrix of size m-by-1 that contains the mean of the Gaussian 
+        mu : ndarray
+            a matrix of size m-by-1 that contains the mean of the Gaussian
             simulation inputs
-        C : ndarray 
-            a matrix of size m-by-m that contains the covariance matrix of the 
+        C : ndarray
+            a matrix of size m-by-m that contains the covariance matrix of the
             Gaussian simulation inputs
         """
         self.mu = mu.reshape((1, mu.size))
@@ -164,15 +164,15 @@ class UnboundedNormalizer(Normalizer):
 
         Parameters
         ----------
-        X : ndarray 
-            contains all input points one wishes to normalize. The shape of `X` 
+        X : ndarray
+            contains all input points one wishes to normalize. The shape of `X`
             is M-by-m. The components of each row of `X` should be a draw from a
             Gaussian with mean `mu` and covariance `C`.
-            
+
         Returns
         -------
-        X_norm : ndarray 
-            contains the normalized inputs corresponding to `X`. The components 
+        X_norm : ndarray
+            contains the normalized inputs corresponding to `X`. The components
             of each row of `X_norm` should be draws from a standard multivariate
             normal distribution.
         """
@@ -183,22 +183,22 @@ class UnboundedNormalizer(Normalizer):
 
     def unnormalize(self, X):
         """Transform points to original Gaussian.
-        
+
         Return corresponding points transformed to draws from a Gaussian
         distribution with mean `mu` and covariance `C`.
 
         Parameters
         ----------
-        X : ndarray 
-            contains all input points one wishes to unnormalize. The shape of 
-            `X` is M-by-m. The components of each row of `X` should be draws 
+        X : ndarray
+            contains all input points one wishes to unnormalize. The shape of
+            `X` is M-by-m. The components of each row of `X` should be draws
             from a standard multivariate normal.
-            
+
         Returns
         -------
         X_unnorm : ndarray
-            contains the unnormalized inputs corresponding to `X`. The 
-            components of each row of `X_unnorm` should represent draws from a 
+            contains the unnormalized inputs corresponding to `X`. The
+            components of each row of `X_unnorm` should represent draws from a
             multivariate normal with mean `mu` and covariance `C`.
         """
         X, M, m = process_inputs(X)
@@ -211,7 +211,7 @@ def process_inputs(X):
 
     Parameters
     ----------
-    X : ndarray 
+    X : ndarray
         contains input points. The shape of `X` should be M-by-m.
 
     Returns
@@ -220,7 +220,7 @@ def process_inputs(X):
         the same as the input
     M : int
         number of rows in `X`
-    m : int 
+    m : int
         number of columns in `X`
     """
     if len(X.shape) == 2:
@@ -236,7 +236,7 @@ def process_inputs_outputs(X, f):
 
     Parameters
     ----------
-    X : ndarray 
+    X : ndarray
         contains input points. The shape of `X` should be M-by-m.
     f : ndarray
         M-by-1 matrix
@@ -249,7 +249,7 @@ def process_inputs_outputs(X, f):
         the same as the output
     M : int
         number of rows in `X`
-    m : int 
+    m : int
         number of columns in `X`
     """
     X, M, m = process_inputs(X)
@@ -271,13 +271,13 @@ def process_inputs_outputs(X, f):
 
 def conditional_expectations(f, ind):
     """Compute conditional expectations and variances for given function values.
-    
+
     Parameters
     ----------
     f : ndarray
         an ndarry of function evaluations
     ind : ndarray[int]
-        index array that tells which values of `f` correspond to the same value 
+        index array that tells which values of `f` correspond to the same value
         for the active variable.
 
     Returns
@@ -306,7 +306,7 @@ def conditional_expectations(f, ind):
 # thanks to Trent for these functions!!!
 def atleast_2d_col(A):
     """Wrapper for `atleast_2d(A, 'col')`
-    
+
     Notes
     -----
     Thanks to Trent Lukaczyk for these functions!
@@ -315,7 +315,7 @@ def atleast_2d_col(A):
 
 def atleast_2d_row(A):
     """Wrapper for `atleast_2d(A, 'row')`
-    
+
     Notes
     -----
     Thanks to Trent Lukaczyk for these functions!
@@ -330,7 +330,7 @@ def atleast_2d(A, oned_as='row'):
     A : ndarray
         matrix
     oned_as : str, optional
-        should be either 'row' or 'col'. It determines whether the array `A` 
+        should be either 'row' or 'col'. It determines whether the array `A`
         should be expanded as a 2d row or 2d column (default 'row')
     """
 
@@ -351,8 +351,3 @@ def atleast_2d(A, oned_as='row'):
             raise Exception , "oned_as must be 'row' or 'col' "
 
     return A
-
-
-
-
-

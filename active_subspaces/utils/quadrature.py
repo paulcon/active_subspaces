@@ -5,18 +5,19 @@ Library.
 
 import numpy as np
 import misc as mi
+from numbers import Integral
 
 def r_hermite(N):
     """Recurrence coefficients for the Hermite orthogonal polynomials.
 
     Parameters
     ----------
-    N : int 
+    N : int
         the number of recurrence coefficients
 
     Returns
     -------
-    ab : ndarray 
+    ab : ndarray
         an `N`-by-2 array of the recurrence coefficients
 
     See Also
@@ -30,7 +31,7 @@ def r_hermite(N):
     https://www.cs.purdue.edu/archives/2002/wxg/codes/OPQ.html.
     """
 
-    if not isinstance(N, int):
+    if not isinstance(N, Integral):
         raise TypeError('N must be an int')
 
     if N <= 0:
@@ -44,13 +45,13 @@ def r_hermite(N):
         a = np.zeros(b.shape)
         ab = np.hstack((a, b))
         return ab
-        
+
 def r_jacobi(N,l,r,a,b):
     """Recurrence coefficients for the Legendre orthogonal polynomials.
 
     Parameters
     ----------
-    N : int 
+    N : int
         the number of recurrence coefficients
     l : float
         the left endpoint of the interval
@@ -63,7 +64,7 @@ def r_jacobi(N,l,r,a,b):
 
     Returns
     -------
-    ab : ndarray 
+    ab : ndarray
         an `N`-by-2 array of the recurrence coefficients
 
     See Also
@@ -77,21 +78,21 @@ def r_jacobi(N,l,r,a,b):
     https://www.cs.purdue.edu/archives/2002/wxg/codes/OPQ.html.
     """
 
-    if not isinstance(N, int):
+    if not isinstance(N, Integral):
         raise TypeError('N must be an int')
 
     if N <= 0:
         raise ValueError('Parameters out of range.')
-    
+
     a0 = (b-a)/(a+b+2.0)
     ab = np.zeros((N+1,2))
     b2a2 = b**2 - a**2
     s, o = (r-l)/2.0, l + (r-l)/2.0
-    
+
     # first row
     ab[0,0] = s*a0 + o
     ab[0,1] = 1
-    
+
     for k in range(1,N+1):
         ab[k,0] = s*b2a2/((2*(k)+a+b)*(2*(k+1) + a+b)) + o
         if k==1:
@@ -110,8 +111,8 @@ def jacobi_matrix(ab):
 
     Returns
     -------
-    J : ndarray 
-        (N-1)-by-(N-1) symmetric, tridiagonal Jacobi matrix associated with the 
+    J : ndarray
+        (N-1)-by-(N-1) symmetric, tridiagonal Jacobi matrix associated with the
         orthogonal polynomials
 
     See Also
@@ -151,14 +152,14 @@ def gl1d(N):
 
     Parameters
     ----------
-    N : int 
+    N : int
         number of nodes in the quadrature rule
 
     Returns
     -------
-    x : ndarray 
+    x : ndarray
         N-by-1 array of quadrature nodes
-    w : ndarray 
+    w : ndarray
         N-by-1 array of quadrature weights
 
     See Also
@@ -172,7 +173,7 @@ def gl1d(N):
     """
 
     return g1d(N, 'Legendre')
-    
+
 def gh1d(N):
     """One-dimensional Gauss-Hermite quadrature rule.
 
@@ -207,14 +208,14 @@ def g1d(N, quadtype):
     ----------
     N : int
         number of nodes in the quadrature rule
-    quadtype : str 
+    quadtype : str
         type of quadrature rule {'Legendre', 'Hermite'}
 
     Returns
     -------
-    x : ndarray 
+    x : ndarray
         N-by-1 array of quadrature nodes
-    w : ndarray 
+    w : ndarray
         N-by-1 array of quadrature weights
 
     See Also
@@ -234,7 +235,7 @@ def g1d(N, quadtype):
             ab = r_jacobi(N, -1, 1, 0, 0)
         else:
             raise ValueError('quadtype must be Legendre or Hermite')
-        
+
         J = jacobi_matrix(ab)
         e, V = np.linalg.eig(J)
         ind = np.argsort(e)
@@ -250,14 +251,14 @@ def gauss_hermite(N):
 
     Parameters
     ----------
-    N : int[] 
+    N : int[]
         number of nodes in each dimension of the quadrature rule
 
     Returns
     -------
-    x : ndarray 
+    x : ndarray
         N-by-1 array of quadrature nodes
-    w : ndarray 
+    w : ndarray
         N-by-1 array of quadrature weights
 
     Notes
@@ -266,7 +267,7 @@ def gauss_hermite(N):
     https://www.cs.purdue.edu/archives/2002/wxg/codes/OPQ.html.
     """
 
-    if isinstance(N, int):
+    if isinstance(N, Integral):
         N = [N]
 
     if type(N) is not list:
@@ -293,14 +294,14 @@ def gauss_legendre(N):
 
     Parameters
     ----------
-    N : int[] 
+    N : int[]
         number of nodes in each dimension of the quadrature rule
 
     Returns
     -------
     x : ndarray
         N-by-1 array of quadrature nodes
-    w : ndarray 
+    w : ndarray
         N-by-1 array of quadrature weights
 
     Notes
@@ -309,7 +310,7 @@ def gauss_legendre(N):
     https://www.cs.purdue.edu/archives/2002/wxg/codes/OPQ.html.
     """
 
-    if isinstance(N, int):
+    if isinstance(N, Integral):
         N = [N]
 
     if type(N) is not list:

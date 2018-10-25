@@ -1,6 +1,7 @@
 """Utilities for exploiting active subspaces in response surfaces."""
 import numpy as np
 import utils.designs as dn
+from numbers import Integral
 from utils.simrunners import SimulationRunner
 from utils.misc import conditional_expectations
 from utils.response_surfaces import RadialBasisApproximation
@@ -12,9 +13,9 @@ class ActiveSubspaceResponseSurface():
 
     Attributes
     ----------
-    respsurf : ResponseSurface 
+    respsurf : ResponseSurface
         `respsurf` is a utils.response_surfaces.ResponseSurface
-    avmap : ActiveVariableMap 
+    avmap : ActiveVariableMap
         a domains.ActiveVariableMap
 
     Notes
@@ -31,12 +32,12 @@ class ActiveSubspaceResponseSurface():
 
         Parameters
         ----------
-        avmap : ActiveVariableMap 
-            a domains.ActiveVariable map that includes the active variable 
+        avmap : ActiveVariableMap
+            a domains.ActiveVariable map that includes the active variable
             domain, which includes the active and inactive subspaces
         respsurf : ResponseSurface, optional
-            a utils.response_surfaces.ResponseSurface object. If a 
-            ResponseSurface is not given, a default RadialBasisApproximation is 
+            a utils.response_surfaces.ResponseSurface object. If a
+            ResponseSurface is not given, a default RadialBasisApproximation is
             used.
         """
         if not isinstance(avmap, ActiveVariableMap):
@@ -50,7 +51,7 @@ class ActiveSubspaceResponseSurface():
 
     def _train(self, Y, f, v=None):
         """Train the radial basis function approximation.
-        
+
         A private function for training the response surface with a set of
         active variable and function evaluations.
         """
@@ -62,15 +63,15 @@ class ActiveSubspaceResponseSurface():
 
     def train_with_data(self, X, f, v=None):
         """Train the response surface with input/output pairs.
-        
+
         Parameters
         ----------
-        X : ndarray 
+        X : ndarray
             M-by-m matrix with evaluations of the simulation inputs
-        f : ndarray 
+        f : ndarray
             M-by-1 matrix with corresponding simulation quantities of interest
         v : ndarray, optional
-            M-by-1 matrix that contains the regularization (i.e., errors) 
+            M-by-1 matrix that contains the regularization (i.e., errors)
             associated with `f` (default None)
 
         Notes
@@ -89,14 +90,14 @@ class ActiveSubspaceResponseSurface():
 
         Parameters
         ----------
-        fun : function 
-            a function that returns the simulation quantity of interest given a 
+        fun : function
+            a function that returns the simulation quantity of interest given a
             point in the input space as an 1-by-m ndarray
-        N : int 
-            the number of points used in the design-of-experiments for 
+        N : int
+            the number of points used in the design-of-experiments for
             constructing the response surface
-        NMC : int, optional 
-            the number of points used to estimate the conditional expectation 
+        NMC : int, optional
+            the number of points used to estimate the conditional expectation
             and conditional variance of the function given a value of the active
             variables
 
@@ -132,25 +133,25 @@ class ActiveSubspaceResponseSurface():
 
     def predict_av(self, Y, compgrad=False):
         """Evaluate response surface at active variable.
-        
+
         Compute the value of the response surface given values of the active
         variables.
 
         Parameters
         ----------
-        Y : ndarray 
-            M-by-n matrix containing points in the range of active variables to 
+        Y : ndarray
+            M-by-n matrix containing points in the range of active variables to
             evaluate the response surface
-        compgrad : bool, optional 
-            determines if the gradient of the response surface with respect to 
+        compgrad : bool, optional
+            determines if the gradient of the response surface with respect to
             the active variables is computed and returned (default False)
 
         Returns
         -------
-        f : ndarray 
+        f : ndarray
             contains the response surface values at the given `Y`
-        df : ndarray 
-            contains the response surface gradients at the given `Y`. If 
+        df : ndarray
+            contains the response surface gradients at the given `Y`. If
             `compgrad` is False, then `df` is None.
         """
         f, df = self.respsurf.predict(Y, compgrad)
@@ -158,19 +159,19 @@ class ActiveSubspaceResponseSurface():
 
     def gradient_av(self, Y):
         """Compute the gradient with respect to the active variables.
-        
+
         A convenience function for computing the gradient of the response
         surface with respect to the active variables.
 
         Parameters
         ----------
-        Y : ndarray 
-            M-by-n matrix containing points in the range of active variables to 
+        Y : ndarray
+            M-by-n matrix containing points in the range of active variables to
             evaluate the response surface gradient
 
         Returns
         -------
-        df : ndarray 
+        df : ndarray
             contains the response surface gradient at the given `Y`
         """
         df = self.respsurf.predict(Y, compgrad=True)[1]
@@ -178,24 +179,24 @@ class ActiveSubspaceResponseSurface():
 
     def predict(self, X, compgrad=False):
         """Evaluate the response surface at full space points.
-        
+
         Compute the value of the response surface given values of the simulation
         variables.
 
         Parameters
         ----------
-        X : ndarray 
+        X : ndarray
             M-by-m matrix containing points in simulation's parameter space
-        compgrad : bool, optional 
-            determines if the gradient of the response surface is computed and 
+        compgrad : bool, optional
+            determines if the gradient of the response surface is computed and
             returned (default False)
-            
+
         Returns
         -------
-        f : ndarray 
+        f : ndarray
             contains the response surface values at the given `X`
         dfdx : ndarray
-            an ndarray of shape M-by-m that contains the estimated gradient at 
+            an ndarray of shape M-by-m that contains the estimated gradient at
             the given `X`. If `compgrad` is False, then `dfdx` is None.
         """
         Y = self.avmap.forward(X)[0]
@@ -209,18 +210,18 @@ class ActiveSubspaceResponseSurface():
 
     def gradient(self, X):
         """Gradient of the response surface.
-        
+
         A convenience function for computing the gradient of the response
         surface with respect to the simulation inputs.
 
         Parameters
         ----------
-        X : ndarray 
+        X : ndarray
             M-by-m matrix containing points in the space of simulation inputs
 
         Returns
         -------
-        df : ndarray 
+        df : ndarray
             contains the response surface gradient at the given `X`
         """
         return self.predict(X, compgrad=True)[1]
@@ -230,32 +231,32 @@ class ActiveSubspaceResponseSurface():
 
 def av_design(avmap, N, NMC=10):
     """Design on active variable space.
-    
+
     A wrapper that returns the design for the response surface in the space of
     the active variables.
 
     Parameters
     ----------
-    avmap : ActiveVariableMap 
-        a domains.ActiveVariable map that includes the active variable domain, 
+    avmap : ActiveVariableMap
+        a domains.ActiveVariable map that includes the active variable domain,
         which includes the active and inactive subspaces
-    N : int 
-        the number of points used in the design-of-experiments for constructing 
+    N : int
+        the number of points used in the design-of-experiments for constructing
         the response surface
     NMC : int, optional
-        the number of points used to estimate the conditional expectation and 
-        conditional variance of the function given a value of the active 
+        the number of points used to estimate the conditional expectation and
+        conditional variance of the function given a value of the active
         variables (Default is 10)
 
     Returns
     -------
-    Y : ndarray 
-        N-by-n matrix that contains the design points in the space of active 
+    Y : ndarray
+        N-by-n matrix that contains the design points in the space of active
         variables
-    X : ndarray 
-        (N*NMC)-by-m matrix that contains points in the simulation input space 
+    X : ndarray
+        (N*NMC)-by-m matrix that contains points in the simulation input space
         to run the simulation
-    ind : ndarray 
+    ind : ndarray
         indices that map points in `X` to points in `Y`
 
     See Also
@@ -270,10 +271,10 @@ def av_design(avmap, N, NMC=10):
         raise TypeError('avmap should be an ActiveVariableMap.')
 
     # interpret N as total number of points in the design
-    if not isinstance(N, int):
+    if not isinstance(N, Integral):
         raise Exception('N should be an integer.')
 
-    if not isinstance(NMC, int):
+    if not isinstance(NMC, Integral):
         raise Exception('NMC should be an integer.')
 
     m, n = avmap.domain.subspaces.W1.shape
@@ -295,4 +296,3 @@ def av_design(avmap, N, NMC=10):
 
     X, ind = avmap.inverse(Y, NMC)
     return Y, X, ind
-

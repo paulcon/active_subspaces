@@ -1,32 +1,33 @@
 """Utilities for approximating gradients."""
 import numpy as np
+from numbers import Integral
 from utils.misc import process_inputs
 from utils.simrunners import SimulationRunner
 
 def local_linear_gradients(X, f, p=None, weights=None):
     """Estimate a collection of gradients from input/output pairs.
-    
+
     Given a set of input/output pairs, choose subsets of neighboring points and
     build a local linear model for each subset. The gradients of these local
     linear models comprise estimates of sampled gradients.
 
     Parameters
     ----------
-    X : ndarray 
+    X : ndarray
         M-by-m matrix that contains the m-dimensional inputs
-    f : ndarray 
+    f : ndarray
         M-by-1 matrix that contains scalar outputs
     p : int, optional
-        how many nearest neighbors to use when constructing the local linear 
+        how many nearest neighbors to use when constructing the local linear
         model (default 1)
     weights : ndarray, optional
-        M-by-1 matrix that contains the weights for each observation (default 
+        M-by-1 matrix that contains the weights for each observation (default
         None)
 
     Returns
     -------
     df : ndarray
-        M-by-m matrix that contains estimated partial derivatives approximated 
+        M-by-m matrix that contains estimated partial derivatives approximated
         by the local linear models
 
     Notes
@@ -39,12 +40,12 @@ def local_linear_gradients(X, f, p=None, weights=None):
 
     if p is None:
         p = int(np.minimum(np.floor(1.7*m), M))
-    elif not isinstance(p, int):
+    elif not isinstance(p, Integral):
         raise TypeError('p must be an integer.')
 
     if p < m+1 or p > M:
         raise Exception('p must be between m+1 and M')
-        
+
     if weights is None:
         weights = np.ones((M, 1)) / M
 
@@ -67,18 +68,18 @@ def finite_difference_gradients(X, fun, h=1e-6):
 
     Parameters
     ----------
-    X : ndarray 
-        M-by-m matrix that contains the points to estimate the gradients with 
+    X : ndarray
+        M-by-m matrix that contains the points to estimate the gradients with
         finite differences
     fun : function
         function that returns the simulation's quantity of interest given inputs
-    h : float, optional 
+    h : float, optional
         the finite difference step size (default 1e-6)
 
     Returns
     -------
-    df : ndarray 
-        M-by-m matrix that contains estimated partial derivatives approximated 
+    df : ndarray
+        M-by-m matrix that contains estimated partial derivatives approximated
         by finite differences
     """
     X, M, m = process_inputs(X)
