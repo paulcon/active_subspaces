@@ -171,7 +171,9 @@ class Subspaces():
         
         """
         if not isinstance(n, int):
-            raise TypeError('n should be an integer')
+            #raise TypeError('n should be an integer')
+            n = int(n)
+            print(Warning("n should be an integer. Performing conversion."))
 
         m = self.eigenvecs.shape[0]
         if n<1 or n>m:
