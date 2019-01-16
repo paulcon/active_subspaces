@@ -236,7 +236,7 @@ def ols_subspace(X, f, weights):
     # solve weighted least squares
     A = np.hstack((np.ones((M, 1)), X)) * np.sqrt(weights)
     b = f * np.sqrt(weights)
-    u = np.linalg.lstsq(A, b)[0]
+    u = np.linalg.lstsq(A, b, rcond=None)[0]
     w = u[1:].reshape((m, 1))
     
     # compute rank-1 C
