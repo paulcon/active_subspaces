@@ -49,6 +49,8 @@ You should now be able to import the active subspaces library in Python scripts 
 
 This method was tested on Windows 7 Professional, and Ubuntu 14.04 LTS, and Mac OSX El Capitan with the [Enthought](https://www.enthought.com/) Python distribution (Python 2.7.11, NumPy 1.10.4, SciPy 0.17.0, and matplotlib 1.5.1).
 
+This method was also tested on Ubuntu 18.04 with Python 3.6 and Python 2.7 using the [Conda](https://anaconda.org) Python distribution.
+
 # Usage
 
 For detailed examples of usage and results, see the Jupyter notebooks contained in the `tutorials` directory, the [active subspaces website]
