@@ -275,7 +275,7 @@ def qphd_subspace(X, f, weights):
     X, f, M, m = process_inputs_outputs(X, f)
     
     # check if the points are uniform or Gaussian, set 2nd moment
-    if np.amax(X) > 1.0 or np.amin < -1.0:
+    if np.amax(X) > 1.0 or np.amin(X) < -1.0:
         gamma = 1.0
     else:
         gamma = 1.0 / 3.0

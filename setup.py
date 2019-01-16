@@ -5,7 +5,7 @@ def readme():
         return f.read()
 
 setup(name='active_subspaces',
-      version='0.1',
+      version='0.2',
       description='Tools to apply active subspaces to analyze models and data.',
       long_description=readme(),
       classifiers=[
