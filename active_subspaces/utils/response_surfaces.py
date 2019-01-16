@@ -2,7 +2,7 @@
 import numpy as np
 from scipy.optimize import fminbound
 from scipy.misc import comb
-from misc import process_inputs, process_inputs_outputs
+from .misc import process_inputs, process_inputs_outputs
 
 class ResponseSurface():
     """An abstract class for response surfaces.

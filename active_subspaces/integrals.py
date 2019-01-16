@@ -1,13 +1,13 @@
 """Utilities for exploiting active subspaces when estimating integrals."""
 
 import numpy as np
-import utils.quadrature as gq
-from utils.misc import conditional_expectations
-from utils.designs import maximin_design
-from utils.simrunners import SimulationRunner
-from domains import UnboundedActiveVariableDomain, BoundedActiveVariableDomain, \
+from active_subspaces.utils import quadrature as gq
+from active_subspaces.utils.misc import conditional_expectations
+from active_subspaces.utils.designs import maximin_design
+from active_subspaces.utils.simrunners import SimulationRunner
+from active_subspaces.domains import UnboundedActiveVariableDomain, BoundedActiveVariableDomain, \
                     ActiveVariableMap
-from response_surfaces import ActiveSubspaceResponseSurface
+from active_subspaces.response_surfaces import ActiveSubspaceResponseSurface
 from scipy.spatial import Delaunay
 
 def integrate(fun, avmap, N, NMC=10):

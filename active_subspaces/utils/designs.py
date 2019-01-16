@@ -1,7 +1,7 @@
 """Utilities for constructing design-of-experiments."""
 import numpy as np
-import misc as mi
-from quadrature import gauss_hermite
+from . import misc as mi
+from .quadrature import gauss_hermite
 from scipy.spatial import ConvexHull, distance_matrix
 from scipy.optimize import minimize
 

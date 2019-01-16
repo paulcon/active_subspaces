@@ -1,7 +1,7 @@
 """Utilities for approximating gradients."""
 import numpy as np
-from utils.misc import process_inputs
-from utils.simrunners import SimulationRunner
+from .utils.misc import process_inputs
+from .utils.simrunners import SimulationRunner
 
 def local_linear_gradients(X, f, p=None, weights=None):
     """Estimate a collection of gradients from input/output pairs.

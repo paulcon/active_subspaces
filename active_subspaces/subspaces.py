@@ -1,9 +1,9 @@
 """Utilities for computing active and inactive subspaces."""
-from __future__ import division
+
 import numpy as np
-from utils.misc import process_inputs, process_inputs_outputs
-from utils.response_surfaces import PolynomialApproximation
-from gradients import local_linear_gradients
+from .utils.misc import process_inputs, process_inputs_outputs
+from .utils.response_surfaces import PolynomialApproximation
+from .gradients import local_linear_gradients
 
 SQRTEPS = np.sqrt(np.finfo(float).eps)
 
