@@ -201,7 +201,7 @@ def eigenvectors(W, W_br=None, in_labels=None, out_label=None, opts=None):
         plt.grid(True)
         plt.tick_params(
             axis='x',          # changes apply to the x-axis
-            labelbottom='off') # labels along the bottom edge are off
+            labelbottom=False) # labels along the bottom edge are off
         plt.axis([1, m, -1, 1])
 
         plt.subplot(212)
@@ -230,7 +230,7 @@ def eigenvectors(W, W_br=None, in_labels=None, out_label=None, opts=None):
         plt.grid(True)
         plt.tick_params(
             axis='x',          # changes apply to the x-axis
-            labelbottom='off') # labels along the bottom edge are off
+            labelbottom=False) # labels along the bottom edge are off
         plt.axis([1, m, -1, 1])
 
         plt.subplot(222)
@@ -241,7 +241,7 @@ def eigenvectors(W, W_br=None, in_labels=None, out_label=None, opts=None):
                 facecolor='0.7', interpolate=True)
         plt.title(out_label + ', evec 2')
         plt.grid(True)
-        plt.tick_params(axis='y', labelleft='off')
+        plt.tick_params(axis='y', labelleft=False)
         if in_labels is not None:
             plt.xticks(list(range(1, m+1)), in_labels, rotation='vertical')
             plt.margins(0.2)
@@ -274,7 +274,7 @@ def eigenvectors(W, W_br=None, in_labels=None, out_label=None, opts=None):
         plt.grid(True)
         plt.tick_params(
             axis='x',          # changes apply to the x-axis
-            labelbottom='off') # labels along the bottom edge are off
+            labelbottom=False) # labels along the bottom edge are off
         plt.axis([1, m, -1, 1])
 
         plt.subplot(222)
@@ -285,7 +285,7 @@ def eigenvectors(W, W_br=None, in_labels=None, out_label=None, opts=None):
                 facecolor='0.7', interpolate=True)
         plt.title(out_label + ', evec 2')
         plt.grid(True)
-        plt.tick_params(labelleft='off', labelbottom='off')
+        plt.tick_params(labelleft=False, labelbottom=False)
         plt.axis([1, m, -1, 1])
 
         plt.subplot(223)
@@ -310,7 +310,7 @@ def eigenvectors(W, W_br=None, in_labels=None, out_label=None, opts=None):
                 facecolor='0.7', interpolate=True)
         plt.title(out_label + ', evec 4')
         plt.grid(True)
-        plt.tick_params(axis='y', labelleft='off')
+        plt.tick_params(axis='y', labelleft=False)
         if in_labels is not None:
             plt.xticks(list(range(1, m+1)), in_labels, rotation='vertical')
             plt.margins(0.2)
@@ -376,7 +376,7 @@ def sufficient_summary(y, f, out_label=None, opts=None):
 
         plt.figure(figsize=(7,7))
         plt.rc('font', **opts['myfont'])
-        plt.scatter(y1, y2, c=f, s=150.0, vmin=np.min(f), vmax=np.max(f))
+        plt.scatter(y1, y2, c=f.ravel(), s=150.0, vmin=np.min(f), vmax=np.max(f))
         plt.xlabel('Active variable 1')
         plt.ylabel('Active variable 2')
         ymin = 1.1*np.amin([np.amin(y1), np.amin(y2)])
@@ -470,7 +470,7 @@ def zonotope_2d_plot(vertices, design=None, y=None, f=None, out_label=None, opts
             if type(l) is Line2D: l.set_color('0.75')
 
     if y is not None:
-        plt.scatter(y[:,0], y[:,1], c=f, s=100.0, vmin=np.min(f), vmax=np.max(f))
+        plt.scatter(y[:,0], y[:,1], c=f.ravel(), s=100.0, vmin=np.min(f), vmax=np.max(f))
         plt.axes().set_aspect('equal')
         plt.title(out_label)
         plt.colorbar()
