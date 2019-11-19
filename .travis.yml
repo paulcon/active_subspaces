@@ -30,4 +30,4 @@ install:
  - pip install .
  - export MPLBACKEND="Agg"
 
-script: pytest
+script: nosetests
