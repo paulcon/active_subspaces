@@ -23,7 +23,7 @@ setup(name='active_subspaces',
       packages=['active_subspaces', 'active_subspaces.utils'],
       install_requires=[
           'numpy',
-          'scipy >= 0.15.0',
+          'scipy >= 0.15.0,<1.2.2',
           'matplotlib'
       ],
       test_suite='pytest',
