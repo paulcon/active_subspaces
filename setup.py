@@ -26,7 +26,7 @@ setup(name='active_subspaces',
           'scipy >= 0.15.0,<1.2.2',
           'matplotlib'
       ],
-      test_suite='pytest',
-      tests_require=['pytest'],
+      test_suite='nose.collector',
+      tests_require=['nose'],
       include_package_data=True,
       zip_safe=False)
