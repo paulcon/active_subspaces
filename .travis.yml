@@ -28,5 +28,6 @@ install:
  #- conda install --yes numpy scipy matplotlib pip nose
 #  - pip install setuptools
  - pip install .
+ - export MPLBACKEND="Agg"
 
-script: nosetests
+script: pytest
