@@ -16,15 +16,15 @@ addons:
     - liblapack-dev
 
 before_install:
- - travis_retry wget http://repo.continuum.io/miniconda/Miniconda-3.8.3-Linux-x86_64.sh -O miniconda.sh
- - chmod +x miniconda.sh
- - bash miniconda.sh -b -p $HOME/miniconda
- - export PATH=/home/travis/miniconda/bin:$PATH
- - conda update --yes conda
+ - #travis_retry wget http://repo.continuum.io/miniconda/Miniconda-3.8.3-Linux-x86_64.sh -O miniconda.sh
+ - #chmod +x miniconda.sh
+ - #bash miniconda.sh -b -p $HOME/miniconda
+ - #export PATH=/home/travis/miniconda/bin:$PATH
+ - #conda update --yes conda
 
 install:
- - conda create --yes -n test python=$TRAVIS_PYTHON_VERSION
- - source activate test
+ #- conda create --yes -n test python=$TRAVIS_PYTHON_VERSION
+ #- source activate test
  #- conda install --yes numpy scipy matplotlib pip nose
 #  - pip install setuptools
  - pip install .
