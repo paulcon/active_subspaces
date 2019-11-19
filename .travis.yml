@@ -25,8 +25,9 @@ before_install:
 install:
  - conda create --yes -n test python=$TRAVIS_PYTHON_VERSION
  - source activate test
- - conda install --yes numpy scipy matplotlib pip nose
- - pip install setuptools
- - python setup.py install
+ #- conda install --yes numpy scipy matplotlib pip nose
+#  - pip install setuptools
+ - pip install pytest
+ - pip install .
 
-script: python test.py
+script: nosetests
