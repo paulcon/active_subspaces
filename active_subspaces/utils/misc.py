@@ -348,7 +348,7 @@ def atleast_2d(A, oned_as='row'):
         elif oned_as == 'col':
             A = A[:,None]
         else:
-            raise Exception , "oned_as must be 'row' or 'col' "
+            raise Exception("oned_as must be 'row' or 'col' ")
 
     return A
 

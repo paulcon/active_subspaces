@@ -1,7 +1,7 @@
 """Utilities for constructing design-of-experiments."""
 import numpy as np
-import misc as mi
-from quadrature import gauss_hermite
+from . import misc as mi
+from .quadrature import gauss_hermite
 from scipy.spatial import ConvexHull, distance_matrix
 from scipy.optimize import minimize
 
@@ -120,7 +120,7 @@ def _maximin_design_obj(y, vert=None):
     the design and between points and vertices.
     """
     Ny, n = vert.shape
-    N = y.size / n
+    N = y.size // n
     Y = y.reshape((N, n))
 
     # get minimum distance among points
@@ -149,7 +149,7 @@ def _maximin_design_grad(y, vert=None):
     Ny, n = vert.shape
     v = vert.reshape((Ny*n, ))
 
-    N = y.size / n
+    N = y.size // n
     Y = y.reshape((N, n))
 
     # get minimum distance among points
@@ -165,19 +165,23 @@ def _maximin_design_grad(y, vert=None):
     g = np.zeros((N*n, ))
     if d0star < d1star:
         dstar, kstar = d0star, k0star
-        istar = kstar/N
+        istar = kstar // N
         jstar = np.mod(kstar, N)
 
         for k in range(n):
-            g[istar*n + k] = 2*(y[istar*n + k] - y[jstar*n + k])
-            g[jstar*n + k] = 2*(y[jstar*n + k] - y[istar*n + k])
+            i = int(np.floor(istar*n))
+            j = int(np.floor(jstar*n))
+            g[i + k] = 2*(y[i + k] - y[j + k])
+            g[j + k] = 2*(y[j + k] - y[i + k])
 
     else:
         dstar, kstar = d1star, k1star
-        istar = kstar/Ny
+        istar = kstar // Ny
         jstar = np.mod(kstar, Ny)
 
         for k in range(n):
-            g[istar*n + k] = 2*(y[istar*n + k] - v[jstar*n + k])
+            i = int(np.floor(istar*n))
+            j = int(np.floor(jstar*n))
+            g[i + k] = 2*(y[i + k] - v[j + k])
 
     return -g

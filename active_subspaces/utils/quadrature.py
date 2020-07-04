@@ -4,7 +4,7 @@ Library.
 """
 
 import numpy as np
-import misc as mi
+from . import misc as mi
 
 def r_hermite(N):
     """Recurrence coefficients for the Hermite orthogonal polynomials.
@@ -39,7 +39,7 @@ def r_hermite(N):
     if N == 1:
         return np.array([[0.0, 1.0]])
     else:
-        n = np.array(range(1, N+1))
+        n = np.array(list(range(1, N+1)))
         b = np.vstack((1.0, n.reshape((N, 1))))
         a = np.zeros(b.shape)
         ab = np.hstack((a, b))

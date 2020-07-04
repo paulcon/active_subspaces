@@ -1,10 +1,10 @@
 """Utilities for building the domains and maps for active variables."""
 import numpy as np
-from utils.misc import process_inputs, BoundedNormalizer
+from .utils.misc import process_inputs, BoundedNormalizer
 from scipy.spatial import ConvexHull
 from scipy.misc import comb
-from utils.qp_solver import QPSolver
-from subspaces import Subspaces
+from .utils.qp_solver import QPSolver
+from .subspaces import Subspaces
 
 class ActiveVariableDomain():
     """A base class for the domain of functions of active variables.
@@ -116,7 +116,7 @@ class BoundedActiveVariableDomain(ActiveVariableDomain):
             convhull = None
             constraints = None
         else:
-	    Y, X = zonotope_vertices(W1)
+            Y, X = zonotope_vertices(W1)
             convhull = ConvexHull(Y)
             A = convhull.equations[:,:n]
             b = convhull.equations[:,n]
@@ -468,7 +468,7 @@ def zonotope_vertices(W1, Nsamples=10000, maxcount=100000):
     
     numverts = X.shape[0]
     if totalverts > numverts:
-        print 'Warning: {} of {} vertices found.'.format(numverts, totalverts)
+        print('Warning: {} of {} vertices found.'.format(numverts, totalverts))
     
     Y = np.dot(X, W1)
     return Y.reshape((numverts, n)), X.reshape((numverts, m))

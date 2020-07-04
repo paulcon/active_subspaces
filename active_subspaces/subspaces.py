@@ -1,9 +1,9 @@
 """Utilities for computing active and inactive subspaces."""
-from __future__ import division
+
 import numpy as np
-from utils.misc import process_inputs, process_inputs_outputs
-from utils.response_surfaces import PolynomialApproximation
-from gradients import local_linear_gradients
+from .utils.misc import process_inputs, process_inputs_outputs
+from .utils.response_surfaces import PolynomialApproximation
+from .gradients import local_linear_gradients
 
 SQRTEPS = np.sqrt(np.finfo(float).eps)
 
@@ -171,7 +171,9 @@ class Subspaces():
         
         """
         if not isinstance(n, int):
-            raise TypeError('n should be an integer')
+            #raise TypeError('n should be an integer')
+            n = int(n)
+            print(Warning("n should be an integer. Performing conversion."))
 
         m = self.eigenvecs.shape[0]
         if n<1 or n>m:
@@ -236,7 +238,7 @@ def ols_subspace(X, f, weights):
     # solve weighted least squares
     A = np.hstack((np.ones((M, 1)), X)) * np.sqrt(weights)
     b = f * np.sqrt(weights)
-    u = np.linalg.lstsq(A, b)[0]
+    u = np.linalg.lstsq(A, b, rcond=None)[0]
     w = u[1:].reshape((m, 1))
     
     # compute rank-1 C
@@ -273,7 +275,7 @@ def qphd_subspace(X, f, weights):
     X, f, M, m = process_inputs_outputs(X, f)
     
     # check if the points are uniform or Gaussian, set 2nd moment
-    if np.amax(X) > 1.0 or np.amin < -1.0:
+    if np.amax(X) > 1.0 or np.amin(X) < -1.0:
         gamma = 1.0
     else:
         gamma = 1.0 / 3.0

@@ -1,7 +1,7 @@
 """Utilities for approximating gradients."""
 import numpy as np
-from utils.misc import process_inputs
-from utils.simrunners import SimulationRunner
+from .utils.misc import process_inputs
+from .utils.simrunners import SimulationRunner
 
 def local_linear_gradients(X, f, p=None, weights=None):
     """Estimate a collection of gradients from input/output pairs.
@@ -58,7 +58,7 @@ def local_linear_gradients(X, f, p=None, weights=None):
         ind = ind[D2 != 0]
         A = np.hstack((np.ones((p,1)), X[ind[:p],:])) * np.sqrt(weights[ii])
         b = f[ind[:p]] * np.sqrt(weights[ii])
-        u = np.linalg.lstsq(A, b)[0]
+        u = np.linalg.lstsq(A, b, rcond=None)[0]
         df[i,:] = u[1:].T
     return df
 

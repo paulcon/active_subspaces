@@ -5,13 +5,13 @@ def readme():
         return f.read()
 
 setup(name='active_subspaces',
-      version='0.1',
+      version='0.3',
       description='Tools to apply active subspaces to analyze models and data.',
       long_description=readme(),
       classifiers=[
         'Development Status :: 3 - Alpha',
         'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 2.7, 3.6',
         'Intended Audience :: Science/Research',
         'Topic :: Scientific/Engineering :: Mathematics'
       ],
@@ -23,7 +23,7 @@ setup(name='active_subspaces',
       packages=['active_subspaces', 'active_subspaces.utils'],
       install_requires=[
           'numpy',
-          'scipy >= 0.15.0',
+          'scipy >= 0.15.0,<1.2.2',
           'matplotlib'
       ],
       test_suite='nose.collector',
