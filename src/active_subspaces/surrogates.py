@@ -23,11 +23,13 @@ from __future__ import annotations
 import concurrent.futures
 import itertools
 import math
+from dataclasses import dataclass
 from typing import Any, Literal, Protocol, cast, runtime_checkable
 
 import numpy as np
 import scipy.linalg
 import scipy.optimize
+import scipy.stats
 from numpy.typing import ArrayLike, NDArray
 from scipy.spatial.distance import cdist
 
@@ -46,12 +48,14 @@ from active_subspaces.results import (
     QoIResult,
     _invariant,
     _make_provenance,
+    _register_migration,
     _register_result,
 )
-from active_subspaces.spaces import InputSpace
+from active_subspaces.spaces import InputSpace, _poincare_constant
 from active_subspaces.subspaces import SubspaceResult
 
 __all__ = (
+    "IntervalResult",
     "PolynomialSurrogate",
     "RBFSurrogate",
     "Surrogate",
@@ -59,6 +63,7 @@ __all__ = (
     "fit_surrogate_from_model",
     "predict",
     "predict_gradient",
+    "predict_interval",
     "quadratic_terms",
 )
 
@@ -68,6 +73,8 @@ _LEVERAGE_TOL = 1e-8
 _RIPPA_TOL = 1e-12
 _GRID_STEP = 0.25
 _DEFAULT_BOUNDS = (-10.0, 1.0)
+_FLAT_RTOL = 1e-8  # J within this of its minimum, relative, counts as flat [D-192]
+_FLAT_DECADES = 4.0
 _CHUNK = 1 << 22  # entries of a (rows, p, k) basis-gradient block
 
 
@@ -545,6 +552,7 @@ def _rbf_search(trial: Any, bounds: tuple[float, float]) -> float:
             details={"log10_eta_bounds": [lo, hi], "grid_points": int(G + 1)},
         )
     g = int(np.argmin(Js))
+    _warn_flat(grid, Js, g)
     a, b = grid[max(g - 1, 0)], grid[min(g + 1, G)]
     big = np.finfo(np.float64).max
 
@@ -558,6 +566,73 @@ def _rbf_search(trial: Any, bounds: tuple[float, float]) -> float:
     u_ref = float(res.x)
     J_ref = _J(trial(u_ref))
     return u_ref if J_ref <= Js[g] else float(grid[g])
+
+
+def _warn_flat(grid: np.ndarray, Js: np.ndarray, g: int) -> None:
+    """Warn ``accuracy.flat_objective`` when the objective is flat around the selected point.
+
+    Flat: J stays within ``1e-8 |J*|`` of its minimum over at least four decades of consecutive
+    grid points containing the selected one [D-192].
+    """
+    thr = Js[g] + _FLAT_RTOL * abs(Js[g])
+    a = g
+    while a > 0 and Js[a - 1] <= thr:
+        a -= 1
+    b = g
+    while b < Js.size - 1 and Js[b + 1] <= thr:
+        b += 1
+    span = float(grid[b] - grid[a])
+    if span >= _FLAT_DECADES:
+        _warn(
+            AccuracyWarning,
+            f"the RBF likelihood is flat over {span:g} decades of log10(eta) around the selected "
+            "value, so the value is arbitrary; pass f_variance or log10_eta_bounds",
+            code="accuracy.flat_objective",
+            details={"span": span, "interval": [float(grid[a]), float(grid[b])]},
+        )
+
+
+def _search_interval(
+    bounds: tuple[float, float] | None,
+    log10_eta: float | None,
+    f_variance: float | None,
+    subspace: SubspaceResult | None,
+    space: InputSpace,
+    f: np.ndarray,
+) -> tuple[tuple[float, float], str, float | None]:
+    """Resolve the search interval of §3.3 [D-101, D-192].
+
+    Returns ``(interval, source, log10_eta)``; ``source`` is ``"given"``, ``"f_variance"`` or
+    ``"default"``. An empty published interval collapses to its upper end, which becomes a
+    fixed ``log10_eta``, and warns ``accuracy.empty_bounds``.
+    """
+    if bounds is not None or log10_eta is not None:
+        return (bounds if bounds is not None else _DEFAULT_BOUNDS), "given", log10_eta
+    if f_variance is None or subspace is None or subspace.estimator == "basis":
+        return _DEFAULT_BOUNDS, "default", None
+    total = math.fsum(np.abs(np.asarray(subspace.eigenvalues, dtype=np.float64)).tolist())
+    if not total > 0:
+        return _DEFAULT_BOUNDS, "default", None
+    c1 = _poincare_constant(space)
+    lo = math.log10(2.0 * f_variance / total)
+    hi = math.log10(2.0 * c1)
+    if lo <= hi:
+        return (lo, hi), "f_variance", None
+    if np.ptp(f) != 0:  # a constant f runs no search and issues no search warning (§5.2)
+        _warn(
+            AccuracyWarning,
+            f"the published bounds on log10(eta) are empty ({lo:.4g} > {hi:.4g}): f_variance "
+            "exceeds C1 times the eigenvalue sum; the upper end is used",
+            code="accuracy.empty_bounds",
+            details={
+                "lower": lo,
+                "upper": hi,
+                "f_variance": f_variance,
+                "eigenvalue_sum": total,
+                "C1": c1,
+            },
+        )
+    return (hi, hi), "f_variance", hi
 
 
 def _J(state: _RBFState | None) -> float:
@@ -841,6 +916,74 @@ class PolynomialSurrogate(QoIResult):
         """
         return _poly_gradient(self, Y)
 
+    def interval(
+        self,
+        Y: ArrayLike,
+        *,
+        level: float = 0.95,
+        kind: Literal["prediction", "confidence"] = "prediction",
+        side: Literal["two", "lower", "upper"] = "two",
+    ) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
+        r"""Return prediction or confidence limits at active coordinates.
+
+        Parameters
+        ----------
+        Y : array_like, shape (K, k), float
+            Points in the surrogate's input coordinates; 1-D is read as
+            ``(K, 1)`` when ``k == 1``.
+        level : float, default 0.95, keyword-only
+            Confidence level in :math:`(0, 1)`.
+        kind : {"prediction", "confidence"}, default "prediction", keyword-only
+            Limits for a new observation (``c = 1``) or for the mean (``c = 0``).
+        side : {"two", "lower", "upper"}, default "two", keyword-only
+            Two-sided limits, or one-sided with the other end :math:`\mp\infty`.
+
+        Returns
+        -------
+        lower, upper : numpy.ndarray, shape (K,), float64
+
+        Raises
+        ------
+        InputError
+            ``input.parameter`` for a bad option, or for no residual degrees of
+            freedom (``details["reason"] == "no_dof"``); the spec 02 codes for a
+            bad ``Y``.
+
+        See Also
+        --------
+        predict_interval : The same limits at physical inputs.
+
+        Notes
+        -----
+        Under :math:`f_i = b(y_i)^\top\beta + \varepsilon_i`,
+        :math:`\varepsilon_i \sim N(0, \sigma^2/s_i)`, with
+        :math:`\nu = \#\lbrace i: s_i > 0\rbrace - p` and
+        :math:`s^2 = \sum_i s_i r_i^2/\nu`, a new point having weight 1, the
+        limits are :math:`g(y) \pm t\, s\sqrt{c + b(y)^\top(B^\top SB)^{-1}b(y)}`
+        with :math:`t = t_{\nu, 1-\alpha/2}` (two-sided) or
+        :math:`t_{\nu, \mathrm{level}}` (one-sided) [1]_ [D-200]. They are
+        conditional on :math:`W_1` and do not include its estimation error.
+
+        References
+        ----------
+        .. [1] D. C. Montgomery, E. A. Peck, G. G. Vining. *Introduction to Linear
+           Regression Analysis*, 5th ed. Wiley, 2012, §3.4-3.5.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> import active_subspaces as ac
+        >>> space = ac.Uniform.reference(1)
+        >>> X = np.linspace(-1.0, 1.0, 21)[:, None]
+        >>> f = 1.0 + X[:, 0] + 0.01 * np.sin(40.0 * X[:, 0])
+        >>> s = ac.fit_surrogate(X=X, f=f, space=space, subspace=None, kind="poly", degree=1)
+        >>> lo, hi = s.interval([[0.0]], kind="confidence")
+        >>> bool(lo[0] < 1.0 < hi[0])
+        True
+        """
+        _, lower, upper, *_ = _poly_interval(self, Y, level, kind, side)
+        return lower, upper
+
     def _check(self) -> None:
         M = _check_common(self, self.Y.shape[1] if self.Y.ndim == 2 else -1)
         p = self.indices.shape[0]
@@ -898,7 +1041,7 @@ class RBFSurrogate(QoIResult):
     noise_variance : ndarray of float64, shape (M,), or None
         Noise variances :math:`v_i` in units of :math:`f^2`, as given or from
         the model path, else ``None``.
-    f_variance : float
+    training_variance : float
         :math:`s_f^2`, the sample variance of ``f`` (ddof 0) that converts
         ``noise_variance`` into the nugget.
     amplitude : float
@@ -956,7 +1099,7 @@ class RBFSurrogate(QoIResult):
     """
 
     TYPE = "RBFSurrogate"
-    SCHEMA_VERSION = 1
+    SCHEMA_VERSION = 2  # 2: f_variance renamed training_variance [D-206]
 
     space: InputSpace
     subspace: SubspaceResult | None
@@ -970,7 +1113,7 @@ class RBFSurrogate(QoIResult):
     log10_eta: float
     nugget: NDArray[np.float64]
     noise_variance: NDArray[np.float64] | None
-    f_variance: float
+    training_variance: float
     amplitude: float
     objective: float | None
     residuals: NDArray[np.float64]
@@ -1113,7 +1256,8 @@ class RBFSurrogate(QoIResult):
         _invariant(bool(np.all(self.nugget >= _NUGGET_FLOOR)), "nugget must be >= 1e-6")
         _invariant(math.isfinite(self.log10_eta), "log10_eta must be finite")
         _invariant(
-            math.isfinite(self.f_variance) and self.f_variance >= 0, "f_variance must be >= 0"
+            math.isfinite(self.training_variance) and self.training_variance >= 0,
+            "training_variance must be >= 0",
         )
         _invariant(math.isfinite(self.amplitude) and self.amplitude >= 0, "amplitude must be >= 0")
         if self.objective is not None:
@@ -1134,6 +1278,14 @@ class RBFSurrogate(QoIResult):
 # ---------------------------------------------------------------------------
 # Evaluation (private module functions called by the methods [D-22])
 # ---------------------------------------------------------------------------
+
+
+@_register_migration("RBFSurrogate", 1)
+def _rbf_v1_to_v2(fields: dict[str, Any]) -> dict[str, Any]:
+    """Version 1 called the training-value variance ``f_variance`` [D-206]."""
+    out = dict(fields)
+    out["training_variance"] = out.pop("f_variance")
+    return out
 
 
 def _poly_evaluate(s: PolynomialSurrogate, Y: Any) -> np.ndarray:
@@ -1206,7 +1358,7 @@ def _fit_rbf(
             "length_scales": (10.0**u) * ell_base,
             "log10_eta": u,
             "nugget": np.full(M, _NUGGET_FLOOR),
-            "f_variance": 0.0,
+            "training_variance": 0.0,
             "amplitude": 0.0,
             "objective": None,
             "residuals": f - B @ beta,
@@ -1255,7 +1407,7 @@ def _fit_rbf(
         "length_scales": st.ell,
         "log10_eta": float(u),
         "nugget": st.delta,
-        "f_variance": sf2,
+        "training_variance": sf2,
         "amplitude": st.sigma2,
         "objective": st.J,
         "residuals": st.delta * alpha,
@@ -1361,7 +1513,16 @@ def _check_kind_degree(kind: Any, degree: Any) -> tuple[Literal["rbf", "poly"], 
     return cast(Literal["rbf", "poly"], kind), degree
 
 
-def _check_bounds(bounds: Any, log10_eta: Any) -> tuple[tuple[float, float], float | None]:
+def _check_bounds(bounds: Any, log10_eta: Any) -> tuple[tuple[float, float] | None, float | None]:
+    """Validate explicit bounds (or ``None``) and a fixed ``log10_eta``.
+
+    A fixed ``log10_eta`` must lie inside the given bounds, or inside the default interval when
+    none are given.
+    """
+    if bounds is None:
+        lo, hi = _DEFAULT_BOUNDS
+        eta = None if log10_eta is None else _v.real(log10_eta, "log10_eta", lo=lo, hi=hi)
+        return None, eta
     try:
         lo_raw, hi_raw = bounds
     except (TypeError, ValueError) as exc:
@@ -1385,19 +1546,27 @@ def _not_for_kind(name: str, kind: str) -> InputError:
 
 
 def _check_rbf_args(
-    kind: str, log10_eta: Any, bounds: Any
-) -> tuple[tuple[float, float], float | None]:
+    kind: str, log10_eta: Any, bounds: Any, f_variance: Any = None
+) -> tuple[tuple[float, float] | None, float | None, float | None]:
+    """Validate the RBF-only arguments; returns ``(bounds or None, log10_eta, f_variance)``."""
     if kind != "rbf":
         if log10_eta is not None:
             raise _not_for_kind("log10_eta", kind)
-        try:
-            default = bounds is _DEFAULT_BOUNDS or tuple(bounds) == _DEFAULT_BOUNDS
-        except TypeError:
-            default = False
-        if not default:
-            raise _not_for_kind("log10_eta_bounds", kind)
-        return _DEFAULT_BOUNDS, None
-    return _check_bounds(bounds, log10_eta)
+        if f_variance is not None:
+            raise _not_for_kind("f_variance", kind)
+        if bounds is not None:
+            try:  # the old default (-10, 1) is accepted, as before
+                default = tuple(bounds) == _DEFAULT_BOUNDS
+            except TypeError:
+                default = False
+            if not default:
+                raise _not_for_kind("log10_eta_bounds", kind)
+        return None, None, None
+    fv = None
+    if f_variance is not None:
+        fv = _v.real(f_variance, "f_variance", lo=0.0, lo_open=True)
+    b, eta = _check_bounds(bounds, log10_eta)
+    return b, eta, fv
 
 
 def _noise_variance(v: Any, M: int) -> np.ndarray:
@@ -1436,7 +1605,8 @@ def fit_surrogate(
     sample_weights: ArrayLike | None = None,
     noise_variance: ArrayLike | None = None,
     log10_eta: float | None = None,
-    log10_eta_bounds: tuple[float, float] = _DEFAULT_BOUNDS,
+    log10_eta_bounds: tuple[float, float] | None = None,
+    f_variance: float | None = None,
     qoi: str | None = None,
 ) -> PolynomialSurrogate | RBFSurrogate:
     r"""Fit a polynomial or radial-basis surrogate to data on the active variables.
@@ -1473,10 +1643,18 @@ def fit_surrogate(
         units of :math:`f^2`.
     log10_eta : float, optional
         ``kind="rbf"`` only. Fixes :math:`\log_{10}\eta` (inside
-        `log10_eta_bounds`) instead of searching for it.
-    log10_eta_bounds : tuple of float, default (-10.0, 1.0)
+        `log10_eta_bounds`, or inside :math:`[-10, 1]` when none are given)
+        instead of searching for it.
+    log10_eta_bounds : tuple of float, optional
         ``kind="rbf"`` only. The search interval for :math:`\log_{10}\eta`,
-        lower < upper.
+        lower < upper. Default: the published bounds when `f_variance` is
+        given, else :math:`[-10, 1]` (see Notes).
+    f_variance : float, optional
+        ``kind="rbf"`` only. :math:`\hat\sigma^2 > 0`, the biased sample
+        variance of :math:`f` at the gradient samples behind `subspace`
+        (CDW (4.11)), not of the training values. Sets the search interval to
+        the published bounds [D-192]; ignored (but recorded) when
+        `log10_eta_bounds` or `log10_eta` is given.
     qoi : str, optional
         Name of the quantity of interest. Defaults to ``subspace.qoi`` (a
         given value must equal it), else ``"f"``.
@@ -1545,9 +1723,12 @@ def fit_surrogate(
        {\max\bigl(\lvert\lambda_j\rvert,\ \epsilon_{\mathrm{mach}}\lvert\lambda_1\rvert\bigr)},
        \qquad j = 1, \dots, n,
 
-    a heuristic of the 2016 package with no published reference; otherwise
-    :math:`\ell_j = \eta`. The nugget :math:`\delta` is dimensionless,
-    relative to the amplitude :math:`\sigma^2`: :math:`\delta_i = v_i / s_f^2`
+    the rule of [1]_ §4.2-4.3, eq. (4.16): there
+    :math:`\ell_i^2 = \alpha\sum_q\lambda_q/\lambda_i` in
+    :math:`\exp(-\sum_i\Delta_i^2/2\ell_i^2)`, which is this kernel with
+    :math:`\eta = 2\alpha`; otherwise :math:`\ell_j = \eta`. The nugget
+    :math:`\delta` is dimensionless, relative to the amplitude :math:`\sigma^2`:
+    :math:`\delta_i = v_i / s_f^2`
     with :math:`s_f^2` the sample variance of `f` when noise variances are
     given; else
     :math:`\delta_i = \eta \sum_{q>n}\lvert\lambda_q\rvert / \sum_q \lvert\lambda_q\rvert`
@@ -1569,6 +1750,35 @@ def fit_surrogate(
     weighted the second term by :math:`M` instead of :math:`M/2` and added
     the nugget in units of :math:`f^2` to a unit-amplitude kernel; both are
     changed here.
+
+    **Search interval** [D-101], [D-192]. By default
+    :math:`\log_{10}\eta \in [-10, 1]`. With `f_variance`
+    :math:`= \hat\sigma^2` and a subspace with eigenvalues, it is the
+    published interval [1]_ (4.13), :math:`\hat\sigma^2/\sum\lambda \le
+    \alpha \le C_1` with :math:`\eta = 2\alpha`:
+
+    .. math::
+
+       \log_{10}\eta \in \Bigl[\log_{10}\frac{2\hat\sigma^2}{\sum_q\lvert\lambda_q\rvert},
+       \ \log_{10} 2C_1\Bigr],
+
+    with the Poincaré constant :math:`C_1 = 1` on a Gaussian space and
+    :math:`4/\pi^2` on a uniform space. [1]_ (4.10) prints
+    :math:`C_1 \le 2\sqrt m/\pi` for the uniform case, citing Bebendorf,
+    whose diameter bound gives :math:`4m/\pi^2`; the sharp constant is
+    :math:`4/\pi^2` in every dimension (Payne-Weinberger on :math:`[-1, 1]`
+    and tensorization) [D-204]. An empty interval collapses to its upper end
+    and warns ``accuracy.empty_bounds``. The bounds are derived for the
+    eigenvalues of :math:`E[\nabla f\nabla f^\top]` (estimators ``"as"``
+    and ``"opg"``); with another estimator they are a heuristic.
+
+    **Departures from** [1]_, flagged [D-194]: (1) the amplitude is profiled,
+    :math:`\hat\sigma^2_\eta`, where [1]_ ties it to the hyperparameter,
+    :math:`\sigma^2 = \alpha\sum_q\lambda_q` (4.10); (2) the relative
+    nugget is :math:`\eta\sum_{q>n}\lvert\lambda_q\rvert/\sum_q\lvert\lambda_q\rvert
+    = 2\alpha\sum_{q>n}\lvert\lambda_q\rvert/\sum_q\lvert\lambda_q\rvert`,
+    where [1]_ (4.14) gives :math:`\sum_{q>n}\lambda_q/\sum_q\lambda_q`,
+    independent of :math:`\alpha`.
 
     **Fit quality.** The leave-one-out residual :math:`e_i` refits without
     point :math:`i` with the hyperparameters fixed; both kinds have closed
@@ -1631,7 +1841,7 @@ def fit_surrogate(
         raise _not_for_kind("sample_weights", kind)
     if kind != "rbf" and noise_variance is not None:
         raise _not_for_kind("noise_variance", kind)
-    bounds, eta = _check_rbf_args(kind, log10_eta, log10_eta_bounds)
+    bounds, eta, fv = _check_rbf_args(kind, log10_eta, log10_eta_bounds, f_variance)
     d = _v.data(
         space,
         X=X,
@@ -1649,12 +1859,17 @@ def fit_surrogate(
         digests["noise_variance"] = _v.digest(v)
     Y = d.X @ subspace.W1 if subspace is not None else np.array(d.X, copy=True)
     Y = np.ascontiguousarray(Y)
+    interval, source, eta_fit = _DEFAULT_BOUNDS, None, eta
+    if kind == "rbf":
+        interval, source, eta_fit = _search_interval(bounds, eta, fv, subspace, space, d.f)
     params = {
         "subspace": subspace,
         "kind": kind,
         "degree": degree,
         "log10_eta": eta,
-        "log10_eta_bounds": list(bounds) if kind == "rbf" else None,
+        "log10_eta_bounds": list(interval) if kind == "rbf" else None,
+        "log10_eta_bounds_source": source,
+        "f_variance": fv,
         "qoi": qoi,
     }
     prov = _make_provenance("fit_surrogate", params, space=space, digests=digests)
@@ -1667,8 +1882,8 @@ def fit_surrogate(
         degree=degree,
         sample_weights=d.sample_weights,
         noise_variance=v,
-        log10_eta=eta,
-        log10_eta_bounds=bounds,
+        log10_eta=eta_fit,
+        log10_eta_bounds=interval,
         qoi=qoi,
         samples=None,
         provenance=prov,
@@ -1687,7 +1902,7 @@ def fit_surrogate_from_model(
     include_vertices: bool = True,
     n_starts: int = 3,
     log10_eta: float | None = None,
-    log10_eta_bounds: tuple[float, float] = _DEFAULT_BOUNDS,
+    log10_eta_bounds: tuple[float, float] | None = None,
     executor: concurrent.futures.Executor | None = None,
     batch_size: int | None = None,
     qoi: str | None = None,
@@ -1730,8 +1945,12 @@ def fit_surrogate_from_model(
         Starts of the maximin design, when it is built.
     log10_eta : float, optional
         ``kind="rbf"`` only; fixes :math:`\log_{10}\eta`.
-    log10_eta_bounds : tuple of float, default (-10.0, 1.0)
-        ``kind="rbf"`` only; the search interval for :math:`\log_{10}\eta`.
+    log10_eta_bounds : tuple of float, optional
+        ``kind="rbf"`` only; the search interval for :math:`\log_{10}\eta`,
+        default :math:`[-10, 1]`. This path takes no ``f_variance`` [D-207]:
+        for the published bounds pass
+        ``(log10(2 * f_variance / sum(abs(eigenvalues))), log10(2 * C1))``,
+        with :math:`C_1 = 1` (Gaussian) or :math:`4/\pi^2` (uniform).
     executor : concurrent.futures.Executor, optional
         Runs the model evaluations; results do not depend on it.
     batch_size : int, optional
@@ -1823,7 +2042,8 @@ def fit_surrogate_from_model(
         raise _param(f"domain: expected an ActiveDomain, got {type(domain).__name__}", "domain")
     subspace = domain.subspace
     kind, degree = _check_kind_degree(kind, degree)
-    bounds, eta = _check_rbf_args(kind, log10_eta, log10_eta_bounds)
+    bounds, eta, _ = _check_rbf_args(kind, log10_eta, log10_eta_bounds)
+    interval = _DEFAULT_BOUNDS if bounds is None else bounds  # no f_variance here [D-207]
     qoi = _resolve_qoi(qoi, subspace.qoi)
     gen, rng_desc = _random.generator(rng)
     samples, _model_obj, params = _conditional_samples(
@@ -1845,7 +2065,7 @@ def fit_surrogate_from_model(
         "kind": kind,
         "degree": degree,
         "log10_eta": eta,
-        "log10_eta_bounds": list(bounds) if kind == "rbf" else None,
+        "log10_eta_bounds": list(interval) if kind == "rbf" else None,
     }
     prov = _make_provenance(
         "fit_surrogate_from_model", params, space=subspace.space, rng_state=rng_desc
@@ -1862,7 +2082,7 @@ def fit_surrogate_from_model(
         sample_weights=None,
         noise_variance=np.array(samples.noise_variance, copy=True) if kind == "rbf" else None,
         log10_eta=eta,
-        log10_eta_bounds=bounds,
+        log10_eta_bounds=interval,
         qoi=qoi,
         samples=samples,
         provenance=prov,
@@ -2065,3 +2285,193 @@ def quadratic_terms(
             degree=surrogate.degree,
         )
     return _quadratic_terms(surrogate.indices, surrogate.coefficients)
+
+
+# ---------------------------------------------------------------------------
+# Intervals for polynomial surrogates [D-200]
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True, slots=True)
+class IntervalResult:
+    r"""Prediction or confidence limits of a polynomial surrogate at new points [D-200].
+
+    A value type returned by :func:`predict_interval`, like the arrays of
+    :func:`predict`: it holds no provenance and is not serialized.
+
+    Attributes
+    ----------
+    estimate : numpy.ndarray, shape (K,), float64
+        The surrogate at the points.
+    lower, upper : numpy.ndarray, shape (K,), float64
+        The limits; ``-inf`` or ``+inf`` on the open side of a one-sided interval.
+    level : float
+        Confidence level.
+    kind : {"prediction", "confidence"}
+    side : {"two", "lower", "upper"}
+    dof : int
+        Residual degrees of freedom :math:`\nu`.
+    residual_scale : float
+        :math:`s`.
+    """
+
+    estimate: NDArray[np.float64]
+    lower: NDArray[np.float64]
+    upper: NDArray[np.float64]
+    level: float
+    kind: Literal["prediction", "confidence"]
+    side: Literal["two", "lower", "upper"]
+    dof: int
+    residual_scale: float
+
+
+def _readonly(a: np.ndarray) -> NDArray[np.float64]:
+    out = np.array(a, dtype=np.float64, copy=True)
+    out.flags.writeable = False
+    return out
+
+
+def _poly_interval(
+    s: PolynomialSurrogate, Y: Any, level: Any, kind: Any, side: Any
+) -> tuple[
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    float,
+    Literal["prediction", "confidence"],
+    Literal["two", "lower", "upper"],
+    int,
+    float,
+]:
+    """``(estimate, lower, upper, level, kind, side, dof, s)`` of §3.2 at input coordinates."""
+    level = _v.real(level, "level", lo=0.0, hi=1.0, lo_open=True, hi_open=True)
+    kind = cast(
+        Literal["prediction", "confidence"], _v.choice(kind, "kind", ("prediction", "confidence"))
+    )
+    side = cast(
+        Literal["two", "lower", "upper"], _v.choice(side, "side", ("two", "lower", "upper"))
+    )
+    w = np.asarray(s.sample_weights, dtype=np.float64)
+    p = s.indices.shape[0]
+    nu = int(np.sum(w > 0)) - p
+    if nu <= 0:
+        raise _param(
+            f"no residual degrees of freedom ({int(np.sum(w > 0))} weighted points, {p} basis "
+            "functions)",
+            "surrogate",
+            reason="no_dof",
+            dof=nu,
+        )
+    Yn = _coords(Y, s.active_dim)
+    est = _poly_evaluate(s, Yn)
+    r = np.asarray(s.residuals, dtype=np.float64)
+    scale = math.sqrt(math.fsum((w * r * r).tolist()) / nu)
+    _, sig, Vt, D = _scaled_svd(_basis(np.asarray(s.Y), s.indices), np.sqrt(w))
+    Z = (_basis(Yn, s.indices) * D) @ Vt.T / sig
+    q = np.sum(Z * Z, axis=1)
+    c = 1.0 if kind == "prediction" else 0.0
+    half_width = np.sqrt(c + q) * scale
+    if side == "two":
+        tq = float(scipy.stats.t.ppf(1.0 - (1.0 - level) / 2.0, nu))
+        lower, upper = est - tq * half_width, est + tq * half_width
+    else:
+        tq = float(scipy.stats.t.ppf(level, nu))
+        if side == "lower":
+            lower, upper = est - tq * half_width, np.full(est.shape, np.inf)
+        else:
+            lower, upper = np.full(est.shape, -np.inf), est + tq * half_width
+    return est, lower, upper, level, kind, side, nu, scale
+
+
+def predict_interval(
+    surrogate: PolynomialSurrogate,
+    X: ArrayLike,
+    *,
+    level: float = 0.95,
+    kind: Literal["prediction", "confidence"] = "prediction",
+    side: Literal["two", "lower", "upper"] = "two",
+) -> IntervalResult:
+    r"""Return prediction or confidence limits of a polynomial surrogate at physical inputs.
+
+    Parameters
+    ----------
+    surrogate : PolynomialSurrogate
+        A polynomial surrogate (an RBF or other surrogate is not accepted;
+        for a ``ReducedModel`` pass ``rm.surrogate``).
+    X : array_like, shape (K, m), float
+        Points in physical coordinates, inside the support of
+        ``surrogate.space``.
+    level : float, default 0.95, keyword-only
+        Confidence level in :math:`(0, 1)`.
+    kind : {"prediction", "confidence"}, default "prediction", keyword-only
+        Limits for a new observation, or for the mean of :math:`f` given :math:`y`.
+    side : {"two", "lower", "upper"}, default "two", keyword-only
+        Two-sided, or one-sided with the one-sided quantile :math:`t_{\nu,\mathrm{level}}`.
+
+    Returns
+    -------
+    IntervalResult
+        ``estimate``, ``lower``, ``upper`` (each ``(K,)``), ``level``,
+        ``kind``, ``side``, ``dof`` and ``residual_scale``.
+
+    Raises
+    ------
+    InputError
+        ``input.parameter`` for a surrogate that is not polynomial
+        (``details["reason"] == "not_polynomial"``), no residual degrees of
+        freedom (``"no_dof"``) or a bad option; the spec 02 codes for a bad
+        ``X``.
+
+    See Also
+    --------
+    PolynomialSurrogate.interval : The same limits at active coordinates.
+    predict : The point prediction.
+
+    Notes
+    -----
+    The Gaussian-error least-squares limits
+    :math:`g(y) \pm t\, s\sqrt{c + b(y)^\top(B^\top SB)^{-1} b(y)}` with
+    :math:`c = 1` (prediction) or 0 (confidence) [1]_ [D-200], from the
+    factorization behind the leave-one-out leverages. With sample weights
+    :math:`s_i`, :math:`s^2 = \sum_i s_i r_i^2/\nu`,
+    :math:`\nu = \#\lbrace i: s_i > 0\rbrace - p`, and a new point has
+    weight 1. The limits treat :math:`W_1` as fixed; on the model path the
+    errors are the scatter of the conditional means about the polynomial.
+
+    References
+    ----------
+    .. [1] D. C. Montgomery, E. A. Peck, G. G. Vining. *Introduction to Linear
+       Regression Analysis*, 5th ed. Wiley, 2012, §3.4-3.5.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> import active_subspaces as ac
+    >>> space = ac.Uniform([0.0, 0.0], [1.0, 2.0])
+    >>> X = space.sample(40, rng=0)
+    >>> f = X[:, 0] + 0.5 * X[:, 1] + 0.01 * np.sin(30.0 * X[:, 0])
+    >>> s = ac.fit_surrogate(X=X, f=f, space=space, subspace=None, kind="poly", degree=1)
+    >>> res = ac.predict_interval(s, [[0.5, 1.0]], level=0.9)
+    >>> res.dof, bool(res.lower[0] < res.estimate[0] < res.upper[0])
+    (37, True)
+    """
+    if not isinstance(surrogate, PolynomialSurrogate):
+        raise _param(
+            f"surrogate: intervals need a PolynomialSurrogate, got {type(surrogate).__name__}",
+            "surrogate",
+            reason="not_polynomial",
+        )
+    s = surrogate
+    x = _v.points(X, s.space)
+    Y = _project(s, x)
+    est, lower, upper, level_, kind_, side_, nu, scale = _poly_interval(s, Y, level, kind, side)
+    return IntervalResult(
+        estimate=_readonly(est),
+        lower=_readonly(lower),
+        upper=_readonly(upper),
+        level=level_,
+        kind=kind_,
+        side=side_,
+        dof=nu,
+        residual_scale=scale,
+    )
