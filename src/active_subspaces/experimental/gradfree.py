@@ -66,7 +66,7 @@ from active_subspaces.results import (
     _make_provenance,
     _register_result,
 )
-from active_subspaces.spaces import InputSpace
+from active_subspaces.spaces import InputSpace, _sign_pivots
 
 __all__ = ("SketchedSubspace", "sketched_active_subspace", "subspace_from_sketches")
 
@@ -92,7 +92,8 @@ class SketchedSubspace(QoIResult):
     W : ndarray, shape (m, p)
         Left singular vectors of :math:`G`, normalized coordinates,
         :math:`p = \min(m, M)`, orthonormal columns. Each column's
-        largest-magnitude entry (first on ties) is positive.
+        largest-magnitude entry (the first within a relative sqrt(eps)) is
+        positive.
     V : ndarray, shape (M, p)
         Right singular vectors, with the same column sign flips as `W`, so
         :math:`G = W \operatorname{diag}(M s) V^\top`.
@@ -277,7 +278,7 @@ def _svd(G: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         raise NumericalError(
             f"SVD failed ({exc})", code="numerical.singular", details={"step": "svd"}
         ) from exc
-    idx = np.argmax(np.abs(W), axis=0)
+    idx = _sign_pivots(W)
     signs = np.sign(W[idx, np.arange(W.shape[1])])
     signs[signs == 0] = 1.0
     return W * signs, sig, Vt.T * signs

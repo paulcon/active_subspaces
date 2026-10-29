@@ -82,8 +82,10 @@ indefinite estimators of the next page. Equal magnitudes keep the order of the e
 result is deterministic.
 
 An eigenvector is determined only up to sign. The library fixes it so that the
-largest-magnitude component of every eigenvector is positive (on an exact tie in magnitude, the
-first such component). This rule does not flip when the first component is near zero, and it is
+largest-magnitude component of every eigenvector is positive. Components within a relative
+$\sqrt{\varepsilon}\approx1.5\times10^{-8}$ of the largest magnitude count as tied, and the first
+of them sets the sign, so components that are equal in exact arithmetic (by a symmetry of the
+function, for example) give the same sign on every platform. This rule does not flip when the first component is near zero, and it is
 equivariant under a permutation of the inputs.
 
 (theory-physical-directions)=

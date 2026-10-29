@@ -283,6 +283,16 @@ def test_orient_columns():
     assert not np.shares_memory(out, W)
 
 
+def test_orient_columns_near_tie():
+    """A tie broken only by rounding uses the first index, on every platform [D-81]."""
+    a = 0.566966564981637
+    W = np.array([[0.1], [-a], [0.2], [a * (1 + 4e-15)]])
+    np.testing.assert_array_equal(orient_columns(W), -W)  # pivot row 1, not the argmax row 3
+    np.testing.assert_array_equal(orient_columns(W[::-1])[::-1], W)  # reversed: pivot row 0
+    W[3, 0] = a * (1 + 1e-6)  # a real gap is not a tie
+    np.testing.assert_array_equal(orient_columns(W), W)
+
+
 def test_square_root_invariance(gaussian_space):
     s = gaussian_space(4, 9)
     L = s.scale

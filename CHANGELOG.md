@@ -119,7 +119,9 @@ D-02, D-02a, D-03).
 - **Eigenvalues are signed** for the indefinite estimators ASX, NASX and pHd; ranking is still by
   magnitude (N-07, D-31).
 - **Eigenvector sign rule**: the largest-magnitude component of each eigenvector is positive (2016:
-  the first component) (D-81).
+  the first component). Components within $\sqrt{\varepsilon}$ of the largest count as tied, and
+  the first of them sets the sign, so the sign does not depend on the platform when two components
+  are equal in exact arithmetic (D-81, D-188).
 - **Default bootstrap interval**: a 95% percentile interval replaces the min/max band in plots and
   in `ac.bootstrap_interval`; `kind="minmax"` gives the 2016 statistic (N-08, D-30).
 - **Fit quality**: the in-sample polynomial `Rsqr` and the RBF "R²" are replaced by a
@@ -231,6 +233,8 @@ Computed values differ from the 2016 code for the same inputs. Each item is eith
   them silently (C-22, D-95).
 - Gradient-free subspaces fix the signs of the singular vectors jointly (C-24, D-140).
 - Constraints of the active domain use the outward convention of `ConvexHull` (R-07).
+- Maximin designs no longer pass on SciPy's "Values in x were outside bounds" warning, which
+  SciPy versions before 1.16 emit when SLSQP clips a step to the bounds (D-189).
 
 ### Security
 

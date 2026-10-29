@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import concurrent.futures
 import math
+import warnings
 from typing import Any, Literal, cast
 
 import numpy as np
@@ -396,15 +397,21 @@ def _slsqp(x0: np.ndarray, cons: Any, cons_jac: Any, bounds: Any = None) -> np.n
     def fun(x: np.ndarray) -> tuple[float, np.ndarray]:
         return -float(x[-1]), grad
 
-    res = scipy.optimize.minimize(
-        fun,
-        x0,
-        jac=True,
-        method="SLSQP",
-        constraints=[{"type": "ineq", "fun": cons, "jac": cons_jac}],
-        bounds=bounds,
-        options=dict(_SLSQP_OPTIONS),
-    )
+    with warnings.catch_warnings():
+        # SciPy < 1.16 warns when SLSQP clips a step to the bounds; the clipped iterate is the
+        # intended one, so the warning would only leak a third-party message to the caller.
+        warnings.filterwarnings(
+            "ignore", message="Values in x were outside bounds", category=RuntimeWarning
+        )
+        res = scipy.optimize.minimize(
+            fun,
+            x0,
+            jac=True,
+            method="SLSQP",
+            constraints=[{"type": "ineq", "fun": cons, "jac": cons_jac}],
+            bounds=bounds,
+            options=dict(_SLSQP_OPTIONS),
+        )
     return np.asarray(res.x, dtype=np.float64)
 
 
