@@ -1,0 +1,49 @@
+name: Bug report
+description: Something in active_subspaces gives a wrong result, crashes or misbehaves.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        Thank you for the report. For a security problem, do not open an issue: see SECURITY.md.
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: example
+    attributes:
+      label: Minimal example
+      description: >-
+        A short, self-contained script that shows the problem. Use synthetic data or a built-in
+        test function, and pass a fixed seed (for example `rng=0`) to every function that takes
+        `rng`, so the result can be reproduced.
+      render: python
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Output or traceback
+      description: The full error message, warning or wrong output.
+      render: text
+  - type: textarea
+    id: versions
+    attributes:
+      label: Versions
+      description: Paste the output of the command below.
+      value: |
+        python -c "import sys, platform, numpy, scipy, matplotlib, active_subspaces; print(sys.version); print(platform.platform()); print('active_subspaces', active_subspaces.__version__); print('numpy', numpy.__version__); print('scipy', scipy.__version__); print('matplotlib', matplotlib.__version__)"
+      render: text
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      placeholder: e.g. Ubuntu 24.04, macOS 15, Windows 11
+    validations:
+      required: true

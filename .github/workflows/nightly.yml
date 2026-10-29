@@ -1,0 +1,65 @@
+# Weekly run against the nightly wheels of NumPy, SciPy and matplotlib (spec 15 §5.5). It uses
+# random statistical seeds and the Hypothesis "nightly" profile, and checks the docs' links.
+# A failure opens an issue; it blocks nothing.
+name: Nightly
+
+on:
+  schedule:
+    - cron: "17 4 * * 1"        # Mondays 04:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  OPENBLAS_NUM_THREADS: "1"
+  MKL_NUM_THREADS: "1"
+  OMP_NUM_THREADS: "1"
+  MPLBACKEND: agg
+  PIP_DISABLE_PIP_VERSION_CHECK: "1"
+  FORCE_COLOR: "1"
+  HYPOTHESIS_PROFILE: nightly
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  nightly:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+      - name: Install the nightly wheels, then the package without its dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --group test --group docs
+          python -m pip install --pre --upgrade \
+            --extra-index-url https://pypi.anaconda.org/scientific-python-nightly-wheels/simple \
+            numpy scipy matplotlib
+          python -m pip install --no-deps .
+          python -c "import numpy, scipy, matplotlib; print(numpy.__version__, scipy.__version__, matplotlib.__version__)"
+      - name: Tests with random statistical seeds
+        run: python -m pytest -o pythonpath=tests --stat-seeds=random
+      - name: Documentation links
+        if: success() || failure()
+        run: sphinx-build -b linkcheck docs docs/_build/linkcheck
+
+  report:
+    needs: nightly
+    if: failure()
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Open an issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh issue create --repo "$GITHUB_REPOSITORY" \
+            --title "Nightly run failed ($(date -u +%Y-%m-%d))" \
+            --body "The weekly run against nightly NumPy, SciPy and matplotlib failed: $RUN_URL
+          If a statistical check failed, the log names the entropy; replay it with --stat-seeds=<entropy>."

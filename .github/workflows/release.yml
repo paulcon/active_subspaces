@@ -1,0 +1,93 @@
+# Release (spec 15 §5.9): runs on a pushed tag vX.Y.Z. The maintainer tags; this workflow builds,
+# publishes to PyPI by Trusted Publishing (no token stored) and creates the GitHub release. The
+# maintainer then archives the sdist by hand as a new version of the Zenodo record (D-182).
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: The tag equals v + __version__
+        run: |
+          python - <<'EOF'
+          import os, re, sys
+          text = open("src/active_subspaces/_version.py", encoding="utf-8").read()
+          version = re.search(r'^__version__ = "([^"]+)"', text, re.M).group(1)
+          tag = os.environ["GITHUB_REF_NAME"]
+          print(f"tag {tag}, __version__ {version}")
+          if tag != f"v{version}":
+              sys.exit(f"tag {tag!r} does not match v{version}")
+          EOF
+      - name: Build
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build twine
+          python -m build
+          twine check --strict dist/*
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/active-subspaces/
+    permissions:
+      id-token: write            # PyPI Trusted Publishing
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist
+      - uses: pypa/gh-action-pypi-publish@release/v1
+
+  github-release:
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist
+      - name: Release notes from the changelog section of this version
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          awk -v v="$version" '
+            index($0, "## [" v "]") == 1 { on = 1; next }
+            on && /^## / { exit }
+            on { print }
+          ' CHANGELOG.md > notes.md
+          if [ ! -s notes.md ]; then
+            echo "CHANGELOG.md has no section '## [$version]'" >&2
+            exit 1
+          fi
+      - name: Create the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          prerelease=""
+          if [[ "$GITHUB_REF_NAME" =~ (a|b|rc|\.dev)[0-9]+$ ]]; then prerelease="--prerelease"; fi
+          gh release create "$GITHUB_REF_NAME" dist/* --verify-tag \
+            --title "$GITHUB_REF_NAME" --notes-file notes.md $prerelease

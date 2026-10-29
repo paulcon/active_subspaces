@@ -1,0 +1,245 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "active_subspaces"
+dynamic = ["version"]
+description = "Discover and exploit active subspaces: low-dimensional structure in functions of many inputs."
+readme = "README.md"
+requires-python = ">=3.11"                       # D-05
+license = "MIT"                                  # PEP 639 expression
+license-files = ["LICENSE*"]                     # spec 15: "LICENSE" once Phase 0 renames LICENSE.rst
+authors = [{ name = "Paul G. Constantine" }]     # full list in CITATION.cff and AUTHORS.md
+maintainers = [{ name = "Paul G. Constantine" }]
+keywords = ["active subspaces", "dimension reduction", "uncertainty quantification", "sensitivity analysis"]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Science/Research",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Scientific/Engineering :: Mathematics",
+  "Typing :: Typed",
+]
+dependencies = [                                  # SPEC 0 minima on 2026-10-28; no upper caps
+  "numpy>=2.2",
+  "scipy>=1.15",
+  "matplotlib>=3.10",                             # core dependency, D-06
+]
+
+[project.urls]
+Homepage = "https://github.com/paulcon/active_subspaces"
+Documentation = "https://active-subspaces.readthedocs.io"
+Changelog = "https://active-subspaces.readthedocs.io/en/stable/changelog.html"
+Issues = "https://github.com/paulcon/active_subspaces/issues"
+
+[dependency-groups]                               # PEP 735: development only, not in the wheel metadata
+test = ["pytest>=8.3", "hypothesis>=6.100", "pytest-cov", "threadpoolctl>=3.5"]
+docs = ["sphinx>=8", "pydata-sphinx-theme", "numpydoc>=1.8", "myst-nb>=1.1", "sphinx-copybutton"]
+lint = ["ruff", "mypy>=1.11", "import-linter>=2.1", "validate-pyproject", "cffconvert"]
+dev = [{ include-group = "test" }, { include-group = "docs" }, { include-group = "lint" }, "pre-commit", "build", "twine"]
+
+[tool.hatch.version]
+path = "src/active_subspaces/_version.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/active_subspaces"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/", "tests/", "docs/", "README.md", "CHANGELOG.md", "CITATION.cff", "AUTHORS.md", "LICENSE"]
+exclude = ["docs/_build", "legacy/", "design-specs/", "paper/", "tools/", ".github/"]
+
+[tool.pytest.ini_options]
+minversion = "8.3"
+testpaths = ["tests"]
+# "src" lets the suite run from a checkout without installing; CI installs the wheel (spec 15 §5.5).
+pythonpath = ["src", "tests"]
+addopts = ["-ra", "--strict-markers", "--strict-config", "--import-mode=importlib"]
+xfail_strict = true
+doctest_optionflags = ["NORMALIZE_WHITESPACE", "ELLIPSIS", "NUMBER"]
+filterwarnings = ["error"]          # an unexpected warning fails the test; expected ones use pytest.warns
+markers = [
+  "unit: contracts (validation, shapes, errors, immutability, serialization, determinism)",
+  "known_answer: analytic or published values",
+  "property: invariance and property-based tests",
+  "statistical: stochastic claims with a controlled false-failure rate",
+  "regression: comparison with the legacy baselines",
+  "acceptance: use cases of spec 01, end to end",
+  "slow: runtime > 5 s on the reference CI runner (deselect with -m 'not slow')",
+]
+
+[tool.mypy]                                       # spec 15 §5.6
+python_version = "3.11"
+strict = true
+files = ["src/active_subspaces"]
+mypy_path = "src"
+enable_error_code = ["ignore-without-code"]
+exclude = ["src/active_subspaces/_reference_data\\.py$"]
+
+[[tool.mypy.overrides]]                           # scipy and matplotlib ship no complete stubs
+module = ["scipy", "scipy.*", "matplotlib", "matplotlib.*", "mpl_toolkits.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]                           # generated data table (tools/make_reference_results.py)
+module = ["active_subspaces._reference_data"]
+disallow_any_generics = false
+
+[[tool.mypy.overrides]]                           # spec 15 §5.6: experimental may relax this one check
+module = ["active_subspaces.experimental", "active_subspaces.experimental.*"]
+disallow_any_generics = false
+
+[tool.coverage.run]                               # spec 15 §5.4: the coverage job
+source = ["active_subspaces"]
+branch = true
+omit = ["*/active_subspaces/experimental/*"]
+
+[tool.coverage.report]
+fail_under = 90                                   # v1.0 release gate (spec 15 §5.14)
+show_missing = true
+skip_covered = true
+exclude_also = [
+  "if (typing\\.)?TYPE_CHECKING:",
+  "raise NotImplementedError",
+  "\\.\\.\\.$",
+]
+
+[tool.importlinter]                               # spec 15 §4.4, run by `lint-imports`
+root_package = "active_subspaces"
+include_external_packages = true
+exclude_type_checking_imports = true              # type-only imports create no runtime edge
+
+[[tool.importlinter.contracts]]
+name = "Layers (spec 15 §4.4)"
+type = "layers"
+containers = ["active_subspaces"]
+layers = [
+  "experimental",
+  "reduced_model | plotting",
+  "integration | optimization",
+  "surrogates",
+  "designs",
+  "geometry",
+  "subspaces",
+  "gradients",
+  "test_functions",
+  "registry",
+  "models",
+  "_quadrature | solvers | _reference_data",
+  "results",
+  "spaces",
+  "_random",
+  "_validation",
+  "errors",
+  "_codes",
+  "_version",
+]
+
+[[tool.importlinter.contracts]]
+name = "Layer-1 kernels import no other layer-1 module"
+type = "forbidden"
+source_modules = [
+  "active_subspaces._quadrature",
+  "active_subspaces.solvers",
+  "active_subspaces._reference_data",
+]
+forbidden_modules = [
+  "active_subspaces.models",
+  "active_subspaces.registry",
+  "active_subspaces.test_functions",
+]
+
+[[tool.importlinter.contracts]]
+name = "Only plotting imports matplotlib"
+type = "forbidden"
+source_modules = [
+  "active_subspaces._codes",
+  "active_subspaces._quadrature",
+  "active_subspaces._random",
+  "active_subspaces._reference_data",
+  "active_subspaces._validation",
+  "active_subspaces._version",
+  "active_subspaces.designs",
+  "active_subspaces.errors",
+  "active_subspaces.experimental",
+  "active_subspaces.geometry",
+  "active_subspaces.gradients",
+  "active_subspaces.integration",
+  "active_subspaces.models",
+  "active_subspaces.optimization",
+  "active_subspaces.reduced_model",
+  "active_subspaces.registry",
+  "active_subspaces.results",
+  "active_subspaces.solvers",
+  "active_subspaces.spaces",
+  "active_subspaces.subspaces",
+  "active_subspaces.surrogates",
+  "active_subspaces.test_functions",
+]
+forbidden_modules = ["matplotlib"]
+
+[[tool.importlinter.contracts]]
+name = "Only experimental imports experimental"
+type = "forbidden"
+source_modules = [
+  "active_subspaces._codes",
+  "active_subspaces._quadrature",
+  "active_subspaces._random",
+  "active_subspaces._reference_data",
+  "active_subspaces._validation",
+  "active_subspaces._version",
+  "active_subspaces.designs",
+  "active_subspaces.errors",
+  "active_subspaces.geometry",
+  "active_subspaces.gradients",
+  "active_subspaces.integration",
+  "active_subspaces.models",
+  "active_subspaces.optimization",
+  "active_subspaces.plotting",
+  "active_subspaces.reduced_model",
+  "active_subspaces.registry",
+  "active_subspaces.results",
+  "active_subspaces.solvers",
+  "active_subspaces.spaces",
+  "active_subspaces.subspaces",
+  "active_subspaces.surrogates",
+  "active_subspaces.test_functions",
+]
+forbidden_modules = ["active_subspaces.experimental"]
+
+[tool.ruff]                                       # spec 15 §5.6
+target-version = "py311"
+line-length = 99
+src = ["src", "tests"]
+extend-exclude = [
+  "legacy",
+  "src/active_subspaces/_reference_data.py",     # generated by tools/make_reference_results.py; a test checks it renders itself
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "NPY", "T20", "BLE", "S301", "TID", "D", "PT", "RUF"]
+# the docs write math with these characters (spec notation); RUF001-RUF003 would flag them
+allowed-confusables = ["α", "ν", "σ", "–", "−"]
+
+[tool.ruff.lint.per-file-ignores]
+# D: public modules only; the banned APIs and S301 apply to src/ only (tests build hostile pickles, spec 04 §8)
+"src/active_subspaces/_*.py" = ["D"]
+"src/active_subspaces/experimental/_*.py" = ["D"]
+"tests/**" = ["D", "S301", "TID251"]
+"tools/**" = ["D"]
+"docs/**" = ["D"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"                      # TID252 [P-02]
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]   # TID251 [D-06], [D-19]; spec 05, spec 13
+"numpy.random.seed".msg = "pass an explicit rng; never seed the global NumPy state (spec 05)"
+"matplotlib.pyplot".msg = "plots never use pyplot (spec 13)"
+"matplotlib.use".msg = "never select a backend in library code (spec 13)"
+"pickle".msg = "results serialize with to_dict/save, never pickle files (spec 04)"
