@@ -524,6 +524,7 @@ def test_zero_dimension_warning(make_provenance):
         bootstrap_eigenvalues=np.zeros((B, 4)),
         bootstrap_distances=np.ones((B, 3)),
         bootstrap_dets=np.zeros((B, 3)),
+        bootstrap_eigenvectors=None,
         provenance=make_provenance(),
     )
     with pytest.warns(AccuracyWarning) as rec:
@@ -592,3 +593,170 @@ def test_distance_and_det_match_definitions():
             d0 = np.linalg.norm(P[:k, k:], 2)
             assert abs(d - d0) <= 1e-13 * max(d0, 1e-300)
             assert abs(t - abs(np.linalg.det(P[:k, :k]))) <= 1e-13
+
+
+# ---------------------------------------------------------------------------
+# As-data-sets port (Phase 5b): D-196, D-197, V1-11
+# ---------------------------------------------------------------------------
+
+
+def test_bootstrap_vectors():
+    """Stored replicate eigenvectors are sign-aligned; k = 0 is bitwise unchanged [D-196]
+    (07 §8 bootstrap item 5, V07.37).
+    """
+    space, _, _, G = _data(3)
+    base = asub.active_subspace(grads=G, space=space, nboot=12, rng=4, n=2)
+    sub = asub.active_subspace(grads=G, space=space, nboot=12, rng=4, n=2, bootstrap_vectors=2)
+    assert base.bootstrap_eigenvectors is None
+    assert sub.bootstrap_eigenvectors.shape == (12, m, 2)
+    for name in (
+        "eigenvalues",
+        "eigenvectors",
+        "bootstrap_eigenvalues",
+        "bootstrap_distances",
+        "bootstrap_dets",
+    ):
+        np.testing.assert_array_equal(getattr(sub, name), getattr(base, name))
+    V = sub.bootstrap_eigenvectors
+    inner = np.einsum("ij,bij->bj", sub.W[:, :2], V)
+    assert np.all(inner >= 0)
+    np.testing.assert_allclose(
+        sub.bootstrap_distances[:, 0], np.sqrt(np.clip(1 - inner[:, 0] ** 2, 0, None)), atol=1e-12
+    )
+    # Replicate b by hand from its own child stream (spec 05 layout), then aligned.
+    child = np.random.default_rng(4).spawn(12)[5]
+    idx = child.integers(0, M, size=M)
+    by_hand = asub.active_subspace(grads=G[idx], space=space, n=2)
+    s = np.sign(sub.W[:, :2].T @ by_hand.W[:, :2]).diagonal()
+    np.testing.assert_allclose(V[5], by_hand.W[:, :2] * s, atol=1e-12)
+    # A rule may pick n < k; the k columns are kept, and with_dimension keeps them too.
+    ruled = asub.active_subspace(grads=G, space=space, nboot=12, rng=4, bootstrap_vectors=3)
+    assert ruled.bootstrap_eigenvectors.shape[2] == 3
+    np.testing.assert_array_equal(
+        asub.with_dimension(ruled, 1).bootstrap_eigenvectors, ruled.bootstrap_eigenvectors
+    )
+    assert asub.from_dict(sub.to_dict()) == sub
+    for bad in (
+        {"bootstrap_vectors": 1},
+        {"bootstrap_vectors": 3, "nboot": 2, "n": 2},
+        {"bootstrap_vectors": m + 1, "nboot": 2},
+        {"bootstrap_vectors": -1, "nboot": 2},
+    ):
+        with pytest.raises(InputError) as e:
+            asub.active_subspace(grads=G, space=space, **{"n": 1, **bad})
+        assert e.value.code == "input.parameter"
+
+
+def test_bootstrap_vectors_unaligned_warning():
+    """Near-repeated eigenvalues make replicates rotate: accuracy.unaligned_replicates [D-196]."""
+    space = asub.Gaussian.reference(3)
+    G = np.random.default_rng(0).standard_normal((200, 3)) * np.array([1.0, 0.995, 0.01])
+    with pytest.warns(AccuracyWarning) as rec:
+        asub.active_subspace(grads=G, space=space, n=2, nboot=40, rng=1, bootstrap_vectors=2)
+    assert "accuracy.unaligned_replicates" in _codes(rec)
+    G2 = G * np.array([1.0, 0.3, 1.0])
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        sub = asub.active_subspace(
+            grads=G2, space=space, n=1, nboot=40, rng=1, bootstrap_vectors=1
+        )
+    assert np.all(np.einsum("i,bi->b", sub.W[:, 0], sub.bootstrap_eigenvectors[:, :, 0]) > 0.5)
+
+
+def test_orient():
+    """orient re-signs the leading columns by a criterion; replicates and physical
+    directions follow [D-197] (07 §8 KA-16, V07.34).
+    """
+    space = asub.Uniform([0.0, -2.0, 1.0], [1.0, 2.0, 5.0])
+    gen = np.random.default_rng(8)
+    X = space.sample(200, rng=gen)
+    x = space.to_normalized(X)
+    a = np.array([-1.0, 0.4, 0.2])
+    f = x @ a + 0.1 * x[:, 1] ** 2
+    G = space.grads_to_physical(
+        np.tile(a, (200, 1)) + np.column_stack([np.zeros(200), 0.2 * x[:, 1], np.zeros(200)])
+    )
+    sub = asub.active_subspace(grads=G, space=space, n=2, nboot=8, rng=0, bootstrap_vectors=2)
+    flipped = asub.orient(sub, by="reference", reference=-sub.W)
+    np.testing.assert_array_equal(flipped.W[:, :2], -sub.W[:, :2])
+    np.testing.assert_array_equal(flipped.W[:, 2], sub.W[:, 2])
+    np.testing.assert_array_equal(flipped.bootstrap_eigenvectors, -sub.bootstrap_eigenvectors)
+    np.testing.assert_array_equal(flipped.physical_directions(), -sub.physical_directions())
+    for name in ("eigenvalues", "bootstrap_distances", "bootstrap_dets", "n", "criterion"):
+        np.testing.assert_array_equal(getattr(flipped, name), getattr(sub, name))
+    assert flipped.provenance.function == "active_subspaces.orient"
+    assert flipped.provenance.parameters["signs"] == [-1, -1]
+    assert asub.orient(flipped, by="reference", reference=sub) == sub
+    # Mean gradient: w1^T a > 0; covariance: positive correlation of y1 with f.
+    mg = asub.orient(sub, by="mean_gradient", grads=G, columns=1)
+    assert mg.W[:, 0] @ a > 0
+    cov = asub.orient(sub, by="covariance", X=X, f=f, columns=1)
+    y = x @ cov.W[:, 0]
+    assert np.cov(y, f)[0, 1] > 0
+    assert asub.orient(cov, by="covariance", X=X, f=f, columns=1) == cov  # idempotent
+    # The OLS sign is the covariance sign for uniform weights.
+    with pytest.warns(ValidityWarning):
+        ols = asub.active_subspace(X=X, f=f, space=space, estimator="ols", n=1)
+    np.testing.assert_array_equal(asub.orient(ols, by="covariance", X=X, f=f).W, ols.W)
+    # A criterion of exactly zero keeps the sign.
+    zero = np.zeros((3, 1))
+    zero[:, 0] = np.cross(sub.W[:, 0], sub.W[:, 1])  # orthogonal to w1
+    assert asub.orient(sub, by="reference", reference=zero, columns=1) == sub
+    # Errors.
+    with pytest.raises(InputError) as e:
+        asub.orient(sub, by="reference", reference=sub.W, X=X)
+    assert e.value.details["reason"] == "not_for_criterion"
+    with pytest.raises(InputError):
+        asub.orient(sub, by="covariance", X=X)
+    with pytest.raises(InputError):
+        asub.orient(sub, by="reference", reference=sub.W[:, :1])  # c = n = 2 > 1 column
+    with pytest.raises(InputError) as e:
+        asub.orient(
+            sub,
+            by="reference",
+            reference=asub.subspace_from_basis(np.eye(3)[:, :1], space=asub.Uniform.reference(3)),
+        )
+    assert e.value.details["reason"] == "space_mismatch"
+    with pytest.raises(InputError):
+        asub.orient(sub, by="nonsense", reference=sub.W)
+
+
+def test_lstsq_qr():
+    """The QR solve equals gelsd on full-rank data; rank deficiency still warns (V1-11)
+    (07 §8 KA-14, V07.40).
+    """
+    gen = np.random.default_rng(1)
+    A = gen.standard_normal((200, 10))
+    b = gen.standard_normal(200)
+    coef, bad = S._lstsq(A, b, "test")
+    assert not bad
+    ref = np.linalg.lstsq(A, b, rcond=None)[0]
+    np.testing.assert_allclose(coef, ref, rtol=1e-10, atol=1e-12)
+    A[:, 3] = A[:, 2]  # duplicated column: rank 9, gelsd route
+    coef, bad = S._lstsq(A, b, "test")
+    assert bad
+    space = asub.Gaussian.reference(3)
+    X = space.sample(30, rng=0)
+    X[:, 2] = X[:, 1]
+    with pytest.warns(AccuracyWarning, match="rank-deficient"):
+        asub.active_subspace(X=X, f=X[:, 0], space=space, estimator="ols", n=1)
+
+
+def test_as_inplace_scaling_never_touches_inputs():
+    """Without a bootstrap AS scales its own normalized copy in place, in row blocks; the
+    caller's arrays and a GradientResult's stored arrays are unchanged, and the result equals
+    the bootstrap path bitwise [D-202].
+    """
+    M3 = S._ROW_BLOCK + 17  # crosses a block boundary
+    G = np.random.default_rng(9).standard_normal((M3, 3))
+    G0 = G.copy()
+    sp = asub.Uniform.reference(3)  # identity map: the normalized array is a copy, not G itself
+    a = asub.active_subspace(grads=G, space=sp, n=1)
+    np.testing.assert_array_equal(G, G0)
+    b = asub.active_subspace(grads=G, space=sp, n=1, nboot=1, rng=0)
+    np.testing.assert_array_equal(a.eigenvalues, b.eigenvalues)
+    np.testing.assert_array_equal(a.eigenvectors, b.eigenvectors)
+    gr = asub.local_linear_gradients(X=sp.sample(40, rng=0), f=np.arange(40.0), space=sp)
+    stored = np.array(gr.grads, copy=True)
+    asub.active_subspace(grads=gr, n=1)
+    np.testing.assert_array_equal(gr.grads, stored)

@@ -1,0 +1,226 @@
+{
+ "fields": {
+  "bootstrap_dets": {
+   "__ndarray__": 1,
+   "data": [
+    0.999785834980306,
+    0.9998093606726088,
+    0.9992604462627926,
+    0.9992095437798066,
+    0.9990486907788605,
+    0.9994664690957592,
+    0.9989868589209892,
+    0.9999878047548826,
+    0.9954898601734675,
+    0.9993343151293466
+   ],
+   "dtype": "float64",
+   "shape": [
+    5,
+    2
+   ]
+  },
+  "bootstrap_distances": {
+   "__ndarray__": 1,
+   "data": [
+    0.02069502772967818,
+    0.019525427304648776,
+    0.0384520550124964,
+    0.039752831589089856,
+    0.04360863966055553,
+    0.032661554666851174,
+    0.045002841056711186,
+    0.004938657865321701,
+    0.09486800457377502,
+    0.03648186679652897
+   ],
+   "dtype": "float64",
+   "shape": [
+    5,
+    2
+   ]
+  },
+  "bootstrap_eigenvalues": {
+   "__ndarray__": 1,
+   "data": [
+    0.9433787185428885,
+    0.0,
+    0.0,
+    0.9162884579704922,
+    0.0,
+    0.0,
+    1.0789178665817571,
+    0.0,
+    0.0,
+    1.0932313940236011,
+    0.0,
+    0.0,
+    0.6719825176378657,
+    0.0,
+    0.0
+   ],
+   "dtype": "float64",
+   "shape": [
+    5,
+    3
+   ]
+  },
+  "criterion": null,
+  "dimension_options": [],
+  "dimension_rule": "fixed",
+  "eigenvalues": {
+   "__ndarray__": 1,
+   "data": [
+    0.9322216314024324,
+    0.0,
+    0.0
+   ],
+   "dtype": "float64",
+   "shape": [
+    3
+   ]
+  },
+  "eigenvectors": {
+   "__ndarray__": 1,
+   "data": [
+    0.8687298187246957,
+    -0.4900891170741734,
+    -0.07156227626350475,
+    0.4900891170741734,
+    0.8714702680570178,
+    -0.018767770727677338,
+    0.07156227626350475,
+    -0.018767770727677338,
+    0.997259550667678
+   ],
+   "dtype": "float64",
+   "shape": [
+    3,
+    3
+   ]
+  },
+  "estimator": "ols",
+  "estimator_options": [],
+  "n": 1,
+  "n_samples": 40,
+  "nboot": 5,
+  "qoi": "f",
+  "space": {
+   "lower": {
+    "__ndarray__": 1,
+    "data": [
+     0.0,
+     -1.0,
+     2.0
+    ],
+    "dtype": "float64",
+    "shape": [
+     3
+    ]
+   },
+   "names": [
+    "a",
+    "b",
+    "c"
+   ],
+   "type": "Uniform",
+   "units": [
+    null,
+    null,
+    null
+   ],
+   "upper": {
+    "__ndarray__": 1,
+    "data": [
+     1.0,
+     1.0,
+     5.0
+    ],
+    "dtype": "float64",
+    "shape": [
+     3
+    ]
+   }
+  }
+ },
+ "library_version": "1.0.0.dev0",
+ "provenance": {
+  "created": "2026-10-29T23:21:36.027256+00:00",
+  "function": "active_subspaces.active_subspace",
+  "input_space": {
+   "lower": {
+    "__ndarray__": 1,
+    "data": [
+     0.0,
+     -1.0,
+     2.0
+    ],
+    "dtype": "float64",
+    "shape": [
+     3
+    ]
+   },
+   "names": [
+    "a",
+    "b",
+    "c"
+   ],
+   "type": "Uniform",
+   "units": [
+    null,
+    null,
+    null
+   ],
+   "upper": {
+    "__ndarray__": 1,
+    "data": [
+     1.0,
+     1.0,
+     5.0
+    ],
+    "dtype": "float64",
+    "shape": [
+     3
+    ]
+   }
+  },
+  "library_version": "1.0.0.dev0",
+  "numpy_version": "2.5.4",
+  "parameters": {
+   "X": {
+    "dtype": "float64",
+    "sha256": "2e365ab30af88dae4608454923ee10746be4fd20352b88afef4e8d59fa394b60",
+    "shape": [
+     40,
+     3
+    ]
+   },
+   "dimension_options": {},
+   "dimension_rule": "fixed",
+   "estimator": "ols",
+   "estimator_options": {},
+   "f": {
+    "dtype": "float64",
+    "sha256": "93af9437c76c15d5ba4954308ee95830cba7183f319fe3f15ec4ee87060d1c07",
+    "shape": [
+     40
+    ]
+   },
+   "n": 1,
+   "nboot": 5,
+   "qoi": "f"
+  },
+  "platform": "macOS-14.8.9-x86_64-i386-64bit-Mach-O",
+  "python_version": "3.14.0",
+  "rng": {
+   "bit_generator": "PCG64",
+   "entropy": "3",
+   "kind": "seed_sequence",
+   "n_children_spawned": 0,
+   "spawn_key": []
+  },
+  "scipy_version": "1.18.1"
+ },
+ "schema_version": 1,
+ "type": "SubspaceResult"
+}

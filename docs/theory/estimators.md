@@ -64,7 +64,10 @@ replicate for the subspace distances.
 $$C=\sum_{i=1}^M\omega_i\,g_ig_i^\top,$$
 
 the Monte Carlo (or quadrature) estimate of $\mathbb E_\rho[\nabla f\nabla f^\top]$, computed from
-the singular value decomposition of the rows $\sqrt{\omega_i}\,g_i^\top$ (see
+the singular value decomposition of the rows $\sqrt{\omega_i}\,g_i^\top$. When $M>m$ the SVD is taken of
+the triangular factor of a blocked QR factorization of those rows, so no other array of the size of
+the gradients is formed: without a bootstrap the peak memory is about $1+2/m$ times the gradient
+array instead of about three times; the eigenvalues change only by rounding [D-202] (see
 [Active subspaces](active_subspaces.md)). It is the matrix that defines the active subspace
 [Constantine 2015], and the only one for which the error bound of the ridge approximation holds. It
 is ridge-exact for every input distribution.
@@ -110,7 +113,12 @@ Weighted least squares of $f$ on $[1\ \ x^\top]$, with rows scaled by $\sqrt{\om
 $$(\hat u_0,\hat u)=\arg\min_{u_0,u}\sum_{i=1}^M\omega_i\,(f_i-u_0-u^\top x_i)^2,\qquad C=\hat u\hat u^\top .$$
 
 Only $\lambda_1=\lVert\hat u\rVert^2$ is nonzero, so only $w_1=\hat u/\lVert\hat u\rVert$ is meaningful;
-the other eigenvectors are an arbitrary orthonormal complement. For Gaussian inputs, Stein's lemma
+the other eigenvectors are an arbitrary orthonormal complement. The sign of $w_1$ is that of the
+slope, not the largest-magnitude rule of the other estimators, so $f$ increases along $w_1$; this is the
+direction published as Algorithm 1.3, eqs. (1.5)–(1.6), of [Constantine 2015] and as Algorithms 1–2,
+eq. (22), of [Constantine et al. 2015] [D-195]. The least-squares problem is solved by a QR
+factorization when the design has full column rank, and by an SVD-based solver (`gelsd`) otherwise
+[D-203]. For Gaussian inputs, Stein's lemma
 gives $\hat u\to\mathbb E[\nabla f]$. For a ridge, the population slope lies in $\operatorname{span}(W_1)$ under
 the linearity condition, $\mathbb E[x\mid W_1^\top x]$ linear in $W_1^\top x$ [Li 1991], which
 Gaussian inputs satisfy and the cube satisfies only in special cases. The population slope is 0
@@ -310,12 +318,16 @@ The dimension rules have their own validity table; see [Choosing the dimension](
 | QPHD | Li (1992), Corollary 3.1 with $q=2$; 2016 code: $gg^\top+\gamma HH^\top$ with $\gamma$ guessed | $gg^\top+H\Sigma H$, $\Sigma$ declared |
 | OPG kernel | fixed bandwidth | $p$ nearest neighbours, uniform weights, at every sample |
 | Ranking of indefinite matrices | pHd: by $\lvert\lambda\rvert$ | by $\lvert\lambda\rvert$ for pHd, ASX and NASX, eigenvalues reported signed |
+| OLS eigenvector sign | $w_1=\hat u/\lVert\hat u\rVert$ | the same, signed |
 | NAS, ASX, NASX, SS | no reference | heuristics, documented as such |
 
 ## References
 
 - Constantine, P. G. (2015). *Active Subspaces: Emerging Ideas for Dimension Reduction in Parameter
   Studies.* SIAM.
+- Constantine, P. G., Emory, M., Larsson, J. and Iaccarino, G. (2015). Exploiting active subspaces
+  to quantify uncertainty in the numerical simulation of the HyShot II scramjet. *Journal of
+  Computational Physics* 302:1–20.
 - Cook, R. D. and Weisberg, S. (1991). Discussion of "Sliced inverse regression for dimension
   reduction". *Journal of the American Statistical Association* 86(414):328–332.
 - Glaws, A., Constantine, P. G. and Cook, R. D. (2020). Inverse regression for ridge recovery: a

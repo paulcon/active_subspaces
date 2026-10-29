@@ -46,6 +46,7 @@ from active_subspaces.results import (
     QoIResult,
     _invariant,
     _make_provenance,
+    _register_migration,
     _register_result,
 )
 from active_subspaces.spaces import InputSpace, _orient_columns
@@ -71,10 +72,13 @@ __all__ = (  # noqa: RUF022 -- plain sorted() order (spec 15 §4.3)
     "SS",
     "SubspaceResult",
     "active_subspace",
+    "activity_scores",
     "bootstrap_interval",
     "dimension_criterion",
     "mean_distance",
+    "orient",
     "subspace_from_basis",
+    "subspace_from_matrix",
     "with_dimension",
 )
 
@@ -83,10 +87,13 @@ __all__ = (  # noqa: RUF022 -- plain sorted() order (spec 15 §4.3)
 _toplevel = (
     "SubspaceResult",
     "active_subspace",
+    "activity_scores",
     "bootstrap_interval",
     "dimension_criterion",
     "mean_distance",
+    "orient",
     "subspace_from_basis",
+    "subspace_from_matrix",
     "with_dimension",
 )
 
@@ -97,6 +104,7 @@ _SQRT_EPS = math.sqrt(_EPS)
 _ORTHO_TOL = 1e-10
 _BASIS_RANK_TOL = 1e-12
 _BLOCK_ELEMENTS = 1 << 21  # elements of a (block, M, m) work array in SS
+_ALIGN_MIN = 0.5  # |w_j^T w_j^(b)| below this warns accuracy.unaligned_replicates [D-196]
 
 _F64 = NDArray[np.float64]
 
@@ -139,9 +147,12 @@ def _singular(what: str, exc: Exception) -> NumericalError:
 
 
 def _from_rows(R: _F64, m: int, what: str, notes: dict[str, Any]) -> tuple[_F64, _F64]:
-    """Eigenpairs of ``R^T R`` from the SVD of ``R`` (§3.3).
+    """Eigenpairs of ``R^T R`` from the singular values and right vectors of ``R`` (§3.3).
 
-    ``lambda = sigma^2``, ``W = V``, signs per §3.2.
+    ``lambda = sigma^2``, ``W = V``, signs per §3.2. When ``R`` has more rows than columns, the
+    SVD is taken of the ``(m, m)`` triangular factor of a Householder QR of ``R``, computed in
+    place, so neither ``Q`` nor the ``(M, m)`` left singular vectors are formed and the peak
+    memory stays at the rows themselves [D-202]. ``R`` may be overwritten.
     """
     if not np.all(np.isfinite(R)):
         raise _nonfinite(what)
@@ -149,14 +160,34 @@ def _from_rows(R: _F64, m: int, what: str, notes: dict[str, Any]) -> tuple[_F64,
         notes["degenerate"] = True
         return np.zeros(m), np.eye(m)
     try:
-        _, s, Vt = np.linalg.svd(R, full_matrices=R.shape[0] < m)
-    except np.linalg.LinAlgError as exc:
+        if R.shape[0] > m:
+            _, s, Vt = np.linalg.svd(_qr_factor(R), full_matrices=False)
+        else:
+            _, s, Vt = np.linalg.svd(R, full_matrices=R.shape[0] < m)
+    except (np.linalg.LinAlgError, scipy.linalg.LinAlgError) as exc:
         raise _singular(what, exc) from exc
     lam = np.zeros(m)
     lam[: s.size] = s * s
     if not np.all(np.isfinite(lam)):
         raise _nonfinite(what)
     return lam, _orient_columns(Vt.T)
+
+
+def _qr_factor(R: _F64) -> _F64:
+    """Return the ``(m, m)`` upper-triangular ``T`` with ``R^T R = T^T T`` (``R`` is ``(M, m)``).
+
+    Blocked (tall-skinny) Householder QR: each row block is stacked under the current ``T`` and
+    reduced to its triangular factor, so only block-sized arrays are allocated, whatever the
+    memory order of ``R``. It is backward stable like a single QR, and ``R`` and ``T`` have the
+    same singular values and right singular vectors [D-202].
+    """
+    T: _F64 | None = None
+    for i in range(0, R.shape[0], _ROW_BLOCK):
+        block = R[i : i + _ROW_BLOCK]
+        A = block if T is None else np.vstack([T, block])
+        T = np.linalg.qr(A, mode="r")
+    assert T is not None  # M > m rows were stacked
+    return T
 
 
 def _from_matrix(C: _F64, what: str, notes: dict[str, Any]) -> tuple[_F64, _F64]:
@@ -179,6 +210,17 @@ def _from_matrix(C: _F64, what: str, notes: dict[str, Any]) -> tuple[_F64, _F64]
     return lam[order], _orient_columns(V[:, order])
 
 
+_ROW_BLOCK = 1 << 16
+
+
+def _scale_rows(G: _F64, w: _F64, out: _F64) -> _F64:
+    """``out[i] = sqrt(w_i) G[i]`` in row blocks (``out`` may be ``G``); returns ``out``."""
+    for i in range(0, G.shape[0], _ROW_BLOCK):
+        j = i + _ROW_BLOCK
+        np.multiply(np.sqrt(w[i:j])[:, None], G[i:j], out=out[i:j])
+    return out
+
+
 def _unit_rows(A: _F64) -> tuple[_F64, int]:
     """Rows scaled to unit norm; rows with norm <= sqrt(eps) * max norm become 0 [D-87].
 
@@ -194,7 +236,23 @@ def _unit_rows(A: _F64) -> tuple[_F64, int]:
 
 
 def _lstsq(A: _F64, b: _F64, what: str) -> tuple[_F64, bool]:
-    """Minimum-norm least squares (gelsd); returns (coefficients, rank deficient?)."""
+    """Least squares; returns (coefficients, rank deficient?).
+
+    With at least as many rows as columns, a Householder QR and a triangular solve, used when
+    every ``|R_jj| > max(M, p) eps max_l |R_ll|``; otherwise, and when ``M < p``, the
+    minimum-norm solution by ``gelsd``, whose rank decides the warning (V1-11, D-203).
+    """
+    M, p = A.shape
+    if M >= p and p > 0:
+        try:
+            Q, R = np.linalg.qr(A, mode="reduced")
+        except np.linalg.LinAlgError:  # pragma: no cover - LAPACK failure; gelsd below decides
+            pass
+        else:
+            d = np.abs(np.diagonal(R))
+            if np.all(np.isfinite(d)) and d.min() > max(M, p) * _EPS * d.max():
+                coef = scipy.linalg.solve_triangular(R, Q.T @ b, check_finite=False)
+                return coef, False
     try:
         coef, _, rank, _ = scipy.linalg.lstsq(A, b, lapack_driver="gelsd", check_finite=False)
     except (np.linalg.LinAlgError, ValueError) as exc:
@@ -425,10 +483,13 @@ class AS(_EstimatorBase):
 
     with :math:`g_i = \nabla_x f(x_i)` in normalized coordinates and
     quadrature weights :math:`\omega_i` (default :math:`1/M`). It is
-    computed from the thin SVD of the matrix with rows
-    :math:`\sqrt{\omega_i} g_i^\top`: :math:`\lambda_k = \sigma_k^2` and
-    :math:`W = V` [1]_, which is more accurate for small eigenvalues than
-    forming :math:`C`.
+    computed from the singular values and right singular vectors of the
+    matrix :math:`G_\omega` with rows :math:`\sqrt{\omega_i} g_i^\top`:
+    :math:`\lambda_k = \sigma_k^2` and :math:`W = V` [1]_, which is more
+    accurate for small eigenvalues than forming :math:`C`. When
+    :math:`M > m` the SVD is taken of the triangular factor of a QR of
+    :math:`G_\omega`, computed block by block, so no other :math:`(M, m)` array is formed:
+    without a bootstrap the peak memory is about :math:`1 + 2/m` times the gradient array.
 
     References
     ----------
@@ -457,7 +518,10 @@ class AS(_EstimatorBase):
 
     def _rows(self, d: _Arrays, notes: dict[str, Any]) -> _F64:
         assert d.G is not None  # required by the estimator
-        return np.sqrt(d.w)[:, None] * d.G
+        # Scaled in row blocks, so no (M,) temporary; in place on the library's own normalized
+        # copy when nothing reads it later (no bootstrap) [D-202].
+        out = d.G if notes.pop("_overwrite_G", False) else np.empty_like(d.G)
+        return _scale_rows(d.G, d.w, out)
 
 
 @dataclass(frozen=True, slots=True)
@@ -651,8 +715,11 @@ class OLS(_EstimatorBase):
         (f_i - u_0 - u^\top x_i)^2, \qquad C = \hat u \hat u^\top,
 
     so :math:`\lambda_1 = \lVert \hat u \rVert^2` and the other eigenvalues
-    are 0. Only :math:`w_1 = \hat u / \lVert \hat u \rVert` is meaningful; the
-    other columns are an arbitrary orthonormal complement. For Gaussian
+    are 0. The first column is the signed direction
+    :math:`w_1 = \hat u / \lVert \hat u \rVert`, so :math:`f` increases along
+    :math:`w_1`, as published ([3]_ Algorithm 1.3, eq. (1.6); [4]_ Algorithms
+    1-2, eq. (22)); the largest-magnitude sign rule is not applied to it
+    [D-195]. The other columns are an arbitrary orthonormal complement. For Gaussian
     inputs :math:`\hat u \to \mathbb{E}[\nabla f]` by Stein's lemma [1]_; on a
     uniform space the linearity condition of [2]_ holds only in special
     cases. A rank-deficient fit uses the minimum-norm solution and warns.
@@ -663,6 +730,11 @@ class OLS(_EstimatorBase):
        distribution. *Ann. Statist.* 9(6):1135-1151, 1981.
     .. [2] K.-C. Li. Sliced inverse regression for dimension reduction. *J. Amer.
        Statist. Assoc.* 86(414):316-327, 1991.
+    .. [3] P. G. Constantine. *Active Subspaces: Emerging Ideas for Dimension
+       Reduction in Parameter Studies.* SIAM, 2015.
+    .. [4] P. G. Constantine, M. Emory, J. Larsson, G. Iaccarino. Exploiting active
+       subspaces to quantify uncertainty in the numerical simulation of the HyShot II
+       scramjet. *J. Comput. Phys.* 302:1-20, 2015.
 
     Examples
     --------
@@ -698,7 +770,15 @@ class OLS(_EstimatorBase):
         coef, bad = _lstsq(A, sw * d.f, self.name)
         if bad:
             notes["rank_deficient"] = True
+        notes["_u"] = coef[1:]
         return coef[None, 1:]
+
+    def _decompose(self, d: _Arrays, notes: dict[str, Any]) -> tuple[_F64, _F64]:
+        lam, W = _EstimatorBase._decompose(self, d, notes)
+        u = notes.pop("_u")
+        if float(W[:, 0] @ u) < 0.0:  # the published signed direction u / ||u|| [D-195]
+            W[:, 0] = -W[:, 0]
+        return lam, W
 
 
 def _quadratic_design(X: _F64) -> _F64:
@@ -1639,6 +1719,9 @@ _VALIDITY_SPACE: Mapping[str, Mapping[str, str]] = MappingProxyType(
         "opg": MappingProxyType({"uniform": "ok", "gaussian": "ok"}),
     }
 )
+# Estimator tags of results that no registered estimator produced (§4.5).
+_NON_ESTIMATORS = frozenset({"basis", "matrix"})
+
 _VALIDITY_SPACE_BASIS: Mapping[str, str] = MappingProxyType(
     {
         "asx": "the symmetrized E[grad f x^T] is ridge-exact only for Gaussian inputs (Stein's "
@@ -1710,8 +1793,9 @@ def _criterion_length(rule: str, m: int) -> int | None:
 class SubspaceResult(QoIResult):
     r"""An estimated subspace: signed eigenvalues, eigenvectors and the chosen dimension.
 
-    Produced by :func:`active_subspace`, :func:`with_dimension` and
-    :func:`subspace_from_basis`; the constructor is used by deserialization.
+    Produced by :func:`active_subspace`, :func:`with_dimension`,
+    :func:`orient`, :func:`subspace_from_basis` and
+    :func:`subspace_from_matrix`; the constructor is used by deserialization.
     Everything is in normalized coordinates; :meth:`physical_directions` gives
     the physical view.
 
@@ -1720,17 +1804,19 @@ class SubspaceResult(QoIResult):
     space : Uniform or Gaussian
         The input space of the data.
     estimator : str
-        Registered estimator name, or ``"basis"`` for
-        :func:`subspace_from_basis`.
+        Registered estimator name, ``"basis"`` for :func:`subspace_from_basis`,
+        or ``"matrix"`` for :func:`subspace_from_matrix`.
     estimator_options : tuple of (str, value) pairs
         The estimator's options, sorted by name.
     eigenvalues : numpy.ndarray, shape (m,), float64
         Signed eigenvalues ordered by :math:`|\lambda|`, descending; NaN for
         ``"basis"``.
     eigenvectors : numpy.ndarray, shape (m, m), float64
-        Orthonormal eigenvectors as columns, normalized coordinates; each
-        column's largest-magnitude entry (the first of those within a relative
-        sqrt(eps) of it) is positive.
+        Orthonormal eigenvectors as columns, normalized coordinates. By
+        default each column's largest-magnitude entry (the first of those
+        within a relative sqrt(eps) of it) is positive; for ``"ols"`` the
+        first column is the signed :math:`\hat u / \lVert \hat u \rVert`;
+        :func:`orient` sets other signs.
     n : int
         Active dimension, :math:`1 \le n \le m`.
     dimension_rule : {"fixed", "evg", "rs", "li"}
@@ -1742,7 +1828,7 @@ class SubspaceResult(QoIResult):
         m-1`, or the ladle :math:`g(0), \dots, g(k_n)`; ``None`` for a fixed
         ``n`` or :math:`m = 1`.
     n_samples : int
-        Number of samples :math:`M` (0 for ``"basis"``).
+        Number of samples :math:`M` (0 for ``"basis"`` and ``"matrix"``).
     nboot : int
         Number of bootstrap replicates :math:`B` (0 if none).
     bootstrap_eigenvalues : numpy.ndarray, shape (B, m), float64, or None
@@ -1752,6 +1838,11 @@ class SubspaceResult(QoIResult):
         for :math:`k = 1, \dots, m-1`.
     bootstrap_dets : numpy.ndarray, shape (B, m - 1), float64, or None
         Ladle statistics :math:`|\det(W_{1:k}^\top W^{(b)}_{1:k})|`.
+    bootstrap_eigenvectors : numpy.ndarray, shape (B, m, k), float64, or None
+        The first ``k`` eigenvectors of each replicate, each multiplied by
+        the sign of its inner product with the full-sample vector, so
+        :math:`w_j^\top v_j^{(b)} \ge 0`; ``None`` unless requested with
+        ``bootstrap_vectors`` [D-196].
     provenance : Provenance, keyword-only
         How the result was produced.
     qoi : str, keyword-only, default "f"
@@ -1778,7 +1869,7 @@ class SubspaceResult(QoIResult):
     """
 
     TYPE = "SubspaceResult"
-    SCHEMA_VERSION = 1
+    SCHEMA_VERSION = 2  # 2: bootstrap_eigenvectors [D-196]
 
     space: InputSpace
     estimator: str
@@ -1794,6 +1885,7 @@ class SubspaceResult(QoIResult):
     bootstrap_eigenvalues: NDArray[np.float64] | None
     bootstrap_distances: NDArray[np.float64] | None
     bootstrap_dets: NDArray[np.float64] | None
+    bootstrap_eigenvectors: NDArray[np.float64] | None
 
     @property
     def m(self) -> int:
@@ -1863,8 +1955,8 @@ class SubspaceResult(QoIResult):
         -------
         numpy.ndarray, shape (m, k), float64
             Orthonormal basis of :math:`\operatorname{span}(A^{-\top} W_{1:k})`
-            in physical coordinates, sign-oriented like ``W``. Eigenvalues
-            have no physical counterpart.
+            in physical coordinates; column :math:`j` keeps the sign of
+            :math:`w_j` [D-197]. Eigenvalues have no physical counterpart.
 
         Raises
         ------
@@ -1890,7 +1982,10 @@ class SubspaceResult(QoIResult):
     def _check(self) -> None:
         m = self.space.dim
         basis = self.estimator == "basis"
-        _invariant(self.estimator in ESTIMATORS or basis, f"unknown estimator {self.estimator!r}")
+        _invariant(
+            self.estimator in ESTIMATORS or self.estimator in _NON_ESTIMATORS,
+            f"unknown estimator {self.estimator!r}",
+        )
         _invariant(
             self.dimension_rule in DIMENSION_RULES or self.dimension_rule == "fixed",
             "unknown dimension rule",
@@ -1913,6 +2008,11 @@ class SubspaceResult(QoIResult):
             )
         else:
             _invariant(bool(np.all(np.isfinite(self.eigenvalues))), "eigenvalues must be finite")
+        if self.estimator in _NON_ESTIMATORS:
+            _invariant(
+                self.n_samples == 0 and self.nboot == 0,
+                f"a {self.estimator!r} result has no samples and no bootstrap",
+            )
         _invariant(self.n_samples >= 0 and self.nboot >= 0, "n_samples and nboot must be >= 0")
         boots = (self.bootstrap_eigenvalues, self.bootstrap_distances, self.bootstrap_dets)
         if self.nboot == 0:
@@ -1935,6 +2035,19 @@ class SubspaceResult(QoIResult):
                 "bootstrap_distances must be (B, m-1)",
             )
             _invariant(self.bootstrap_dets.shape == (B, m - 1), "bootstrap_dets must be (B, m-1)")
+        V = self.bootstrap_eigenvectors
+        if V is not None:
+            _invariant(self.nboot > 0, "bootstrap_eigenvectors needs bootstrap replicates")
+            _invariant(
+                V.ndim == 3 and V.shape[:2] == (self.nboot, m) and 1 <= V.shape[2] <= m,
+                "bootstrap_eigenvectors must be (B, m, k) with 1 <= k <= m",
+            )
+            k = V.shape[2]
+            _invariant(bool(np.all(np.isfinite(V))), "bootstrap_eigenvectors must be finite")
+            inner = np.einsum("ij,bij->bj", W[:, :k], V)
+            _invariant(
+                bool(np.all(inner >= -1e-12)), "bootstrap_eigenvectors must be sign-aligned"
+            )
         if self.dimension_rule in ("rs", "li"):
             _invariant(self.nboot > 0, f"rule {self.dimension_rule!r} needs bootstrap replicates")
         length = _criterion_length(self.dimension_rule, m)
@@ -1949,6 +2062,14 @@ class SubspaceResult(QoIResult):
             self.dimension_rule != "fixed" or self.dimension_options == (),
             "a fixed n has no rule options",
         )
+
+
+@_register_migration("SubspaceResult", 1)
+def _subspace_v1_to_v2(fields: dict[str, Any]) -> dict[str, Any]:
+    """Version 1 stored no eigenvector replicates [D-196]."""
+    out = dict(fields)
+    out["bootstrap_eigenvectors"] = None
+    return out
 
 
 # ---------------------------------------------------------------------------
@@ -2026,11 +2147,12 @@ def _resample(d: _Arrays, idx: NDArray[Any]) -> _Arrays:
 
 
 def _replicate(
-    est: Any, d: _Arrays, W: _F64, gen: np.random.Generator
-) -> tuple[_F64, _F64, _F64, dict[str, Any]]:
+    est: Any, d: _Arrays, W: _F64, gen: np.random.Generator, k: int = 0
+) -> tuple[_F64, _F64, _F64, dict[str, Any], _F64 | None]:
     """One bootstrap replicate.
 
-    Draw indices from ``gen`` only, recompute, compare with W (§3.7).
+    Draw indices from ``gen`` only, recompute, compare with W (§3.7); return the first ``k``
+    replicate eigenvectors as computed (aligned later, in replicate order).
     """
     M = d.w.shape[0]
     idx = np.asarray(gen.integers(0, M, size=M))  # asarray: an ndarray for the type checker
@@ -2040,9 +2162,9 @@ def _replicate(
     P = W.T @ Wb
     dist = np.empty(m - 1)
     dets = np.empty(m - 1)
-    for k in range(1, m):
-        dist[k - 1], dets[k - 1] = _distance_and_det(P, k)
-    return lam, dist, dets, notes
+    for j in range(1, m):
+        dist[j - 1], dets[j - 1] = _distance_and_det(P, j)
+    return lam, dist, dets, notes, (Wb[:, :k].copy() if k else None)
 
 
 def _distance_and_det(P: _F64, k: int) -> tuple[float, float]:
@@ -2064,18 +2186,43 @@ def _distance_and_det(P: _F64, k: int) -> tuple[float, float]:
 
 
 def _bootstrap(
-    est: Any, d: _Arrays, W: _F64, gen: np.random.Generator, nboot: int, executor: Any
-) -> tuple[_F64, _F64, _F64, list[dict[str, Any]]]:
+    est: Any, d: _Arrays, W: _F64, gen: np.random.Generator, nboot: int, executor: Any, k: int = 0
+) -> tuple[_F64, _F64, _F64, list[dict[str, Any]], _F64 | None]:
     children = _random.spawn(gen, nboot)
     if executor is None:
-        outs = [_replicate(est, d, W, c) for c in children]
+        outs = [_replicate(est, d, W, c, k) for c in children]
     else:
-        futures = [executor.submit(_replicate, est, d, W, c) for c in children]
+        futures = [executor.submit(_replicate, est, d, W, c, k) for c in children]
         outs = [fu.result() for fu in futures]
     lam = np.array([o[0] for o in outs])
     dist = np.array([o[1] for o in outs]).reshape(nboot, W.shape[0] - 1)
     dets = np.array([o[2] for o in outs]).reshape(nboot, W.shape[0] - 1)
-    return lam, dist, dets, [o[3] for o in outs]
+    vecs = _align_replicates(W, [o[4] for o in outs]) if k else None
+    return lam, dist, dets, [o[3] for o in outs], vecs
+
+
+def _align_replicates(W: _F64, reps: list[Any]) -> _F64:
+    """Stack replicate eigenvectors ``(B, m, k)``, aligned with the full-sample vectors.
+
+    Column ``j`` of each replicate is multiplied by ``sign(w_j^T w_j^(b))`` (a zero product keeps
+    the replicate's sign) [D-196]; warn when a column's smallest ``|w_j^T w_j^(b)|`` is below 0.5.
+    """
+    V = np.stack(reps)  # (B, m, k)
+    k = V.shape[2]
+    inner = np.einsum("ij,bij->bj", W[:, :k], V)
+    signs = np.where(inner < 0.0, -1.0, 1.0)
+    V *= signs[:, None, :]
+    minima = np.abs(inner).min(axis=0)
+    bad = [j for j in range(k) if minima[j] < _ALIGN_MIN]
+    if bad:
+        _warn(
+            AccuracyWarning,
+            "bootstrap eigenvector replicates are poorly aligned with the full-sample vectors "
+            f"(columns {bad}); their components are ill-defined, e.g. near repeated eigenvalues",
+            code="accuracy.unaligned_replicates",
+            details={"columns": bad, "minima": [float(minima[j]) for j in bad]},
+        )
+    return V
 
 
 def _warn_accuracy(name: str, main: dict[str, Any], reps: list[dict[str, Any]]) -> None:
@@ -2181,6 +2328,7 @@ def active_subspace(
     n: int | None = None,
     dimension_rule: str | DimensionRule | None = None,
     nboot: int = 0,
+    bootstrap_vectors: int = 0,
     rng: _random.RngLike = None,
     executor: concurrent.futures.Executor | None = None,
     qoi: str | None = None,
@@ -2220,6 +2368,12 @@ def active_subspace(
         need ``nboot > 0``.
     nboot : int, default 0
         Number of bootstrap replicates :math:`B`.
+    bootstrap_vectors : int, default 0
+        Number :math:`k` of leading eigenvectors whose replicates are stored,
+        sign-aligned, in ``bootstrap_eigenvectors`` (:math:`8Bmk` bytes);
+        :math:`0 \le k \le m`, :math:`k \le n` for a fixed ``n``, and
+        :math:`k \ge 1` needs ``nboot > 0``. With a dimension rule the
+        :math:`k` columns are kept whatever ``n`` the rule selects [D-196].
     rng : None, int, numpy.random.SeedSequence or numpy.random.Generator, optional
         Source of randomness for the bootstrap only; one child stream per
         replicate, so the result does not depend on ``executor``.
@@ -2245,7 +2399,8 @@ def active_subspace(
         ``dimension_rule``, or a space that differs from the
         ``GradientResult``'s (``details["reason"] == "space_mismatch"``);
         ``input.too_few_samples`` below the estimator's minimum;
-        ``input.no_bootstrap`` for ``"rs"`` or ``"li"`` without a bootstrap.
+        ``input.no_bootstrap`` for ``"rs"`` or ``"li"`` without a bootstrap;
+        ``input.parameter`` for a bad ``bootstrap_vectors``.
     NumericalError
         ``numerical.nonfinite`` if the estimator's matrix is not finite;
         ``numerical.singular`` if a factorization fails or a bootstrap
@@ -2262,7 +2417,9 @@ def active_subspace(
         ``accuracy.rank_deficient`` for a rank-deficient least-squares fit
         (OLS, QPHD, OPG); ``accuracy.degenerate_matrix`` if the matrix is
         exactly zero (``W = I`` is returned); ``accuracy.zero_dimension`` if
-        the ladle chooses 0 (``n = 1`` is used).
+        the ladle chooses 0 (``n = 1`` is used); ``accuracy.unaligned_replicates``
+        if a stored eigenvector column has a replicate with
+        :math:`|w_j^\top w_j^{(b)}| < 0.5`.
 
     See Also
     --------
@@ -2281,7 +2438,8 @@ def active_subspace(
     with eigenvalues reported signed (they are non-negative for the positive
     semidefinite estimators), ties kept in the order the factorization
     returns, and each eigenvector signed so that its largest-magnitude entry
-    is positive. :math:`W = [W_1 \ W_2]` with :math:`W_1` the first ``n``
+    is positive (for ``"ols"``, :math:`w_1 = \hat u/\lVert \hat u \rVert`
+    instead). :math:`W = [W_1 \ W_2]` with :math:`W_1` the first ``n``
     columns. For ``"as"``,
     :math:`C = \sum_i \omega_i \nabla_x f(x_i) \nabla_x f(x_i)^\top` [1]_.
 
@@ -2332,6 +2490,13 @@ def active_subspace(
     space, d, digests, qoi = _prepare(space, X, f, grads, quad_weights, qoi)
     m = space.dim
     nboot = _v.integer(nboot, "nboot", lo=0)
+    kvec = _v.integer(bootstrap_vectors, "bootstrap_vectors", lo=0, hi=m)
+    if kvec > 0 and nboot == 0:
+        raise InputError(
+            "bootstrap_vectors: needs bootstrap replicates; pass nboot > 0",
+            code="input.parameter",
+            details={"param": "bootstrap_vectors", "reason": "no_bootstrap"},
+        )
     est = _resolve(estimator, ESTIMATORS, "estimator")
     if n is not None and dimension_rule is not None:
         raise InputError(
@@ -2342,6 +2507,12 @@ def active_subspace(
     rule = None
     if n is not None:
         n = _v.integer(n, "n", lo=1, hi=m)
+        if kvec > n:
+            raise InputError(
+                f"bootstrap_vectors: {kvec} exceeds n = {n}",
+                code="input.parameter",
+                details={"param": "bootstrap_vectors", "expected": [0, n], "got": kvec},
+            )
     else:
         rule = (
             EVG()
@@ -2384,12 +2555,16 @@ def active_subspace(
             details={"nboot": nboot},
         )
 
-    notes: dict[str, Any] = {}
+    # Without a bootstrap the normalized gradients are read once, so AS may scale them in place.
+    notes: dict[str, Any] = {"_overwrite_G": nboot == 0}
     lam, W = est._decompose(d, notes)
-    boot_lam = boot_dist = boot_dets = None
+    notes.pop("_overwrite_G", None)
+    boot_lam = boot_dist = boot_dets = boot_vecs = None
     rep_notes: list[dict[str, Any]] = []
     if nboot > 0:
-        boot_lam, boot_dist, boot_dets, rep_notes = _bootstrap(est, d, W, gen, nboot, executor)
+        boot_lam, boot_dist, boot_dets, rep_notes, boot_vecs = _bootstrap(
+            est, d, W, gen, nboot, executor, kvec
+        )
     if rule is not None:
         n, criterion, k_hat = _apply_rule(rule, lam, boot_dist, boot_dets)
     else:
@@ -2406,6 +2581,7 @@ def active_subspace(
         "dimension_rule": "fixed" if rule is None else rule.name,
         "dimension_options": {} if rule is None else rule.options(),
         "nboot": nboot,
+        "bootstrap_vectors": kvec,
         "qoi": qoi,
     }
     prov = _make_provenance(
@@ -2430,6 +2606,7 @@ def active_subspace(
         bootstrap_eigenvalues=boot_lam,
         bootstrap_distances=boot_dist,
         bootstrap_dets=boot_dets,
+        bootstrap_eigenvectors=boot_vecs,
         qoi=qoi,
         provenance=prov,
     )
@@ -2485,7 +2662,8 @@ def with_dimension(
     -------
     SubspaceResult
         A new result in which only ``n``, ``dimension_rule``,
-        ``dimension_options``, ``criterion`` and the provenance differ.
+        ``dimension_options``, ``criterion`` and the provenance differ; the
+        eigenvector signs and any eigenvector replicates are kept.
 
     Raises
     ------
@@ -2556,6 +2734,7 @@ def with_dimension(
         bootstrap_eigenvalues=result.bootstrap_eigenvalues,
         bootstrap_distances=result.bootstrap_distances,
         bootstrap_dets=result.bootstrap_dets,
+        bootstrap_eigenvectors=result.bootstrap_eigenvectors,
         qoi=result.qoi,
         provenance=prov,
     )
@@ -2825,5 +3004,407 @@ def subspace_from_basis(basis: Any, *, space: InputSpace) -> SubspaceResult:
         bootstrap_eigenvalues=None,
         bootstrap_distances=None,
         bootstrap_dets=None,
+        bootstrap_eigenvectors=None,
+        provenance=prov,
+    )
+
+
+def subspace_from_matrix(
+    C: Any,
+    *,
+    space: InputSpace,
+    n: int | None = None,
+    dimension_rule: str | DimensionRule | None = None,
+    qoi: str | None = None,
+) -> SubspaceResult:
+    r"""Wrap a precomputed symmetric matrix as a subspace result with eigenvalues.
+
+    Use it for a matrix accumulated by hand, for example
+    :math:`\sum_i \omega_i g_i g_i^\top` over a tensor quadrature rule too
+    large to hold as one gradient array.
+
+    Parameters
+    ----------
+    C : array_like, shape (m, m), float
+        A symmetric matrix in **normalized** coordinates (for a matrix
+        :math:`C_\xi` of physical gradients, pass :math:`A^\top C_\xi A` with
+        ``A = space.scale``), symmetric to a relative :math:`\sqrt\epsilon`.
+    space : Uniform or Gaussian, keyword-only
+        The input space.
+    n : int, optional, keyword-only
+        A fixed dimension, :math:`1 \le n \le m`.
+    dimension_rule : str or rule instance, optional, keyword-only
+        A rule of :data:`DIMENSION_RULES`; default ``EVG(gap="linear")``.
+        ``"rs"`` and ``"li"`` need replicates, which this result has not.
+    qoi : str, optional, keyword-only
+        Name of the quantity of interest; default ``"f"``.
+
+    Returns
+    -------
+    SubspaceResult
+        ``estimator="matrix"``, signed eigenvalues ranked by :math:`|\lambda|`,
+        eigenvectors with the default sign rule, ``n_samples=0`` and no
+        bootstrap.
+
+    Raises
+    ------
+    InputError
+        ``input.shape``, ``input.dtype`` or ``input.nonfinite`` for a bad
+        ``C``; ``input.parameter`` for a non-symmetric ``C``
+        (``details["reason"] == "not_symmetric"``), both ``n`` and
+        ``dimension_rule``, or a bad option; ``input.no_bootstrap`` for
+        ``"rs"`` or ``"li"``.
+    NumericalError
+        ``numerical.singular`` if the eigensolver fails.
+
+    Warns
+    -----
+    AccuracyWarning
+        ``accuracy.degenerate_matrix`` if ``C`` is exactly zero (``W = I``).
+
+    See Also
+    --------
+    active_subspace : Estimate the matrix from samples.
+    subspace_from_basis : Wrap a basis without eigenvalues.
+
+    Notes
+    -----
+    The eigenpairs are those of :math:`\tfrac12(C + C^\top)` by
+    ``numpy.linalg.eigh``, ranked by :math:`|\lambda|` and reported signed,
+    with the sign rule of :func:`active_subspace` [D-202].
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> import active_subspaces as ac
+    >>> C = np.diag([4.0, 1.0, 0.01])
+    >>> sub = ac.subspace_from_matrix(C, space=ac.Uniform.reference(3))
+    >>> sub.estimator, sub.n, sub.eigenvalues
+    ('matrix', 1, array([4.  , 1.  , 0.01]))
+    """
+    space = _v.check_space(space)
+    m = space.dim
+    A = _v.matrix(C, "C", rows=m, cols=m)
+    scale = float(np.max(np.abs(A)))
+    if float(np.max(np.abs(A - A.T))) > _SQRT_EPS * scale:
+        raise InputError(
+            "C: not symmetric to a relative sqrt(eps)",
+            code="input.parameter",
+            details={"param": "C", "reason": "not_symmetric"},
+        )
+    if n is not None and dimension_rule is not None:
+        raise InputError(
+            "give at most one of n and dimension_rule",
+            code="input.parameter",
+            details={"param": "dimension_rule"},
+        )
+    qoi = "f" if qoi is None else qoi
+    if not isinstance(qoi, str) or not qoi:
+        raise InputError(
+            "qoi: expected a non-empty string", code="input.parameter", details={"param": "qoi"}
+        )
+    rule = None
+    if n is not None:
+        n = _v.integer(n, "n", lo=1, hi=m)
+    else:
+        rule = (
+            EVG()
+            if dimension_rule is None
+            else _resolve(dimension_rule, DIMENSION_RULES, "dimension_rule")
+        )
+        if rule.needs_bootstrap:
+            raise _no_bootstrap(rule.name)
+    notes: dict[str, Any] = {}
+    lam, W = _from_matrix(A, "matrix", notes)
+    _warn_accuracy("matrix", notes, [])
+    if rule is not None:
+        n, criterion, _ = _apply_rule(rule, lam, None, None)
+    else:
+        assert n is not None  # a fixed n, validated above
+        criterion = None
+    params: dict[str, Any] = {
+        "n": None if rule is not None else n,
+        "dimension_rule": "fixed" if rule is None else rule.name,
+        "dimension_options": {} if rule is None else rule.options(),
+        "qoi": qoi,
+    }
+    prov = _make_provenance(
+        "subspace_from_matrix", params, space=space, digests={"C": _v.digest(A)}
+    )
+    return SubspaceResult(
+        space=space,
+        estimator="matrix",
+        estimator_options=(),
+        eigenvalues=lam,
+        eigenvectors=W,
+        n=int(n),
+        dimension_rule="fixed" if rule is None else rule.name,
+        dimension_options=() if rule is None else tuple(sorted(rule.options().items())),
+        criterion=criterion,
+        n_samples=0,
+        nboot=0,
+        bootstrap_eigenvalues=None,
+        bootstrap_distances=None,
+        bootstrap_dets=None,
+        bootstrap_eigenvectors=None,
+        qoi=qoi,
+        provenance=prov,
+    )
+
+
+def activity_scores(subspace: SubspaceResult, n: int | None = None) -> NDArray[np.float64]:
+    r"""Return the activity scores of the inputs, in normalized coordinates.
+
+    Parameters
+    ----------
+    subspace : SubspaceResult
+        A result with eigenvalues (not ``"basis"``).
+    n : int, optional
+        Number of eigenpairs, :math:`1 \le n \le m`; default ``subspace.n``.
+
+    Returns
+    -------
+    numpy.ndarray, shape (m,), float64
+        :math:`\alpha_i(n) = \sum_{j=1}^n |\lambda_j| \, w_{ij}^2`, a new array.
+
+    Raises
+    ------
+    InputError
+        ``input.parameter`` for a bad ``n`` or result, and for a ``"basis"``
+        result (``details["reason"] == "no_eigenvalues"``).
+
+    See Also
+    --------
+    active_subspace : Estimate the eigenpairs.
+
+    Notes
+    -----
+    Activity scores are global sensitivity metrics [1]_. For the positive
+    semidefinite estimators :math:`|\lambda_j| = \lambda_j`; for the indefinite
+    ones the magnitude matches their ranking [D-201]. The scores depend on
+    the normalization: inputs scaled to :math:`[0, 1]` instead of
+    :math:`[-1, 1]` multiply every eigenvalue by 4.
+
+    References
+    ----------
+    .. [1] P. G. Constantine, P. Diaz. Global sensitivity metrics from active
+       subspaces. *Reliab. Eng. Syst. Saf.* 162:1-13, 2017.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> import active_subspaces as ac
+    >>> sub = ac.subspace_from_matrix(np.diag([4.0, 1.0, 0.0]), space=ac.Uniform.reference(3))
+    >>> ac.activity_scores(sub), ac.activity_scores(sub, n=2)
+    (array([4., 0., 0.]), array([4., 1., 0.]))
+    """
+    sub = _check_result(subspace)
+    if sub.estimator == "basis":
+        raise InputError(
+            "a 'basis' result has no eigenvalues, so no activity scores",
+            code="input.parameter",
+            details={"param": "subspace", "reason": "no_eigenvalues"},
+        )
+    k = sub.n if n is None else _v.integer(n, "n", lo=1, hi=sub.m)
+    W = sub.eigenvectors[:, :k]
+    scores: _F64 = (np.abs(sub.eigenvalues[:k]) * W * W).sum(axis=1)
+    return scores
+
+
+_ORIENT_ARGS: Mapping[str, tuple[str, ...]] = MappingProxyType(
+    {"reference": ("reference",), "covariance": ("X", "f"), "mean_gradient": ("grads",)}
+)
+
+
+def _criterion_signs(crit: _F64, scale: _F64) -> _F64:
+    """+1 or -1 per column; a criterion within sqrt(eps) of its scale keeps the sign [D-197]."""
+    s = np.where(crit < 0.0, -1.0, 1.0)
+    s[np.abs(crit) <= _SQRT_EPS * scale] = 1.0
+    return s
+
+
+def orient(
+    subspace: SubspaceResult,
+    *,
+    by: Literal["reference", "covariance", "mean_gradient"],
+    reference: Any = None,
+    X: Any = None,
+    f: Any = None,
+    grads: Any = None,
+    columns: int | None = None,
+) -> SubspaceResult:
+    r"""Return a subspace result whose leading eigenvectors carry user-defined signs.
+
+    Parameters
+    ----------
+    subspace : SubspaceResult
+        The result to re-sign.
+    by : {"reference", "covariance", "mean_gradient"}, keyword-only
+        The criterion (see Notes).
+    reference : array_like, shape (m, k), or SubspaceResult, optional, keyword-only
+        For ``"reference"``: directions in normalized coordinates as
+        columns, :math:`k \ge` ``columns``, or a result on an equal space
+        (its ``W`` is used).
+    X : array_like, shape (M, m), optional, keyword-only
+        For ``"covariance"``: points in physical coordinates.
+    f : array_like, shape (M,) or (M, 1), optional, keyword-only
+        For ``"covariance"``: values at ``X``.
+    grads : array_like, shape (M, m), or GradientResult, optional, keyword-only
+        For ``"mean_gradient"``: gradients in physical coordinates.
+    columns : int, optional, keyword-only
+        Number :math:`c` of leading columns to re-sign,
+        :math:`1 \le c \le m`; default ``subspace.n``.
+
+    Returns
+    -------
+    SubspaceResult
+        A new result in which only ``eigenvectors``, ``bootstrap_eigenvectors``
+        (re-signed with the same signs, so they stay aligned) and the
+        provenance differ.
+
+    Raises
+    ------
+    InputError
+        ``input.parameter`` for a bad ``by`` or ``columns``, a missing
+        argument, an argument the criterion does not use
+        (``details["reason"] == "not_for_criterion"``), a reference with too
+        few columns, or a reference result or ``GradientResult`` on another
+        space (``details["reason"] == "space_mismatch"``); the spec 02 codes
+        for bad arrays.
+
+    See Also
+    --------
+    active_subspace : Its default sign rule.
+    SubspaceResult.physical_directions : Follows the signs set here.
+
+    Notes
+    -----
+    Column :math:`j \le c` is multiplied by :math:`s_j = \operatorname{sign}`
+    of
+
+    - ``"reference"``: :math:`w_j^\top r_j`;
+    - ``"covariance"``: :math:`\sum_i \omega_i (y_{ij} - \bar y_j)(f_i - \bar f)`
+      with :math:`y_i = W^\top x_i` for the normalized inputs and
+      :math:`\omega_i = 1/M` (a result keeps only a digest of its quadrature
+      weights);
+    - ``"mean_gradient"``: :math:`\bar g^\top w_j` with :math:`\bar g` the
+      mean normalized gradient.
+
+    A criterion whose magnitude is at most :math:`\sqrt\epsilon` times its
+    scale (:math:`\lVert r_j\rVert`; the product of the two standard
+    deviations; :math:`\lVert \bar g\rVert`) keeps the current sign [D-197].
+    Bootstrap distances and determinants are sign-invariant.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> import active_subspaces as ac
+    >>> sub = ac.subspace_from_matrix(np.diag([2.0, 1.0]), space=ac.Uniform.reference(2))
+    >>> flipped = ac.orient(sub, by="reference", reference=[[-1.0], [0.0]])
+    >>> flipped.W1.ravel() + 0.0, flipped.physical_directions().ravel() + 0.0
+    (array([-1.,  0.]), array([-1.,  0.]))
+    """
+    sub = _check_result(subspace)
+    crit_name = _v.choice(by, "by", ("reference", "covariance", "mean_gradient"))
+    space = sub.space
+    m = sub.m
+    c = sub.n if columns is None else _v.integer(columns, "columns", lo=1, hi=m)
+    used = _ORIENT_ARGS[crit_name]
+    given = {"reference": reference, "X": X, "f": f, "grads": grads}
+    for name, value in given.items():
+        if value is not None and name not in used:
+            raise InputError(
+                f"{name}: not used by the {crit_name!r} criterion",
+                code="input.parameter",
+                details={"param": name, "reason": "not_for_criterion", "by": crit_name},
+            )
+    for name in used:
+        if given[name] is None:
+            raise InputError(
+                f"{name}: required by the {crit_name!r} criterion",
+                code="input.parameter",
+                details={"param": name, "by": crit_name},
+            )
+    W = sub.eigenvectors
+    digests: dict[str, Any] = {}
+    if crit_name == "reference":
+        if isinstance(reference, SubspaceResult):
+            if reference.space != space:
+                raise InputError(
+                    "reference: a result on a different input space",
+                    code="input.parameter",
+                    details={"param": "reference", "reason": "space_mismatch"},
+                )
+            R = np.array(reference.eigenvectors, dtype=np.float64)
+        else:
+            R = _v.matrix(reference, "reference", rows=m)
+        if R.shape[1] < c:
+            raise InputError(
+                f"reference: has {R.shape[1]} columns, fewer than columns = {c}",
+                code="input.parameter",
+                details={"param": "reference", "expected": c, "got": int(R.shape[1])},
+            )
+        digests["reference"] = _v.digest(R)
+        crit = np.einsum("ij,ij->j", W[:, :c], R[:, :c])
+        scale = np.linalg.norm(R[:, :c], axis=0)
+    elif crit_name == "covariance":
+        dd = _v.data(space, X=X, f=f, require=("X", "f"))
+        assert dd.X is not None  # required above
+        assert dd.f is not None
+        digests.update(dd.digests)
+        Y = dd.X @ W[:, :c]
+        Yc = Y - Y.mean(axis=0)
+        fc = dd.f - dd.f.mean()
+        M = Y.shape[0]
+        crit = (Yc * fc[:, None]).sum(axis=0) / M
+        scale = np.sqrt((Yc * Yc).sum(axis=0) / M) * math.sqrt(float(fc @ fc) / M)
+    else:
+        if isinstance(grads, GradientResult):
+            if grads.space != space:
+                raise _space_mismatch()
+            G = np.array(grads.grads, dtype=np.float64)
+            digests["grads"] = _v.digest(grads.grads_physical)
+        else:
+            dd = _v.data(space, grads=grads, require=("grads",))
+            assert dd.grads is not None  # required above
+            G = dd.grads
+            digests.update(dd.digests)
+        gbar = G.mean(axis=0)
+        crit = gbar @ W[:, :c]
+        scale = np.full(c, float(np.linalg.norm(gbar)))
+    s = _criterion_signs(np.asarray(crit, dtype=np.float64), np.asarray(scale, dtype=np.float64))
+    Wn = np.array(W, dtype=np.float64, copy=True)
+    Wn[:, :c] *= s
+    V = sub.bootstrap_eigenvectors
+    if V is not None:
+        V = np.array(V, dtype=np.float64, copy=True)
+        k = min(c, V.shape[2])
+        V[:, :, :k] *= s[:k]
+    src = sub.provenance.to_dict()
+    src["input_space"] = None  # the space is recorded at the top level
+    params: dict[str, Any] = {
+        "by": crit_name,
+        "columns": c,
+        "signs": [int(v) for v in s],
+        "source": src,
+    }
+    prov = _make_provenance("orient", params, space=space, digests=digests)
+    return SubspaceResult(
+        space=space,
+        estimator=sub.estimator,
+        estimator_options=sub.estimator_options,
+        eigenvalues=sub.eigenvalues,
+        eigenvectors=Wn,
+        n=sub.n,
+        dimension_rule=sub.dimension_rule,
+        dimension_options=sub.dimension_options,
+        criterion=sub.criterion,
+        n_samples=sub.n_samples,
+        nboot=sub.nboot,
+        bootstrap_eigenvalues=sub.bootstrap_eigenvalues,
+        bootstrap_distances=sub.bootstrap_distances,
+        bootstrap_dets=sub.bootstrap_dets,
+        bootstrap_eigenvectors=V,
+        qoi=sub.qoi,
         provenance=prov,
     )

@@ -86,6 +86,7 @@ v1 normalized coordinates are the 2016 ones, so normalized results compare direc
 | `.partition(n)` | `ac.with_dimension(result, n)` | returns a new result |
 | `.eigenvals` `(m,1)`, `.eigenvecs` | `result.eigenvalues` `(m,)`, `result.eigenvectors` (`result.W`) | new sign rule |
 | `.W1`, `.W2` | `result.W1`, `result.W2` | |
+| `.W_br` *(dev)* | `ac.active_subspace(..., nboot=B, bootstrap_vectors=k)` → `result.bootstrap_eigenvectors` `(B, m, k)` | sign-aligned replicates of the leading $k$ eigenvectors; `ac.plotting.plot_eigenvectors(sub, interval="percentile" \| "minmax", level=0.95)` draws the bands |
 | `.e_br` | `ac.bootstrap_interval(abs(result.bootstrap_eigenvalues), kind="minmax")` | `(2, m)`; default is a 95% percentile interval |
 | `.sub_br` | `ac.bootstrap_interval(result.bootstrap_distances, kind="minmax")`, `ac.mean_distance(result)` | |
 | `sstype='AS'`, …, `'OPG'` | `estimator="as"`, …, `"opg"`; or `ac.subspaces.SIR(n_slices=…)`, `ac.subspaces.SAVE(n_slices=…)`, `ac.subspaces.OPG(p=…)` | names in `ac.subspaces.ESTIMATORS` |
@@ -94,6 +95,9 @@ v1 normalized coordinates are the 2016 ones, so normalized results compare direc
 | `eig_partition`, `errbnd_partition`, `ladle_partition` | `ac.dimension_criterion(result, rule="evg" \| "rs" \| "li")` | ladle returns $\hat k$, not $\hat k+1$ |
 | `sorted_eigh(C)` | removed | `numpy.linalg.eigh` |
 | — | `ac.subspace_from_basis(basis, space=)` | wraps a basis computed elsewhere |
+| a hand-accumulated $C$ (no 2016 equivalent) | `ac.subspace_from_matrix(C, space=, n=)` | new: a symmetric $C$ in normalized coordinates becomes a result with eigenvalues (`estimator="matrix"`) |
+| activity scores coded by hand | `ac.activity_scores(result, n=)` | new: $\sum_{j\le n}\lvert\lambda_j\rvert w_{ij}^2$ in normalized coordinates |
+| hand-flipped eigenvector signs | `ac.orient(result, by="reference" \| "covariance" \| "mean_gradient", …)` | new: returns a new result; plots and `physical_directions()` follow its signs |
 | `sstype='MAVE'` *(dev)* | removed | the 2016 stub returned `None` |
 
 ### `gradients`
@@ -258,13 +262,25 @@ Tuple returns become results with named fields. Only `ac.forward_map` (`Y, Z`) a
 ## What changes in your numbers
 
 - **Identical.** The normalization maps; active-subspace eigenpairs from the same gradients and
-  weights (up to the sign rule); the default dimension rule (EVG with the linear gap); interval and
+  weights (equal to rounding, up to the sign rule: v1 takes an SVD of $\mathrm{diag}(\sqrt\omega)G$
+  through a QR factor when $M>m$, and the eigenvalues agree with the direct SVD to $10^{-13}$
+  relative); the default dimension rule (EVG with the linear gap); interval and
   Gauss–Hermite design points.
 - **Same quantity, different convention.**
   - Each eigenvector's largest-magnitude component is positive (2016: the first), so a column of
-    `W`, `y` and the sufficient summary may be mirrored.
+    `W`, `y` and the sufficient summary may be mirrored. `ac.orient` sets any other convention.
+  - OLS: $w_1=\hat u/\lVert\hat u\rVert$, the signed slope of the published method, so $f$
+    increases along $w_1$ (the largest-magnitude rule is not applied to it). An analysis that
+    re-signed OLS by hand no longer needs to. A result saved with the development builds keeps the
+    sign it was saved with.
+  - `physical_directions()` keeps the signs of `W1`: $q_j^\top A^{-\top}w_j>0$. The development
+    builds re-applied the largest-magnitude rule to them, so an oriented `W1` and
+    `physical_directions()` could disagree.
   - ASX, NASX and pHd eigenvalues keep their sign.
-  - Bootstrap bands are 95% percentile intervals, narrower than the 2016 min/max band.
+  - Bootstrap bands are 95% percentile intervals, narrower than the 2016 min/max band. With
+    `bootstrap_vectors=k`, `bootstrap_eigenvectors` `(B, m, k)` holds the sign-aligned replicates of
+    the leading $k$ eigenvectors, and `plot_eigenvectors(interval=…)` draws their bands (`nboot=100`,
+    $m=1000$, $k=1$: 0.8 MB).
   - `quad_weights` must sum to 1.
   - Shapes are `(m,)` and `(M,)`, not `(m, 1)` and `(M, 1)`.
   - Fit quality is a leave-one-out or holdout $R^2$, lower than the 2016 in-sample value.
@@ -290,7 +306,7 @@ Tuple returns become results with named fields. Only `ac.forward_map` (`Y, Z`) a
 ## Reproducing 2016 numbers
 
 - **With settings:**
-  - `ac.bootstrap_interval(..., kind="minmax")` and `ac.plotting.plot_eigenvalues(sub, interval="minmax")` give the 2016 bands.
+  - `ac.bootstrap_interval(..., kind="minmax")`, `ac.plotting.plot_eigenvalues(sub, interval="minmax")` and `ac.plotting.plot_eigenvectors(sub, interval="minmax")` give the 2016 bands.
   - `dimension_rule="evg"` (the default, linear gap) gives the 2016 EVG choice.
   - For unnormalized 2016 weights, multiply the eigenvalues by $\sum_i w_i$.
   - Multiply SAVE eigenvalues by the number of slices.
@@ -551,7 +567,6 @@ each stochastic call. `rng=None` draws fresh entropy and records it in the resul
 - The Celery runner: it executed serialized code received from a message broker. Use `executor=`.
 - Gurobi: the SciPy backend is the only built-in solver; a `SolverBackend` can wrap another.
 - `random_walk_z`: defective and unused.
-- Eigenvector bootstrap bands (`W_br`): no plot draws them.
 - The 2016 tutorial data files.
 - ECNoise (`utils.est_noise`, dev): estimates of the noise level of a computed function are
   outside the scope of v1. Use Moré and Wild's ECNoise, the method it ported (Moré and Wild, 2011).

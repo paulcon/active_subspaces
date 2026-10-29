@@ -130,10 +130,13 @@ from active_subspaces.spaces import Gaussian, InputSpace, Uniform
 from active_subspaces.subspaces import (
     SubspaceResult,
     active_subspace,
+    activity_scores,
     bootstrap_interval,
     dimension_criterion,
     mean_distance,
+    orient,
     subspace_from_basis,
+    subspace_from_matrix,
     with_dimension,
 )
 from active_subspaces.surrogates import (
@@ -204,6 +207,7 @@ __all__ = (
     "active_domain",
     "active_quadrature_rule",
     "active_subspace",
+    "activity_scores",
     "as_model",
     "bootstrap_interval",
     "build_reduced_model",
@@ -237,6 +241,7 @@ __all__ = (
     "minimize_active",
     "models",
     "optimization",
+    "orient",
     "plotting",
     "pointwise",
     "predict",
@@ -250,6 +255,7 @@ __all__ = (
     "solvers",
     "spaces",
     "subspace_from_basis",
+    "subspace_from_matrix",
     "subspaces",
     "surrogates",
     "test_functions",

@@ -251,6 +251,7 @@ def test_ladle_formula(m, kn, make_provenance):
         bootstrap_eigenvalues=np.zeros((B, m)),
         bootstrap_distances=np.zeros((B, m - 1)),
         bootstrap_dets=dets,
+        bootstrap_eigenvectors=None,
         provenance=make_provenance(),
     )
     ks, vals, k_hat = S.dimension_criterion(hand, rule="li")
@@ -301,3 +302,120 @@ def test_subspace_from_basis(space):
     r2 = S.subspace_from_basis(space.directions_to_physical(V), space=space)
     assert r2.n == 2
     assert _dist(r2.W1, V) <= 1e-12
+
+
+# ---------------------------------------------------------------------------
+# As-data-sets port (Phase 5b): D-195, D-201, D-202
+# ---------------------------------------------------------------------------
+
+
+def test_ols_signed():
+    """OLS reports the signed u/||u||, so f increases along w1 [D-195] (07 §8 KA-11, V07.33)."""
+    space = asub.Gaussian.reference(5)
+    gen = np.random.default_rng(11)
+    X = space.sample(300, rng=gen)
+    # The largest-magnitude entry of a is negative, so D-81 alone would flip the sign.
+    a = np.array([0.2, -0.9, 0.1, 0.3, -0.05])
+    noise = 1e-3 * gen.standard_normal(300)
+    sub = asub.active_subspace(X=X, f=X @ a + noise, space=space, estimator="ols", n=1)
+    A1 = np.column_stack([np.ones(300), X])
+    u = np.linalg.lstsq(A1, X @ a + noise, rcond=None)[0][1:]
+    np.testing.assert_allclose(sub.W[:, 0], u / np.linalg.norm(u), rtol=0, atol=1e-12)
+    assert sub.W[:, 0] @ u > 0
+    neg = asub.active_subspace(X=X, f=-(X @ a + noise), space=space, estimator="ols", n=1)
+    np.testing.assert_allclose(neg.W[:, 0], -sub.W[:, 0], atol=1e-12)
+    # A smooth family f_t = (a + t b)^T x never reverses between neighbours.
+    b = np.array([0.5, 0.4, -0.2, 0.0, 0.1])
+    prev = None
+    for t in np.linspace(0.0, 1.0, 11):
+        w = asub.active_subspace(X=X, f=X @ (a + t * b), space=space, estimator="ols", n=1).W[:, 0]
+        if prev is not None:
+            assert w @ prev > 0
+        prev = w
+    # The bootstrap distances do not depend on the sign.
+    boot = asub.active_subspace(
+        X=X, f=X @ a + noise, space=space, estimator="ols", n=1, nboot=5, rng=2
+    )
+    assert np.all(boot.bootstrap_distances[:, 0] < 1e-2)
+
+
+def test_subspace_from_matrix():
+    """A hand-accumulated C gives the eigenpairs of active_subspace(quad_weights=) [D-202]
+    (07 §8 KA-12, V07.35).
+    """
+    m = 3
+    space = asub.Uniform.reference(m)
+    nodes, weights = np.polynomial.legendre.leggauss(4)
+    grid = np.array(list(itertools.product(nodes, repeat=m)))
+    w = np.prod(np.array(list(itertools.product(weights, repeat=m))), axis=1) / 2**m
+    B = np.array([[2.0, 0.5, 0.0], [0.5, 1.0, 0.2], [0.0, 0.2, 0.3]])
+    G = grid @ B  # gradients of x^T B x / 2
+    C = (G * w[:, None]).T @ G
+    ref = asub.active_subspace(grads=G, space=space, quad_weights=w)
+    sub = asub.subspace_from_matrix(C, space=space)
+    assert sub.estimator == "matrix"
+    assert sub.n_samples == 0
+    assert sub.nboot == 0
+    np.testing.assert_allclose(sub.eigenvalues, ref.eigenvalues, rtol=1e-13)
+    np.testing.assert_allclose(
+        sub.eigenvalues, np.sort(np.linalg.eigvalsh(B @ B / 3))[::-1], rtol=1e-13
+    )
+    assert np.linalg.norm(sub.W1 @ sub.W1.T - ref.W1 @ ref.W1.T, 2) < 1e-12
+    assert sub.n == ref.n
+    assert sub.dimension_rule == "evg"
+    assert asub.with_dimension(sub, 2).n == 2
+    assert asub.from_dict(sub.to_dict()) == sub
+    bad = C.copy()
+    bad[0, 1] += 1e-6 * np.abs(C).max()
+    with pytest.raises(asub.InputError) as e:
+        asub.subspace_from_matrix(bad, space=space)
+    assert e.value.details["reason"] == "not_symmetric"
+    with pytest.raises(asub.InputError) as e:
+        asub.subspace_from_matrix(C, space=space, dimension_rule="rs")
+    assert e.value.code == "input.no_bootstrap"
+    with pytest.warns(AccuracyWarning, match="exactly zero"):
+        z = asub.subspace_from_matrix(np.zeros((m, m)), space=space, n=1)
+    np.testing.assert_array_equal(z.W, np.eye(m))
+
+
+def test_activity_scores():
+    """alpha_i(n) = sum_{j<=n} |lambda_j| w_ij^2 [D-201] (07 §8 KA-15, V07.35)."""
+    space = asub.Gaussian.reference(4)
+    gen = np.random.default_rng(5)
+    X = space.sample(400, rng=gen)
+    f = X[:, 0] ** 2 - 0.5 * X[:, 1] * X[:, 2]
+    G = np.column_stack([2 * X[:, 0], -0.5 * X[:, 2], -0.5 * X[:, 1], np.zeros(400)])
+    for sub in (
+        asub.active_subspace(grads=G, space=space, n=2),
+        asub.active_subspace(X=X, f=f, space=space, estimator="phd", n=2),
+    ):
+        lam, W = sub.eigenvalues, sub.W
+        for k in (1, 2, 4):
+            expected = (np.abs(lam[:k]) * W[:, :k] ** 2).sum(axis=1)
+            np.testing.assert_allclose(asub.activity_scores(sub, k), expected, rtol=1e-14)
+        np.testing.assert_array_equal(asub.activity_scores(sub), asub.activity_scores(sub, 2))
+    basis = asub.subspace_from_basis(np.eye(4)[:, :1], space=space)
+    with pytest.raises(asub.InputError) as e:
+        asub.activity_scores(basis)
+    assert e.value.details["reason"] == "no_eigenvalues"
+    with pytest.raises(asub.InputError):
+        asub.activity_scores(sub, 5)
+
+
+@pytest.mark.parametrize("factor", [1, 10, 1000])
+def test_as_qr_route(factor):
+    """M > m: eigenvalues through the QR factor equal the direct SVD's to 1e-13 relative
+    [D-202] (07 §8 KA-13, V07.36).
+    """
+    m = 6
+    M = factor * m + 1
+    space = asub.Uniform.reference(m)
+    gen = np.random.default_rng(factor)
+    G = gen.standard_normal((M, m)) * np.logspace(0, -3, m)
+    w = gen.uniform(0.5, 1.5, M)
+    w /= w.sum()
+    sub = asub.active_subspace(grads=G, space=space, quad_weights=w, n=2)
+    _, s, Vt = np.linalg.svd(np.sqrt(w)[:, None] * G, full_matrices=False)
+    np.testing.assert_allclose(sub.eigenvalues, s**2, rtol=1e-13)
+    V = Vt.T[:, :2]
+    assert np.linalg.norm(sub.W1 @ sub.W1.T - V @ V.T, 2) < 1e-12

@@ -131,6 +131,7 @@ def signed(space, make_provenance):
         bootstrap_eigenvalues=lam + 0.1 * gen.standard_normal((Bn, M_IN)),
         bootstrap_distances=gen.uniform(0.01, 0.5, (Bn, M_IN - 1)),
         bootstrap_dets=gen.uniform(0.5, 1.0, (Bn, M_IN - 1)),
+        bootstrap_eigenvectors=None,
         provenance=make_provenance(),
     )
 
@@ -702,6 +703,7 @@ def test_dimension_criterion_zero_and_errors(make_provenance, res_noboot, basis)
         bootstrap_eigenvalues=np.zeros((Bn, 4)),
         bootstrap_distances=np.ones((Bn, 3)),
         bootstrap_dets=np.zeros((Bn, 3)),
+        bootstrap_eigenvectors=None,
         provenance=make_provenance(),
     )
     _, ax = P.plot_dimension_criterion(hand, rule="li")
@@ -889,3 +891,59 @@ def test_no_pyplot_and_no_files_subprocess(mode, tmp_path):
     assert proc.stdout == ""
     assert proc.stderr == ""
     run_dir.rmdir()
+
+
+# ---------------------------------------------------------------------------
+# As-data-sets port (Phase 5b): D-196, D-197, D-202
+# ---------------------------------------------------------------------------
+
+
+def test_eigenvector_bands(space, data):
+    """Bands from the sign-aligned replicates; none by default [D-196] (13 §8, V13.15)."""
+    _, _, G = data
+    sub = asub.active_subspace(space=space, grads=G, n=2, nboot=30, rng=1, bootstrap_vectors=2)
+    for kind in ("percentile", "minmax"):
+        _, axes = P.plot_eigenvectors(sub, interval=kind, level=0.9)
+        for j, a in enumerate(axes):
+            (band,) = [c for c in a.collections if isinstance(c, PolyCollection)]
+            expected = S.bootstrap_interval(
+                sub.bootstrap_eigenvectors[:, :, j], kind=kind, level=0.9
+            )
+            verts = band.get_paths()[0].vertices
+            ii = np.arange(1, sub.m + 1)
+            lower = np.array([verts[(verts[:, 0] == i)][:, 1].min() for i in ii])
+            upper = np.array([verts[(verts[:, 0] == i)][:, 1].max() for i in ii])
+            np.testing.assert_allclose(lower, expected[0], rtol=1e-15, atol=0)
+            np.testing.assert_allclose(upper, expected[1], rtol=1e-15, atol=0)
+    _, axes = P.plot_eigenvectors(sub)
+    assert not any(isinstance(c, PolyCollection) for a in axes for c in a.collections)
+    for bad, idx in ((sub, [2]), (asub.with_dimension(sub, 2), [0, 3])):
+        with pytest.raises(InputError) as e:
+            P.plot_eigenvectors(bad, indices=idx, interval="percentile")
+        assert e.value.details["reason"] == "no_eigenvector_replicates"
+    plain = asub.active_subspace(space=space, grads=G, n=2, nboot=30, rng=1)
+    with pytest.raises(InputError) as e:
+        P.plot_eigenvectors(plain, interval="minmax")
+    assert e.value.details["reason"] == "no_eigenvector_replicates"
+    with pytest.raises(InputError):
+        P.plot_eigenvectors(sub, interval="percentile", level=1.5)
+
+
+def test_plots_keep_signs(space, data, res):
+    """After orient, the plots draw the new signs; a "matrix" result plots its eigenvalues
+    without a band [D-197], [D-202] (13 §8, V13.16).
+    """
+    X, f, _ = data
+    flipped = asub.orient(res, by="reference", reference=-res.W)
+    _, axes = P.plot_eigenvectors(flipped)
+    for j, a in enumerate(axes):
+        np.testing.assert_array_equal(_data_lines(a)[0].get_ydata(), -res.eigenvectors[:, j])
+    _, ax = P.plot_sufficient_summary(flipped, X=X, f=f, dims=1)
+    (sc,) = [c for c in ax.collections if isinstance(c, PathCollection)]
+    np.testing.assert_allclose(
+        sc.get_offsets()[:, 0], space.to_normalized(X) @ flipped.W[:, 0], rtol=1e-14
+    )
+    mat = asub.subspace_from_matrix(np.diag([3.0, 1.0, 0.5, 0.1, 0.01]), space=space)
+    _, ax = P.plot_eigenvalues(mat)
+    np.testing.assert_array_equal(_data_lines(ax)[0].get_ydata(), mat.eigenvalues)
+    assert not any(isinstance(c, PolyCollection) for c in ax.collections)
