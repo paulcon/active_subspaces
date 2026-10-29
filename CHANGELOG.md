@@ -203,6 +203,9 @@ Computed values differ from the 2016 code for the same inputs. Each item is eith
 - `setup.py`, `requirements.txt`, `test.py`, `MANIFEST.in`, Travis CI and nose (P-10).
 - The 2016 tutorials and Sphinx sources; they remain at the tags `legacy-master` and `legacy-dev`
   (D-01, D-144).
+- `legacy/`: the 2016 master tree and the Python 3 reference ports used to capture the regression
+  baselines, with the `legacy` CI job and the legacy mode of `tools/capture_baselines.py`. They
+  remain at the tag `legacy-py3`; the baselines stay in `tests/data/baselines/` (D-37, D-150).
 - No compatibility shim is provided for 2016 code (D-02a).
 
 ### Fixed

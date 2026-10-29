@@ -11,7 +11,9 @@ kernelspec:
 
 `active_subspaces` v1.0 is not backward compatible with the 2016 package (v0.1, Python 2.7). There
 is no compatibility layer. To keep running 2016 code unchanged, pin the git tags `legacy-master` or
-`legacy-dev` in a Python 2.7 environment. v1 needs Python 3.11 or later.
+`legacy-dev` in a Python 2.7 environment. v1 needs Python 3.11 or later. The tag `legacy-py3` holds
+mechanical Python 3 ports of both branches under `legacy/`; they were used to capture the
+regression baselines and are not maintained.
 
 In the code below, `ac` is `import active_subspaces as ac`. A 2016 name such as `ac.utils` or
 `ac.domains` raises an `AttributeError` that names its replacement and links to this page.

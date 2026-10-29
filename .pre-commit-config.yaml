@@ -16,7 +16,7 @@ repos:
     rev: v6.0.0
     hooks:
       - id: end-of-file-fixer
-        exclude: ^(legacy|tests/data)/
+        exclude: ^tests/data/
       - id: trailing-whitespace
-        exclude: ^(legacy|tests/data)/
+        exclude: ^tests/data/
       - id: check-yaml
