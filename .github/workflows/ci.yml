@@ -190,36 +190,3 @@ jobs:
         with:
           name: docs-html
           path: docs/_build/html
-
-  # The Python 3 reference ports of the 2016 code (spec 15 §5.13). Runs only while legacy/ exists,
-  # in an environment without v1 installed, one branch per process. Not a required check: the
-  # ports still have known failures (master 4 of 138, dev 14 of 166).
-  legacy:
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.11", "3.14"]
-    steps:
-      - uses: actions/checkout@v7
-      - id: present
-        run: |
-          if [ -d legacy ]; then echo "legacy=true" >> "$GITHUB_OUTPUT"; else echo "legacy=false" >> "$GITHUB_OUTPUT"; fi
-      - if: steps.present.outputs.legacy == 'true'
-        uses: actions/setup-python@v7
-        with:
-          python-version: ${{ matrix.python-version }}
-      - if: steps.present.outputs.legacy == 'true'
-        name: Install the legacy dependencies (not v1)
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install numpy scipy matplotlib pytest
-      - if: steps.present.outputs.legacy == 'true'
-        name: 2016 master (Python 3 port)
-        working-directory: legacy/port-master
-        run: PYTHONPATH="$PWD" python -m pytest -c /dev/null -p no:cacheprovider tests
-      - if: steps.present.outputs.legacy == 'true' && (success() || failure())
-        name: 2016 dev (Python 3 port)
-        working-directory: legacy/port-dev
-        run: PYTHONPATH="$PWD" python -m pytest -c /dev/null -p no:cacheprovider tests

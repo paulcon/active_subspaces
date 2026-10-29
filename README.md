@@ -101,7 +101,8 @@ Python 2.7 requirements remain available at the git tags
 [`legacy-master`](https://github.com/paulcon/active_subspaces/tree/legacy-master) (the last 2016
 `master`), [`legacy-dev`](https://github.com/paulcon/active_subspaces/tree/legacy-dev) (the
 `dev` branch) and [`0.1`](https://github.com/paulcon/active_subspaces/tree/0.1) (the original
-release).
+release). The tag [`legacy-py3`](https://github.com/paulcon/active_subspaces/tree/legacy-py3/legacy)
+holds unofficial Python 3 ports of both branches, used only to capture the regression baselines.
 
 ## AI assistance
 

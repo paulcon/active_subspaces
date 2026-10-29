@@ -2,11 +2,10 @@
 V12.4) [D-37].
 
 The 2016 functions are run from the Python 3 reference port's copy of the 2016
-``tutorials/test_functions`` sources (``legacy/port-master/``; the 2016 ``tutorials/`` tree is no
-longer in the repository), with the one library call they make
-(``BoundedNormalizer.unnormalize``) supplied by a stub with the 2016 formula. When ``legacy/`` is
-removed before v1.0 these tests skip; the baselines in ``tests/data/baselines/test_functions/``
-then carry the comparison.
+``tutorials/test_functions`` sources (``legacy/port-master/``), with the one library call they
+make (``BoundedNormalizer.unnormalize``) supplied by a stub with the 2016 formula. ``legacy/``
+was removed before v1.0 and is kept at the git tag ``legacy-py3``, so these tests skip outside
+that checkout; the baselines in ``tests/data/baselines/test_functions/`` carry the comparison.
 """
 
 from __future__ import annotations
