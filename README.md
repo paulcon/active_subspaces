@@ -1,83 +1,119 @@
-# Description
+# active_subspaces
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.158941.svg)](https://doi.org/10.5281/zenodo.158941)
+[![JOSS](https://joss.theoj.org/papers/10.21105/joss.00079/status.svg)](https://doi.org/10.21105/joss.00079)
+[![CI](https://github.com/paulcon/active_subspaces/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/paulcon/active_subspaces/actions/workflows/ci.yml)
+[![Documentation](https://readthedocs.org/projects/active-subspaces/badge/?version=latest)](https://active-subspaces.readthedocs.io/en/latest/)
 
-[Active subspaces](http://activesubspaces.org) are part of an emerging set of tools for discovering low-dimensional structure in a given function of several variables. Interesting applications arise in deterministic computer simulations of complex physical systems, where the function is the map from the physical model's input parameters to its output quantity of interest. The active subspace is the span of particular directions in the input parameter space; perturbing the inputs along these *active* directions changes the output more, on average, than perturbing the inputs orthogonally to the active directions. By focusing on the model's response along active directions and ignoring the relatively inactive directions, we *reduce the dimension* for parameter studies---such as optimization and integration---that are essential to engineering tasks such as design and uncertainty quantification.
+Python tools for discovering and exploiting **active subspaces**: low-dimensional structure in a
+function of many inputs.
 
-This library contains Python tools for discovering and exploiting a given model's active subspace. The user may provide a function handle to a complex model or its gradient with respect to the input parameters. Alternatively, the user may provide a set of input/output pairs from a previously executed set of runs (e.g., a Monte Carlo or Latin hypercube study). Essential classes and methods are documented; see documentation below. We also provide a set of [Jupyter](http://jupyter.org/) notebooks that demonstrate how to apply the code to a given model.
+The active subspace of a function f(x) is spanned by the leading eigenvectors of the matrix
+C = E[∇f ∇fᵀ], the average outer product of the gradient over the distribution of the inputs
+(gradients taken with respect to the normalized inputs).
+Perturbing the inputs along these directions changes f more, on average, than perturbing them
+along the remaining directions. When a few eigenvalues dominate, parameter studies such as
+integration, optimization and surrogate construction can work on a few active variables instead of
+all the inputs.
 
-To see active subspace in action on real science and engineering applications, see the [Active Subspaces Data Sets](https://github.com/paulcon/as-data-sets) repository, which contains several Jupyter notebooks applying the methods to study input/output relationships in complex models.
+The library
 
-# Testing
+- estimates the subspace from gradients, from input/output pairs or from a model, with bootstrap
+  intervals and rules for choosing its dimension; alternatives include sufficient dimension
+  reduction estimators (OLS, QPHD, SIR, pHd, SAVE, OPG);
+- describes the geometry of the active variables (intervals, zonotopes) and maps between full and
+  active coordinates;
+- fits polynomial and radial-basis surrogates on the active variables;
+- integrates and minimizes functions by exploiting the subspace;
+- builds a reduced model in one call;
+- plots the results with matplotlib.
 
-[![Build Status](https://travis-ci.org/paulcon/active_subspaces.svg?branch=master)](https://travis-ci.org/paulcon/active_subspaces)
+Inputs live in an explicit input space (`Uniform` or `Gaussian`). You pass data in physical
+units; the library normalizes it, and every result states whether its arrays are in physical or
+normalized coordinates. Functions are stateless and return frozen result objects that can be saved
+and loaded.
 
-We are using Travis CI for continuous integration testing. You can check out the current status [here](https://travis-ci.org/paulcon/active_subspaces).
+## Install
 
-To run tests locally:
+Until version 1.0 is on PyPI, install it from GitHub; `pip install active_subspaces` still gives the
+2016 release.
 
-```bash
-> python test.py
+```sh
+pip install "active_subspaces @ git+https://github.com/paulcon/active_subspaces@main"
 ```
 
-# Requirements and Dependencies
+Python 3.11 or later, with NumPy, SciPy and matplotlib.
 
-* [numpy](http://www.numpy.org/)
-* [scipy](http://www.scipy.org/), >= 0.15.0
-* [matplotlib](http://matplotlib.org/)
-* [Gurobi](http://www.gurobi.com/) is an _optional_ dependency. The same functionality is accomplished with SciPy's [optimize](http://docs.scipy.org/doc/scipy/reference/optimize.html) package, albeit less accurately (particularly in the quadratic programs).
+## Example
 
-If you wish to use Gurobi, you will need to install it separately by following the instructions contained in their quick-start guides for [Windows](http://www.gurobi.com/documentation/6.5/quickstart_windows.pdf), [Linux](http://www.gurobi.com/documentation/6.5/quickstart_linux.pdf), or [Mac](http://www.gurobi.com/documentation/6.5/quickstart_mac.pdf). To test your installation of Gurobi, start a python interpreter and execute the command `import gurobipy`. If there is no import exception, the active subspaces library will be able to use Gurobi.
+```python
+import numpy as np
+import active_subspaces as ac
 
-We had some initial trouble getting the Gurobi Python interface working with Enthought Python; Gurobi formally supports as subset of Python distributions, and Enthought is not one of them. However, we were able to get the interface working by following instructions in this [thread](https://groups.google.com/forum/#!searchin/gurobi/canopy/gurobi/ArCkf4a40uU/R9U1XFuMJEkJ).
+wing = ac.test_functions.WING_WEIGHT          # built-in model: 10 inputs, a Uniform space
+rng = np.random.default_rng(42)
+X = wing.space.sample(300, rng=rng)            # physical inputs, shape (300, 10)
+G = ac.evaluate_grads(wing, X=X)               # physical gradients, shape (300, 10)
 
-# Installation
+sub = ac.active_subspace(grads=G, space=wing.space, nboot=200, rng=rng)
+print(sub.n, sub.eigenvalues[:3])              # chosen dimension and leading eigenvalues
+fig, ax = ac.plotting.plot_eigenvalues(sub)    # a matplotlib Figure; nothing is shown or saved
 
-To install the active subspaces package, open the terminal/command line and clone the repository with the command
-
-```bash
-git clone https://github.com/paulcon/active_subspaces.git
+res = ac.integrate(wing, domain=ac.active_domain(sub), n_nodes=10, rng=rng)
+print(res.estimate, res.inactive_std_error)    # mean of f over the input space
 ```
 
-Navigate into the `active_subspaces` folder (where the `setup.py` file is located) and run the command
+## Documentation
 
-```bash
-python setup.py install
-```
+- Documentation: <https://active-subspaces.readthedocs.io>
+- Migration from the 2016 version: <https://active-subspaces.readthedocs.io/en/stable/migration.html>
+- Changes: [CHANGELOG.md](https://github.com/paulcon/active_subspaces/blob/main/CHANGELOG.md)
+- Applications on real models: [paulcon/as-data-sets](https://github.com/paulcon/as-data-sets)
 
-You should now be able to import the active subspaces library in Python scripts and interpreters with the command `import active_subspaces`.
+## Citing
 
-This method was tested on Windows 7 Professional, and Ubuntu 14.04 LTS, and Mac OSX El Capitan with the [Enthought](https://www.enthought.com/) Python distribution (Python 2.7.11, NumPy 1.10.4, SciPy 0.17.0, and matplotlib 1.5.1).
+If you use this library, please cite the JOSS article:
 
-# Usage
+> P. Constantine, R. Howard, A. Glaws, Z. Grey, P. Diaz, L. Fletcher. Python Active-subspaces
+> Utility Library. *Journal of Open Source Software* 1(5):79, 2016.
+> [doi:10.21105/joss.00079](https://doi.org/10.21105/joss.00079)
 
-For detailed examples of usage and results, see the Jupyter notebooks contained in the `tutorials` directory, the [active subspaces website]
-(http://activesubspaces.org/applications/), and the Active Subspaces Data Sets [repo](https://github.com/paulcon/as-data-sets).
+The software is archived on Zenodo ([doi:10.5281/zenodo.158941](https://doi.org/10.5281/zenodo.158941)).
+[CITATION.cff](https://github.com/paulcon/active_subspaces/blob/main/CITATION.cff) holds the
+full author list; GitHub's "Cite this repository" button exports it. For the methods, see P. G. Constantine, *Active Subspaces: Emerging Ideas for Dimension
+Reduction in Parameter Studies*, SIAM, 2015.
 
-The core class is the Subspaces class contained in the `subspaces.py` file. An instance of this class can compute the active subspace with a variety of methods that take either an array of gradients or input/output pairs. It contains the estimated eigenvalues (and bootstrap ranges), subspace errors (and bootstrap ranges), eigenvalues, and an array of the eigenvectors defining the active subspace. The `utils/plotters.py` file contains functions to plot these quantities and produce summary plots that show model output against the first 1 or 2 active variables. The `utils/response_surfaces.py` file contains classes for polynomial and radial-basis approximations that can be trained with input/output pairs. Both classes can predict the value and gradient at input points and have a coefficient of determination (R-squared) value that measures goodness-of-fit. The `integrals.py` and `optimizers.py` files contain functions for integrating and optimizing functions of the active variables; these rely on classes from the `domains.py` file.
+## Contributing
 
-# Documentation
+Contributions are welcome: see
+[CONTRIBUTING.md](https://github.com/paulcon/active_subspaces/blob/main/CONTRIBUTING.md) and the
+[code of conduct](https://github.com/paulcon/active_subspaces/blob/main/CODE_OF_CONDUCT.md).
+Report security issues as described in
+[SECURITY.md](https://github.com/paulcon/active_subspaces/blob/main/SECURITY.md). Contributors are
+listed in [AUTHORS.md](https://github.com/paulcon/active_subspaces/blob/main/AUTHORS.md).
 
-[![Documentation Status](https://readthedocs.org/projects/active-subspaces/badge/?version=latest)](http://active-subspaces.readthedocs.io/en/latest/?badge=latest)
+## The 2016 version
 
-Documentation can be found on [ReadTheDocs](http://active-subspaces.readthedocs.io/en/latest/).
+Version 1.0 is a rewrite for Python 3. It changes the API and has no compatibility layer; the
+[migration guide](https://active-subspaces.readthedocs.io/en/stable/migration.html) maps every 2016
+name to its replacement and says which numbers change and why. The 2016 code, its tutorials and its
+Python 2.7 requirements remain available at the git tags
+[`legacy-master`](https://github.com/paulcon/active_subspaces/tree/legacy-master) (the last 2016
+`master`), [`legacy-dev`](https://github.com/paulcon/active_subspaces/tree/legacy-dev) (the
+`dev` branch) and [`0.1`](https://github.com/paulcon/active_subspaces/tree/0.1) (the original
+release).
 
-# Community Guidelines
+## AI assistance
 
-To contribute to this project, please follow these steps. Thanks to [Marco Tezzele](https://github.com/mtezzele) for providing this helpful template.
+Version 1.0 was developed with AI assistance (Anthropic's Claude) and reviewed by the maintainer.
+The maintainer ruled on every design decision, and on every point where the code departs from a
+published method. AI-assisted commits carry a `Co-Authored-By` trailer; AI tools are not listed as
+authors.
 
-## Submitting a patch
+## License and acknowledgments
 
-1. Open a new issue describing the bug to fix or feature to add. Even if you think it's relatively minor, it's helpful to know what people are working on.
-2. Follow the normal process of [forking][] the project, and set up a new branch to work in.  It's important that each group of changes be done in separate branches to ensure that a pull request only includes the commits related to that bug or feature.
-3. Significant changes should be accompanied by tests. The project already has good test coverage, so look at some of the existing tests if you're unsure how to go about it. 
-4. Push the commits to your fork and submit a [pull request][]. Please, remember to rebase properly in order to maintain a clean, linear git history.
+MIT; see [LICENSE](https://github.com/paulcon/active_subspaces/blob/main/LICENSE).
 
-[forking]: https://help.github.com/articles/fork-a-repo
-[pull request]: https://help.github.com/articles/creating-a-pull-request
-
-If you have questions or feedback, contact [*Paul Constantine*](http://inside.mines.edu/~pconstan/).
-
-# Acknowledgments
-
-This material is based upon work supported by the U.S. Department of Energy Office of Science, Office of Advanced Scientific Computing Research, Applied Mathematics program under Award Number DE-SC-0011077.
+The 2016 library was based upon work supported by the U.S. Department of Energy Office of Science,
+Office of Advanced Scientific Computing Research, Applied Mathematics program under Award Number
+DE-SC-0011077.

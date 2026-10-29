@@ -1,0 +1,207 @@
+{
+  "schema": "active_subspaces.benchmarks/1",
+  "date": "2026-10-29",
+  "started": "2026-10-29T10:10:07-04:00",
+  "total_s": 331.6392369979876,
+  "runner": "Reference runner for now: the author's development laptop (MacBookPro16,2: Intel Core i7-1068NG7, 4 cores / 8 threads, 32 GB, macOS 14.8, Apple Accelerate). Not a dedicated machine: other jobs ran during the benchmarks; see load_average_before. Supplement to 2026-10-29.json: the reduced-model default design sizes.",
+  "selection": {
+    "only": [
+      ".N25",
+      ".N125",
+      ".N625"
+    ],
+    "quick": false
+  },
+  "environment": {
+    "python": "3.14.0",
+    "implementation": "CPython",
+    "numpy": "2.5.4",
+    "scipy": "1.18.1",
+    "active_subspaces": "1.0.0.dev0",
+    "source": "checkout src/",
+    "git_commit": "64817a19db250e4b01bcd51055ad0f7d2a5665b8",
+    "git_dirty": true,
+    "platform": "macOS-14.8.9-x86_64-i386-64bit-Mach-O",
+    "machine": "x86_64",
+    "cpu": {
+      "processor": "i386",
+      "logical_cpus": 8,
+      "model": "Intel(R) Core(TM) i7-1068NG7 CPU @ 2.30GHz",
+      "physical_cpus": "4",
+      "memory_bytes": 34359738368
+    },
+    "blas": {
+      "blas": {
+        "name": "accelerate",
+        "version": "unknown"
+      },
+      "lapack": {
+        "name": "accelerate",
+        "version": "unknown"
+      }
+    },
+    "thread_env": {
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "VECLIB_MAXIMUM_THREADS": "1",
+      "MPLBACKEND": "agg"
+    },
+    "threadpoolctl": null,
+    "load_average_at_end": [
+      2.85,
+      2.69,
+      3.47
+    ]
+  },
+  "method": {
+    "wall_s": "minimum over `repeat` timed runs of the call alone (time.perf_counter); setup is not timed",
+    "tracemalloc_peak_bytes": "peak Python/NumPy allocation during one extra run under tracemalloc; only when wall_s <= 30 s, else null",
+    "rss_peak_bytes": "process high-water RSS (getrusage ru_maxrss) after the timed runs; includes the interpreter, imports and the setup data",
+    "rss_after_setup_bytes": "high-water RSS before the first timed run",
+    "threads": "every child runs with the thread variables of thread_env",
+    "load_average_before": "os.getloadavg() just before the case's child starts; a value above the core count means the timings shared the CPU"
+  },
+  "cases": [
+    {
+      "name": "designs.active_design.uniform.n2.m100.N25",
+      "group": "active_design",
+      "params": {
+        "space": "uniform",
+        "m": 100,
+        "n": 2,
+        "n_points": 25
+      },
+      "rss_after_setup_bytes": 69652480,
+      "setup_s": 0.026945123972836882,
+      "rss_peak_bytes": 131821568,
+      "wall_s": 11.303405824990477,
+      "wall_s_all": [
+        11.303405824990477
+      ],
+      "tracemalloc_peak_bytes": 19822605,
+      "warnings": [],
+      "info": {
+        "N_v": 200,
+        "N_f": 200,
+        "method": "maximin_slsqp",
+        "min_distance": 2.3194820245486736
+      },
+      "status": "ok",
+      "process_s": 23.306466295034625,
+      "load_average_before": [
+        1.92,
+        2.8,
+        3.91
+      ],
+      "repeat": 1,
+      "boundary": false,
+      "note": "N = 5**n = 25 is the default design of build_reduced_model (model path)."
+    },
+    {
+      "name": "designs.active_design.uniform.n2.m1000.N25",
+      "group": "active_design",
+      "params": {
+        "space": "uniform",
+        "m": 1000,
+        "n": 2,
+        "n_points": 25
+      },
+      "rss_after_setup_bytes": 254066688,
+      "setup_s": 0.2354162089759484,
+      "rss_peak_bytes": 671113216,
+      "wall_s": 285.86561621399596,
+      "wall_s_all": [
+        285.86561621399596
+      ],
+      "tracemalloc_peak_bytes": null,
+      "warnings": [],
+      "info": {
+        "N_v": 2000,
+        "N_f": 2000,
+        "method": "maximin_slsqp",
+        "min_distance": 7.504976295954647
+      },
+      "status": "ok",
+      "process_s": 286.72019640897634,
+      "load_average_before": [
+        1.96,
+        2.75,
+        3.86
+      ],
+      "repeat": 1,
+      "boundary": true,
+      "note": "The reduced-model default design at m = 1000: N N_f = 50 000. Capped at 300 s."
+    },
+    {
+      "name": "designs.active_design.uniform.n3.m100.N125",
+      "group": "active_design",
+      "params": {
+        "space": "uniform",
+        "m": 100,
+        "n": 3,
+        "n_points": 125
+      },
+      "rss_after_setup_bytes": 146923520,
+      "setup_s": 0.5791198600200005,
+      "rss_peak_bytes": 3117449216,
+      "wall_s": 3.543551664974075,
+      "wall_s_all": [
+        3.543551664974075
+      ],
+      "tracemalloc_peak_bytes": 1980560465,
+      "warnings": [],
+      "info": {
+        "N_v": 9902,
+        "N_f": 9900,
+        "method": "maximin_greedy",
+        "min_distance": 1.7469664259954858
+      },
+      "status": "ok",
+      "process_s": 7.7223865750129335,
+      "load_average_before": [
+        3.05,
+        2.72,
+        3.5
+      ],
+      "repeat": 1,
+      "boundary": true,
+      "note": "Greedy; N = 5**3 is the reduced-model default design at n = 3."
+    },
+    {
+      "name": "designs.active_design.uniform.n4.m20.N625",
+      "group": "active_design",
+      "params": {
+        "space": "uniform",
+        "m": 20,
+        "n": 4,
+        "n_points": 625
+      },
+      "rss_after_setup_bytes": 72159232,
+      "setup_s": 0.09648056398145854,
+      "rss_peak_bytes": 2976780288,
+      "wall_s": 6.634853003022727,
+      "wall_s_all": [
+        6.634853003022727
+      ],
+      "tracemalloc_peak_bytes": 2901105273,
+      "warnings": [],
+      "info": {
+        "N_v": 2320,
+        "N_f": 2280,
+        "method": "maximin_greedy",
+        "min_distance": 0.7683523537794739
+      },
+      "status": "ok",
+      "process_s": 13.88902803097153,
+      "load_average_before": [
+        2.81,
+        2.68,
+        3.48
+      ],
+      "repeat": 1,
+      "boundary": true,
+      "note": "Greedy; N = 5**4 is the reduced-model default design at n = 4. Its candidate-to-vertex distance array holds 50 N N_v n doubles (2.3 GB here)."
+    }
+  ]
+}

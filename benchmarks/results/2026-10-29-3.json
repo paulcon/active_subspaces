@@ -1,0 +1,483 @@
+{
+  "schema": "active_subspaces.benchmarks/1",
+  "date": "2026-10-29",
+  "started": "2026-10-29T10:45:16-04:00",
+  "total_s": 98.86088003398618,
+  "runner": "reference runner (interim): Intel i7-1068NG7 laptop; rerun after D-177/D-178",
+  "selection": {
+    "only": [
+      "bootstrap",
+      "designs.active_design"
+    ],
+    "quick": false
+  },
+  "environment": {
+    "python": "3.14.0",
+    "implementation": "CPython",
+    "numpy": "2.5.4",
+    "scipy": "1.18.1",
+    "active_subspaces": "1.0.0.dev0",
+    "source": "checkout src/",
+    "git_commit": "64817a19db250e4b01bcd51055ad0f7d2a5665b8",
+    "git_dirty": true,
+    "platform": "macOS-14.8.9-x86_64-i386-64bit-Mach-O",
+    "machine": "x86_64",
+    "cpu": {
+      "processor": "i386",
+      "logical_cpus": 8,
+      "model": "Intel(R) Core(TM) i7-1068NG7 CPU @ 2.30GHz",
+      "physical_cpus": "4",
+      "memory_bytes": 34359738368
+    },
+    "blas": {
+      "blas": {
+        "name": "accelerate",
+        "version": "unknown"
+      },
+      "lapack": {
+        "name": "accelerate",
+        "version": "unknown"
+      }
+    },
+    "thread_env": {
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "VECLIB_MAXIMUM_THREADS": "1",
+      "MPLBACKEND": "agg"
+    },
+    "threadpoolctl": null,
+    "load_average_at_end": [
+      2.54,
+      2.55,
+      2.61
+    ]
+  },
+  "method": {
+    "wall_s": "minimum over `repeat` timed runs of the call alone (time.perf_counter); setup is not timed",
+    "tracemalloc_peak_bytes": "peak Python/NumPy allocation during one extra run under tracemalloc; only when wall_s <= 30 s, else null",
+    "rss_peak_bytes": "process high-water RSS (getrusage ru_maxrss) after the timed runs; includes the interpreter, imports and the setup data",
+    "rss_after_setup_bytes": "high-water RSS before the first timed run",
+    "threads": "every child runs with the thread variables of thread_env",
+    "load_average_before": "os.getloadavg() just before the case's child starts; a value above the core count means the timings shared the CPU"
+  },
+  "cases": [
+    {
+      "name": "bootstrap.as.m100.M1000.nboot100",
+      "group": "bootstrap",
+      "params": {
+        "estimator": "as",
+        "m": 100,
+        "M": 1000,
+        "n": 2,
+        "nboot": 100
+      },
+      "rss_after_setup_bytes": 71548928,
+      "setup_s": 0.00428653898416087,
+      "rss_peak_bytes": 104566784,
+      "wall_s": 1.6720334089477547,
+      "wall_s_all": [
+        1.6720334089477547
+      ],
+      "tracemalloc_peak_bytes": 5850641,
+      "warnings": [],
+      "info": {
+        "nboot": 100,
+        "bootstrap_arrays_bytes": 238400
+      },
+      "status": "ok",
+      "process_s": 5.972606110968627,
+      "load_average_before": [
+        2.63,
+        2.48,
+        2.59
+      ],
+      "repeat": 1,
+      "boundary": false,
+      "note": ""
+    },
+    {
+      "name": "bootstrap.as.m300.M1000.nboot20",
+      "group": "bootstrap",
+      "params": {
+        "estimator": "as",
+        "m": 300,
+        "M": 1000,
+        "n": 2,
+        "nboot": 20
+      },
+      "rss_after_setup_bytes": 76111872,
+      "setup_s": 0.012060985958669335,
+      "rss_peak_bytes": 177381376,
+      "wall_s": 3.6096963709569536,
+      "wall_s_all": [
+        3.6096963709569536
+      ],
+      "tracemalloc_peak_bytes": 20399199,
+      "warnings": [],
+      "info": {
+        "nboot": 20,
+        "bootstrap_arrays_bytes": 143680
+      },
+      "status": "ok",
+      "process_s": 9.261518795974553,
+      "load_average_before": [
+        2.58,
+        2.47,
+        2.59
+      ],
+      "repeat": 1,
+      "boundary": false,
+      "note": ""
+    },
+    {
+      "name": "bootstrap.as.m1000.M2000.nboot3",
+      "group": "bootstrap",
+      "params": {
+        "estimator": "as",
+        "m": 1000,
+        "M": 2000,
+        "n": 2,
+        "nboot": 3
+      },
+      "rss_after_setup_bytes": 117379072,
+      "setup_s": 0.06983221601694822,
+      "rss_peak_bytes": 361598976,
+      "wall_s": 23.101281867013313,
+      "wall_s_all": [
+        23.101281867013313
+      ],
+      "tracemalloc_peak_bytes": 160252402,
+      "warnings": [],
+      "info": {
+        "nboot": 3,
+        "bootstrap_arrays_bytes": 71952
+      },
+      "status": "ok",
+      "process_s": 48.402171530004125,
+      "load_average_before": [
+        2.56,
+        2.47,
+        2.59
+      ],
+      "repeat": 1,
+      "boundary": true,
+      "note": "Scaled down from nboot = 100: three replicates give the per-replicate cost."
+    },
+    {
+      "name": "designs.active_design.uniform.n2.m100.N10",
+      "group": "active_design",
+      "params": {
+        "space": "uniform",
+        "m": 100,
+        "n": 2,
+        "n_points": 10
+      },
+      "rss_after_setup_bytes": 70340608,
+      "setup_s": 0.033681964967399836,
+      "rss_peak_bytes": 74522624,
+      "wall_s": 0.006963125022593886,
+      "wall_s_all": [
+        0.006963125022593886
+      ],
+      "tracemalloc_peak_bytes": 2415161,
+      "warnings": [],
+      "info": {
+        "N_v": 200,
+        "N_f": 200,
+        "method": "maximin_greedy",
+        "min_distance": 2.4846403151626855
+      },
+      "status": "ok",
+      "process_s": 0.7277624609996565,
+      "load_average_before": [
+        2.79,
+        2.58,
+        2.62
+      ],
+      "repeat": 1,
+      "boundary": false,
+      "note": "Maximin by SLSQP (N(N-1)/2 <= 2000 pairs), 3 starts."
+    },
+    {
+      "name": "designs.active_design.uniform.n2.m1000.N10",
+      "group": "active_design",
+      "params": {
+        "space": "uniform",
+        "m": 1000,
+        "n": 2,
+        "n_points": 10
+      },
+      "rss_after_setup_bytes": 258752512,
+      "setup_s": 0.2709883820498362,
+      "rss_peak_bytes": 275763200,
+      "wall_s": 0.05144253501202911,
+      "wall_s_all": [
+        0.05144253501202911
+      ],
+      "tracemalloc_peak_bytes": 24014713,
+      "warnings": [],
+      "info": {
+        "N_v": 2000,
+        "N_f": 2000,
+        "method": "maximin_greedy",
+        "min_distance": 8.260945045060328
+      },
+      "status": "ok",
+      "process_s": 1.0600661109783687,
+      "load_average_before": [
+        2.72,
+        2.57,
+        2.62
+      ],
+      "repeat": 1,
+      "boundary": true,
+      "note": "Maximin by SLSQP; the facet constraints number N N_f = 20 000 here."
+    },
+    {
+      "name": "designs.active_design.uniform.n2.m100.N25",
+      "group": "active_design",
+      "params": {
+        "space": "uniform",
+        "m": 100,
+        "n": 2,
+        "n_points": 25
+      },
+      "rss_after_setup_bytes": 71065600,
+      "setup_s": 0.03268139105057344,
+      "rss_peak_bytes": 81113088,
+      "wall_s": 0.01701928599504754,
+      "wall_s_all": [
+        0.01701928599504754
+      ],
+      "tracemalloc_peak_bytes": 6034521,
+      "warnings": [],
+      "info": {
+        "N_v": 200,
+        "N_f": 200,
+        "method": "maximin_greedy",
+        "min_distance": 1.9014999557851386
+      },
+      "status": "ok",
+      "process_s": 0.7917055840371177,
+      "load_average_before": [
+        2.72,
+        2.57,
+        2.62
+      ],
+      "repeat": 1,
+      "boundary": false,
+      "note": "N = 5**n = 25 is the default design of build_reduced_model (model path)."
+    },
+    {
+      "name": "designs.active_design.uniform.n2.m1000.N25",
+      "group": "active_design",
+      "params": {
+        "space": "uniform",
+        "m": 1000,
+        "n": 2,
+        "n_points": 25
+      },
+      "rss_after_setup_bytes": 250855424,
+      "setup_s": 0.27528248802991584,
+      "rss_peak_bytes": 291053568,
+      "wall_s": 0.12920256605139002,
+      "wall_s_all": [
+        0.12920256605139002
+      ],
+      "tracemalloc_peak_bytes": 60033641,
+      "warnings": [],
+      "info": {
+        "N_v": 2000,
+        "N_f": 2000,
+        "method": "maximin_greedy",
+        "min_distance": 6.312574052481884
+      },
+      "status": "ok",
+      "process_s": 1.1594177469960414,
+      "load_average_before": [
+        2.72,
+        2.57,
+        2.62
+      ],
+      "repeat": 1,
+      "boundary": true,
+      "note": "The reduced-model default design at m = 1000: N N_f = 50 000. Capped at 300 s."
+    },
+    {
+      "name": "designs.active_design.uniform.n3.m30.N10",
+      "group": "active_design",
+      "params": {
+        "space": "uniform",
+        "m": 30,
+        "n": 3,
+        "n_points": 10
+      },
+      "rss_after_setup_bytes": 82616320,
+      "setup_s": 0.054865264042746276,
+      "rss_peak_bytes": 95002624,
+      "wall_s": 0.025179132004268467,
+      "wall_s_all": [
+        0.025179132004268467
+      ],
+      "tracemalloc_peak_bytes": 13966377,
+      "warnings": [],
+      "info": {
+        "N_v": 872,
+        "N_f": 870,
+        "method": "maximin_greedy",
+        "min_distance": 1.9052279477315164
+      },
+      "status": "ok",
+      "process_s": 0.7152273919782601,
+      "load_average_before": [
+        2.72,
+        2.57,
+        2.62
+      ],
+      "repeat": 1,
+      "boundary": false,
+      "note": "Maximin by SLSQP; N N_f = 8 700 facet constraints."
+    },
+    {
+      "name": "designs.active_design.uniform.n3.m100.N10",
+      "group": "active_design",
+      "params": {
+        "space": "uniform",
+        "m": 100,
+        "n": 3,
+        "n_points": 10
+      },
+      "rss_after_setup_bytes": 113307648,
+      "setup_s": 0.5534185339929536,
+      "rss_peak_bytes": 353492992,
+      "wall_s": 0.29239760601194575,
+      "wall_s_all": [
+        0.29239760601194575
+      ],
+      "tracemalloc_peak_bytes": 158452857,
+      "warnings": [],
+      "info": {
+        "N_v": 9902,
+        "N_f": 9900,
+        "method": "maximin_greedy",
+        "min_distance": 3.239807155780861
+      },
+      "status": "ok",
+      "process_s": 1.7622154289856553,
+      "load_average_before": [
+        2.72,
+        2.57,
+        2.62
+      ],
+      "repeat": 1,
+      "boundary": true,
+      "note": "Maximin by SLSQP; N N_f = 99 020 facet constraints. Capped at 300 s."
+    },
+    {
+      "name": "designs.active_design.uniform.n3.m100.N100",
+      "group": "active_design",
+      "params": {
+        "space": "uniform",
+        "m": 100,
+        "n": 3,
+        "n_points": 100
+      },
+      "rss_after_setup_bytes": 139075584,
+      "setup_s": 0.5766609359998256,
+      "rss_peak_bytes": 2515492864,
+      "wall_s": 2.7996802990091965,
+      "wall_s_all": [
+        2.7996802990091965
+      ],
+      "tracemalloc_peak_bytes": 1584449073,
+      "warnings": [],
+      "info": {
+        "N_v": 9902,
+        "N_f": 9900,
+        "method": "maximin_greedy",
+        "min_distance": 1.8301308257561948
+      },
+      "status": "ok",
+      "process_s": 6.629004230955616,
+      "load_average_before": [
+        2.67,
+        2.56,
+        2.61
+      ],
+      "repeat": 1,
+      "boundary": false,
+      "note": "Greedy farthest-point (N(N-1)/2 = 4 950 > 2000 pairs)."
+    },
+    {
+      "name": "designs.active_design.uniform.n3.m100.N125",
+      "group": "active_design",
+      "params": {
+        "space": "uniform",
+        "m": 100,
+        "n": 3,
+        "n_points": 125
+      },
+      "rss_after_setup_bytes": 126545920,
+      "setup_s": 0.5407487049815245,
+      "rss_peak_bytes": 3097038848,
+      "wall_s": 3.603135267039761,
+      "wall_s_all": [
+        3.603135267039761
+      ],
+      "tracemalloc_peak_bytes": 1980560465,
+      "warnings": [],
+      "info": {
+        "N_v": 9902,
+        "N_f": 9900,
+        "method": "maximin_greedy",
+        "min_distance": 1.7469664259954858
+      },
+      "status": "ok",
+      "process_s": 7.995744699961506,
+      "load_average_before": [
+        2.69,
+        2.57,
+        2.62
+      ],
+      "repeat": 1,
+      "boundary": true,
+      "note": "Greedy; N = 5**3 is the reduced-model default design at n = 3."
+    },
+    {
+      "name": "designs.active_design.uniform.n4.m20.N625",
+      "group": "active_design",
+      "params": {
+        "space": "uniform",
+        "m": 20,
+        "n": 4,
+        "n_points": 625
+      },
+      "rss_after_setup_bytes": 73043968,
+      "setup_s": 0.10854736500186846,
+      "rss_peak_bytes": 2976137216,
+      "wall_s": 6.849922102992423,
+      "wall_s_all": [
+        6.849922102992423
+      ],
+      "tracemalloc_peak_bytes": 2901105273,
+      "warnings": [],
+      "info": {
+        "N_v": 2320,
+        "N_f": 2280,
+        "method": "maximin_greedy",
+        "min_distance": 0.7683523537794739
+      },
+      "status": "ok",
+      "process_s": 14.380605697981082,
+      "load_average_before": [
+        2.9,
+        2.62,
+        2.63
+      ],
+      "repeat": 1,
+      "boundary": true,
+      "note": "Greedy; N = 5**4 is the reduced-model default design at n = 4. Its candidate-to-vertex distance array holds 50 N N_v n doubles (2.3 GB here)."
+    }
+  ]
+}

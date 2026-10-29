@@ -1,0 +1,72 @@
+cff-version: 1.2.0
+message: >-
+  If you use this software, please cite the article in preferred-citation.
+  To cite the software itself, use the metadata below.
+title: "active_subspaces: Python Active-subspaces Utility Library"
+abstract: >-
+  Python tools for discovering and exploiting active subspaces: low-dimensional
+  structure in functions of many inputs, with subspace estimation, geometry of the
+  active variables, surrogates, integration, optimization and reduced models.
+type: software
+version: 1.0.0.dev0
+license: MIT
+repository-code: "https://github.com/paulcon/active_subspaces"
+url: "https://active-subspaces.readthedocs.io"
+doi: 10.5281/zenodo.158941
+keywords:
+  - active subspaces
+  - dimension reduction
+  - uncertainty quantification
+  - sensitivity analysis
+authors:
+  - given-names: Paul G.
+    family-names: Constantine
+    orcid: "https://orcid.org/0000-0003-3726-6307"
+  - given-names: Ryan
+    family-names: Howard
+  - given-names: Andrew
+    family-names: Glaws
+    orcid: "https://orcid.org/0000-0002-7268-1883"
+  - given-names: Zachary
+    family-names: Grey
+    orcid: "https://orcid.org/0000-0003-1244-1623"
+  - given-names: Paul
+    family-names: Diaz
+    orcid: "https://orcid.org/0000-0002-0971-0231"
+  - given-names: Leslie
+    family-names: Fletcher
+  - given-names: Jeffrey M.
+    family-names: Hokanson
+    orcid: "https://orcid.org/0000-0003-3059-5298"
+  - given-names: Marco
+    family-names: Tezzele
+    orcid: "https://orcid.org/0000-0001-9747-6328"
+  - given-names: Chris
+    family-names: Maes
+preferred-citation:
+  type: article
+  title: "Python Active-subspaces Utility Library"
+  authors:
+    - given-names: Paul
+      family-names: Constantine
+      orcid: "https://orcid.org/0000-0003-3726-6307"
+    - given-names: Ryan
+      family-names: Howard
+    - given-names: Andrew
+      family-names: Glaws
+      orcid: "https://orcid.org/0000-0002-7268-1883"
+    - given-names: Zachary
+      family-names: Grey
+      orcid: "https://orcid.org/0000-0003-1244-1623"
+    - given-names: Paul
+      family-names: Diaz
+      orcid: "https://orcid.org/0000-0002-0971-0231"
+    - given-names: Leslie
+      family-names: Fletcher
+  journal: "Journal of Open Source Software"
+  volume: 1
+  issue: 5
+  start: 79
+  year: 2016
+  month: 9
+  doi: 10.21105/joss.00079
