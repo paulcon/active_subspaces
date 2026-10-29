@@ -1,0 +1,91 @@
+{
+ "area": "designs",
+ "case": "maximin",
+ "case_index": 23,
+ "environment": {
+  "blas": "accelerate unknown",
+  "legacy_branch": "master",
+  "legacy_commit": "64817a19db250e4b01bcd51055ad0f7d2a5665b8",
+  "machine": "x86_64",
+  "numpy": "2.5.4",
+  "platform": "macOS-14.8.9-x86_64-i386-64bit-Mach-O",
+  "port_digest": "feb87c4f57e6ddc637b7d9874635645acebb788c000483c5b85bc3d72d0b37db",
+  "python": "3.14.0",
+  "scipy": "1.18.1"
+ },
+ "inputs": {
+  "N": {
+   "dtype": "int64",
+   "shape": [
+    2
+   ]
+  },
+  "W1": {
+   "dtype": "float64",
+   "shape": [
+    3,
+    2
+   ]
+  },
+  "vertices": {
+   "dtype": "float64",
+   "shape": [
+    4,
+    2
+   ]
+  }
+ },
+ "inputs_from": "deterministic: square zonotope of W1 = [e1 e2], m = 3",
+ "legacy_call": "maximin_design(vertices, N) for N in (5, 10), seeds 0..19",
+ "legacy_seeds": {
+  "np.random.seed": "0..19, in place of the fixed reseed with 42 inside maximin_design [R-03]"
+ },
+ "not_stored": {},
+ "notes": [
+  "min_distance = smallest distance among the design points and to the vertices (v1 ActiveDesign.min_distance)."
+ ],
+ "outputs": {
+  "min_distance_N10": {
+   "direction": "higher",
+   "dtype": "float64",
+   "shape": [
+    0
+   ],
+   "spec": "09 \u00a78",
+   "stats": {
+    "R": 20,
+    "mean": 0.35515345556657757,
+    "median": 0.48461339823554295,
+    "n_failed": 0,
+    "q05": 2.1094237467877976e-16,
+    "q95": 0.6252596006756388,
+    "sd": 0.25216517014865747,
+    "seeds": "0..19"
+   },
+   "status": "summary"
+  },
+  "min_distance_N5": {
+   "direction": "higher",
+   "dtype": "float64",
+   "shape": [
+    0
+   ],
+   "spec": "09 \u00a78",
+   "stats": {
+    "R": 20,
+    "mean": 0.7084428752001928,
+    "median": 0.7696666585710554,
+    "n_failed": 0,
+    "q05": 3.9138400428249007e-16,
+    "q95": 0.9907296580703334,
+    "sd": 0.26045404602051886,
+    "seeds": "0..19"
+   },
+   "status": "summary"
+  }
+ },
+ "seed_sequence": [
+  37,
+  23
+ ]
+}

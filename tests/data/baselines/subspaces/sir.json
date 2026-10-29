@@ -1,0 +1,73 @@
+{
+ "area": "subspaces",
+ "case": "sir",
+ "case_index": 6,
+ "environment": {
+  "blas": "accelerate unknown",
+  "legacy_branch": "dev",
+  "legacy_commit": "361ba2c3052d8346c581f9a11fd0ca755a351d25",
+  "machine": "x86_64",
+  "numpy": "2.5.4",
+  "platform": "macOS-14.8.9-x86_64-i386-64bit-Mach-O",
+  "port_digest": "9a53de7dd230655adcf1152612ed0a58c9853b2b1071cc1ec6a8e7433df84ebd",
+  "python": "3.14.0",
+  "scipy": "1.18.1"
+ },
+ "inputs": {
+  "X": {
+   "dtype": "float64",
+   "shape": [
+    200,
+    4
+   ]
+  },
+  "f": {
+   "dtype": "float64",
+   "shape": [
+    200
+   ]
+  },
+  "n_slices": {
+   "dtype": "int64",
+   "shape": []
+  }
+ },
+ "inputs_from": "SeedSequence",
+ "legacy_call": "sir_subspace(X, f[:, None], np.full((M, 1), 1/M))  # H = 10 percentile slices",
+ "legacy_seeds": {},
+ "not_stored": {},
+ "notes": [
+  "Gaussian X, distinct f, M = 200 divisible by S = 10: the 2016 percentile slices equal v1's equal-count slices."
+ ],
+ "outputs": {
+  "W": {
+   "compare": "eigvecs",
+   "dtype": "float64",
+   "shape": [
+    4,
+    4
+   ],
+   "status": "reference",
+   "tolerance": {
+    "scale": "max",
+    "tier": "F10"
+   }
+  },
+  "e": {
+   "compare": "array",
+   "dtype": "float64",
+   "shape": [
+    4
+   ],
+   "status": "reference",
+   "tolerance": {
+    "scale": "lambda1",
+    "tier": "F10"
+   }
+  }
+ },
+ "seed_sequence": [
+  37,
+  6
+ ]
+}

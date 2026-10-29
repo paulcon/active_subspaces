@@ -1,0 +1,75 @@
+{
+ "area": "reduced_model",
+ "case": "probability",
+ "case_index": 30,
+ "environment": {
+  "blas": "accelerate unknown",
+  "legacy_branch": "dev",
+  "legacy_commit": "361ba2c3052d8346c581f9a11fd0ca755a351d25",
+  "machine": "x86_64",
+  "numpy": "2.5.4",
+  "platform": "macOS-14.8.9-x86_64-i386-64bit-Mach-O",
+  "port_digest": "9a53de7dd230655adcf1152612ed0a58c9853b2b1071cc1ec6a8e7433df84ebd",
+  "python": "3.14.0",
+  "scipy": "1.18.1"
+ },
+ "inputs": {
+  "a": {
+   "dtype": "float64",
+   "shape": [
+    3
+   ]
+  },
+  "bounds": {
+   "dtype": "float64",
+   "shape": [
+    2
+   ]
+  },
+  "n_samples": {
+   "dtype": "int64",
+   "shape": []
+  }
+ },
+ "inputs_from": "deterministic surrogate g(x) = a^T x on Gaussian inputs",
+ "legacy_call": "ActiveSubspaceReducedModel(3, False) with as_respsurf(X) = X a; probability(lb, ub, M=10000) -> (p, plb, pub)",
+ "legacy_seeds": {
+  "np.random.seed": 0
+ },
+ "not_stored": {},
+ "notes": [
+  "2016 plb = p + 2.58 se and pub = p - 2.58 se: the pair is reversed."
+ ],
+ "outputs": {
+  "interval": {
+   "dtype": "float64",
+   "finding": "C-06",
+   "relation": {
+    "atol": 0.002,
+    "kind": "swap",
+    "level": 0.99,
+    "n": 10000,
+    "p": 0.4778
+   },
+   "shape": [
+    2
+   ],
+   "status": "known_wrong"
+  },
+  "p": {
+   "dtype": "float64",
+   "note": "one Monte Carlo estimate; sd is its standard error",
+   "shape": [],
+   "stats": {
+    "R": 1,
+    "mean": 0.4778,
+    "sd": 0.00499506916869026
+   },
+   "status": "summary"
+  }
+ },
+ "seed_sequence": [
+  37,
+  30
+ ]
+}

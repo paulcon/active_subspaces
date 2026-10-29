@@ -1,0 +1,91 @@
+{
+ "area": "subspaces",
+ "case": "as_exact_rule",
+ "case_index": 0,
+ "environment": {
+  "blas": "accelerate unknown",
+  "legacy_branch": "master",
+  "legacy_commit": "64817a19db250e4b01bcd51055ad0f7d2a5665b8",
+  "machine": "x86_64",
+  "numpy": "2.5.4",
+  "platform": "macOS-14.8.9-x86_64-i386-64bit-Mach-O",
+  "port_digest": "feb87c4f57e6ddc637b7d9874635645acebb788c000483c5b85bc3d72d0b37db",
+  "python": "3.14.0",
+  "scipy": "1.18.1"
+ },
+ "inputs": {
+  "K": {
+   "dtype": "float64",
+   "shape": [
+    5,
+    5
+   ]
+  },
+  "X": {
+   "dtype": "float64",
+   "shape": [
+    32,
+    5
+   ]
+  },
+  "grads": {
+   "dtype": "float64",
+   "shape": [
+    32,
+    5
+   ]
+  },
+  "weights": {
+   "dtype": "float64",
+   "shape": [
+    32
+   ]
+  }
+ },
+ "inputs_from": "KA-1 (spec 01 \u00a73.2): 2-point Gauss-Legendre tensor nodes {\u00b11/sqrt(3)}^5, weights 1/32",
+ "legacy_call": "Subspaces().compute(df=grads, weights=weights[:, None])  # sstype='AS', ptype='EVG'",
+ "legacy_seeds": {},
+ "not_stored": {},
+ "notes": [],
+ "outputs": {
+  "W": {
+   "compare": "eigvecs",
+   "dtype": "float64",
+   "shape": [
+    5,
+    5
+   ],
+   "status": "reference",
+   "tolerance": {
+    "scale": "max",
+    "tier": "F10"
+   }
+  },
+  "e": {
+   "compare": "array",
+   "dtype": "float64",
+   "shape": [
+    5
+   ],
+   "status": "reference",
+   "tolerance": {
+    "scale": "lambda1",
+    "tier": "F12"
+   }
+  },
+  "n": {
+   "compare": "exact",
+   "dtype": "int64",
+   "shape": [],
+   "status": "reference",
+   "tolerance": {
+    "scale": "max",
+    "tier": "X"
+   }
+  }
+ },
+ "seed_sequence": [
+  37,
+  0
+ ]
+}

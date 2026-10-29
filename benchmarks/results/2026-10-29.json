@@ -1,0 +1,1860 @@
+{
+  "schema": "active_subspaces.benchmarks/1",
+  "date": "2026-10-29",
+  "started": "2026-10-29T09:50:47-04:00",
+  "total_s": 1096.858827066957,
+  "runner": "Reference runner for now: the author's development laptop (MacBook Pro, Intel Core i7-1068NG7, 4 cores / 8 threads, 32 GB, macOS 14, Apple Accelerate). Not a dedicated machine: other jobs ran during the benchmarks; see load_average_before.",
+  "selection": {
+    "only": [],
+    "quick": false
+  },
+  "environment": {
+    "python": "3.14.0",
+    "implementation": "CPython",
+    "numpy": "2.5.4",
+    "scipy": "1.18.1",
+    "active_subspaces": "1.0.0.dev0",
+    "source": "checkout src/",
+    "git_commit": "64817a19db250e4b01bcd51055ad0f7d2a5665b8",
+    "git_dirty": true,
+    "platform": "macOS-14.8.9-x86_64-i386-64bit-Mach-O",
+    "machine": "x86_64",
+    "cpu": {
+      "processor": "i386",
+      "logical_cpus": 8,
+      "model": "Intel(R) Core(TM) i7-1068NG7 CPU @ 2.30GHz",
+      "physical_cpus": "4",
+      "memory_bytes": 34359738368
+    },
+    "blas": {
+      "blas": {
+        "name": "accelerate",
+        "version": "unknown"
+      },
+      "lapack": {
+        "name": "accelerate",
+        "version": "unknown"
+      }
+    },
+    "thread_env": {
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "VECLIB_MAXIMUM_THREADS": "1",
+      "MPLBACKEND": "agg"
+    },
+    "threadpoolctl": null,
+    "load_average_at_end": [
+      2.52,
+      3.09,
+      4.09
+    ]
+  },
+  "method": {
+    "wall_s": "minimum over `repeat` timed runs of the call alone (time.perf_counter); setup is not timed",
+    "tracemalloc_peak_bytes": "peak Python/NumPy allocation during one extra run under tracemalloc; only when wall_s <= 30 s, else null",
+    "rss_peak_bytes": "process high-water RSS (getrusage ru_maxrss) after the timed runs; includes the interpreter, imports and the setup data",
+    "rss_after_setup_bytes": "high-water RSS before the first timed run",
+    "threads": "every child runs with the thread variables of thread_env",
+    "load_average_before": "os.getloadavg() just before the case's child starts; a value above the core count means the timings shared the CPU"
+  },
+  "cases": [
+    {
+      "name": "subspace.as.m1000.M2000",
+      "group": "subspace_estimation",
+      "params": {
+        "estimator": "as",
+        "m": 1000,
+        "M": 2000,
+        "n": 2,
+        "uses": [
+          "grads"
+        ]
+      },
+      "rss_after_setup_bytes": 117837824,
+      "setup_s": 0.08842086896765977,
+      "rss_peak_bytes": 376225792,
+      "wall_s": 1.1203575090039521,
+      "wall_s_all": [
+        1.1301814210019074,
+        1.4452065519872122,
+        1.1203575090039521
+      ],
+      "tracemalloc_peak_bytes": 136155509,
+      "warnings": [],
+      "info": {
+        "n": 2,
+        "eigenvectors_bytes": 8000000
+      },
+      "status": "ok",
+      "process_s": 5.776428377022967,
+      "load_average_before": [
+        8.16,
+        5.88,
+        4.38
+      ],
+      "repeat": 3,
+      "boundary": false,
+      "note": ""
+    },
+    {
+      "name": "subspace.as.m1000.M10000",
+      "group": "subspace_estimation",
+      "params": {
+        "estimator": "as",
+        "m": 1000,
+        "M": 10000,
+        "n": 2,
+        "uses": [
+          "grads"
+        ]
+      },
+      "rss_after_setup_bytes": 310829056,
+      "setup_s": 0.5098827040055767,
+      "rss_peak_bytes": 768888832,
+      "wall_s": 2.8289993420476094,
+      "wall_s_all": [
+        2.8289993420476094
+      ],
+      "tracemalloc_peak_bytes": 456219605,
+      "warnings": [],
+      "info": {
+        "n": 2,
+        "eigenvectors_bytes": 8000000
+      },
+      "status": "ok",
+      "process_s": 7.354733609012328,
+      "load_average_before": [
+        8.07,
+        5.9,
+        4.4
+      ],
+      "repeat": 1,
+      "boundary": false,
+      "note": ""
+    },
+    {
+      "name": "subspace.nas.m1000.M2000",
+      "group": "subspace_estimation",
+      "params": {
+        "estimator": "nas",
+        "m": 1000,
+        "M": 2000,
+        "n": 2,
+        "uses": [
+          "grads"
+        ]
+      },
+      "rss_after_setup_bytes": 117592064,
+      "setup_s": 0.07722855795873329,
+      "rss_peak_bytes": 409006080,
+      "wall_s": 1.094430863042362,
+      "wall_s_all": [
+        1.138251127966214,
+        1.094430863042362,
+        1.2148129459819756
+      ],
+      "tracemalloc_peak_bytes": 136155525,
+      "warnings": [],
+      "info": {
+        "n": 2,
+        "eigenvectors_bytes": 8000000
+      },
+      "status": "ok",
+      "process_s": 5.537860997021198,
+      "load_average_before": [
+        8.34,
+        6.03,
+        4.46
+      ],
+      "repeat": 3,
+      "boundary": false,
+      "note": ""
+    },
+    {
+      "name": "subspace.asx.m1000.M2000",
+      "group": "subspace_estimation",
+      "params": {
+        "estimator": "asx",
+        "m": 1000,
+        "M": 2000,
+        "n": 2,
+        "uses": [
+          "X",
+          "grads"
+        ]
+      },
+      "rss_after_setup_bytes": 120791040,
+      "setup_s": 0.09028143499745056,
+      "rss_peak_bytes": 346968064,
+      "wall_s": 0.5685130420024507,
+      "wall_s_all": [
+        0.6059771649888717,
+        0.5685130420024507,
+        0.5895299229887314
+      ],
+      "tracemalloc_peak_bytes": 80125162,
+      "warnings": [
+        "validity.assumption"
+      ],
+      "info": {
+        "n": 2,
+        "eigenvectors_bytes": 8000000
+      },
+      "status": "ok",
+      "process_s": 3.6006553869810887,
+      "load_average_before": [
+        8.48,
+        6.1,
+        4.49
+      ],
+      "repeat": 3,
+      "boundary": false,
+      "note": ""
+    },
+    {
+      "name": "subspace.ols.m1000.M2000",
+      "group": "subspace_estimation",
+      "params": {
+        "estimator": "ols",
+        "m": 1000,
+        "M": 2000,
+        "n": 2,
+        "uses": [
+          "X",
+          "f"
+        ]
+      },
+      "rss_after_setup_bytes": 118382592,
+      "setup_s": 0.11463524296414107,
+      "rss_peak_bytes": 342061056,
+      "wall_s": 0.72584209399065,
+      "wall_s_all": [
+        0.9818046339787543,
+        0.8357407879666425,
+        0.72584209399065
+      ],
+      "tracemalloc_peak_bytes": 56147255,
+      "warnings": [
+        "validity.assumption"
+      ],
+      "info": {
+        "n": 2,
+        "eigenvectors_bytes": 8000000
+      },
+      "status": "ok",
+      "process_s": 4.529805033991579,
+      "load_average_before": [
+        11.96,
+        6.86,
+        4.77
+      ],
+      "repeat": 3,
+      "boundary": false,
+      "note": ""
+    },
+    {
+      "name": "subspace.sir.m1000.M2000",
+      "group": "subspace_estimation",
+      "params": {
+        "estimator": "sir",
+        "m": 1000,
+        "M": 2000,
+        "n": 2,
+        "uses": [
+          "X",
+          "f"
+        ]
+      },
+      "rss_after_setup_bytes": 118517760,
+      "setup_s": 0.125519152963534,
+      "rss_peak_bytes": 348872704,
+      "wall_s": 0.7611281280405819,
+      "wall_s_all": [
+        0.9376171180047095,
+        0.8991056489758193,
+        0.7611281280405819
+      ],
+      "tracemalloc_peak_bytes": 72149248,
+      "warnings": [
+        "validity.assumption"
+      ],
+      "info": {
+        "n": 2,
+        "eigenvectors_bytes": 8000000
+      },
+      "status": "ok",
+      "process_s": 4.664617365982849,
+      "load_average_before": [
+        11.56,
+        6.86,
+        4.78
+      ],
+      "repeat": 3,
+      "boundary": false,
+      "note": ""
+    },
+    {
+      "name": "subspace.phd.m1000.M2000",
+      "group": "subspace_estimation",
+      "params": {
+        "estimator": "phd",
+        "m": 1000,
+        "M": 2000,
+        "n": 2,
+        "uses": [
+          "X",
+          "f"
+        ]
+      },
+      "rss_after_setup_bytes": 118808576,
+      "setup_s": 0.15837003098567948,
+      "rss_peak_bytes": 361177088,
+      "wall_s": 0.9138833800097927,
+      "wall_s_all": [
+        1.0656981749925762,
+        1.0255864309729077,
+        0.9138833800097927
+      ],
+      "tracemalloc_peak_bytes": 80157251,
+      "warnings": [
+        "validity.assumption"
+      ],
+      "info": {
+        "n": 2,
+        "eigenvectors_bytes": 8000000
+      },
+      "status": "ok",
+      "process_s": 5.455524186021648,
+      "load_average_before": [
+        11.56,
+        6.86,
+        4.78
+      ],
+      "repeat": 3,
+      "boundary": false,
+      "note": ""
+    },
+    {
+      "name": "subspace.save.m1000.M2000",
+      "group": "subspace_estimation",
+      "params": {
+        "estimator": "save",
+        "m": 1000,
+        "M": 2000,
+        "n": 2,
+        "uses": [
+          "X",
+          "f"
+        ]
+      },
+      "rss_after_setup_bytes": 119185408,
+      "setup_s": 0.10328487399965525,
+      "rss_peak_bytes": 423403520,
+      "wall_s": 1.4925541370175779,
+      "wall_s_all": [
+        1.8372038769884966,
+        1.6147582560079172,
+        1.4925541370175779
+      ],
+      "tracemalloc_peak_bytes": 81665900,
+      "warnings": [
+        "validity.assumption"
+      ],
+      "info": {
+        "n": 2,
+        "eigenvectors_bytes": 8000000
+      },
+      "status": "ok",
+      "process_s": 7.8669178780401126,
+      "load_average_before": [
+        10.94,
+        6.88,
+        4.81
+      ],
+      "repeat": 3,
+      "boundary": false,
+      "note": ""
+    },
+    {
+      "name": "subspace.qphd.m30.M1000",
+      "group": "subspace_estimation",
+      "params": {
+        "estimator": "qphd",
+        "m": 30,
+        "M": 1000,
+        "n": 2,
+        "uses": [
+          "X",
+          "f"
+        ]
+      },
+      "rss_after_setup_bytes": 71237632,
+      "setup_s": 0.002827588003128767,
+      "rss_peak_bytes": 126300160,
+      "wall_s": 0.10901207401184365,
+      "wall_s_all": [
+        0.14537637395551428,
+        0.10901207401184365,
+        0.11152474296977744
+      ],
+      "tracemalloc_peak_bytes": 10971432,
+      "warnings": [
+        "validity.assumption"
+      ],
+      "info": {
+        "n": 2,
+        "eigenvectors_bytes": 7200
+      },
+      "status": "ok",
+      "process_s": 1.537725277012214,
+      "load_average_before": [
+        10.78,
+        6.92,
+        4.84
+      ],
+      "repeat": 3,
+      "boundary": false,
+      "note": "QPHD needs M >= (m+1)(m+2)/2 samples (501 501 at m = 1000), so it is run at m = 30."
+    },
+    {
+      "name": "subspace.ss.m100.M1000",
+      "group": "subspace_estimation",
+      "params": {
+        "estimator": "ss",
+        "m": 100,
+        "M": 1000,
+        "n": 2,
+        "uses": [
+          "X",
+          "f"
+        ]
+      },
+      "rss_after_setup_bytes": 73064448,
+      "setup_s": 0.006452802976127714,
+      "rss_peak_bytes": 144654336,
+      "wall_s": 1.7193572630058043,
+      "wall_s_all": [
+        1.7918913519824855,
+        1.7193572630058043,
+        1.782183985982556
+      ],
+      "tracemalloc_peak_bytes": 65642044,
+      "warnings": [
+        "validity.assumption"
+      ],
+      "info": {
+        "n": 2,
+        "eigenvectors_bytes": 80000
+      },
+      "status": "ok",
+      "process_s": 8.240418408997357,
+      "load_average_before": [
+        10.78,
+        6.92,
+        4.84
+      ],
+      "repeat": 3,
+      "boundary": false,
+      "note": "SS forms all M^2 pairwise difference quotients: O(M^2 m^2); run at m = 100."
+    },
+    {
+      "name": "subspace.opg.m100.M1000",
+      "group": "subspace_estimation",
+      "params": {
+        "estimator": "opg",
+        "m": 100,
+        "M": 1000,
+        "n": 2,
+        "uses": [
+          "X",
+          "f"
+        ]
+      },
+      "rss_after_setup_bytes": 74194944,
+      "setup_s": 0.007501195999793708,
+      "rss_peak_bytes": 178987008,
+      "wall_s": 3.0263132179970853,
+      "wall_s_all": [
+        3.347476369992364,
+        3.372819435026031,
+        3.0263132179970853
+      ],
+      "tracemalloc_peak_bytes": 71322534,
+      "warnings": [],
+      "info": {
+        "n": 2,
+        "eigenvectors_bytes": 80000
+      },
+      "status": "ok",
+      "process_s": 13.623897442012094,
+      "load_average_before": [
+        10.59,
+        7.0,
+        4.89
+      ],
+      "repeat": 3,
+      "boundary": false,
+      "note": "OPG is local linear gradients at every sample; see the gradients.local_linear cases."
+    },
+    {
+      "name": "bootstrap.as.m100.M1000.nboot100",
+      "group": "bootstrap",
+      "params": {
+        "estimator": "as",
+        "m": 100,
+        "M": 1000,
+        "n": 2,
+        "nboot": 100
+      },
+      "rss_after_setup_bytes": 72761344,
+      "setup_s": 0.005767961964011192,
+      "rss_peak_bytes": 113041408,
+      "wall_s": 2.393322892021388,
+      "wall_s_all": [
+        2.393322892021388
+      ],
+      "tracemalloc_peak_bytes": 5843790,
+      "warnings": [],
+      "info": {
+        "nboot": 100,
+        "bootstrap_arrays_bytes": 238400
+      },
+      "status": "ok",
+      "process_s": 6.276355626992881,
+      "load_average_before": [
+        9.99,
+        7.05,
+        4.95
+      ],
+      "repeat": 1,
+      "boundary": false,
+      "note": ""
+    },
+    {
+      "name": "bootstrap.as.m300.M1000.nboot20",
+      "group": "bootstrap",
+      "params": {
+        "estimator": "as",
+        "m": 300,
+        "M": 1000,
+        "n": 2,
+        "nboot": 20
+      },
+      "rss_after_setup_bytes": 77053952,
+      "setup_s": 0.014862940006423742,
+      "rss_peak_bytes": 212951040,
+      "wall_s": 8.436626739043277,
+      "wall_s_all": [
+        8.436626739043277
+      ],
+      "tracemalloc_peak_bytes": 20394945,
+      "warnings": [],
+      "info": {
+        "nboot": 20,
+        "bootstrap_arrays_bytes": 143680
+      },
+      "status": "ok",
+      "process_s": 20.342243584047537,
+      "load_average_before": [
+        9.67,
+        7.03,
+        4.95
+      ],
+      "repeat": 1,
+      "boundary": false,
+      "note": ""
+    },
+    {
+      "name": "bootstrap.as.m1000.M2000.nboot3",
+      "group": "bootstrap",
+      "params": {
+        "estimator": "as",
+        "m": 1000,
+        "M": 2000,
+        "n": 2,
+        "nboot": 3
+      },
+      "rss_after_setup_bytes": 118411264,
+      "setup_s": 0.1002571849967353,
+      "rss_peak_bytes": 480784384,
+      "wall_s": 97.09708297398174,
+      "wall_s_all": [
+        97.09708297398174
+      ],
+      "tracemalloc_peak_bytes": null,
+      "warnings": [],
+      "info": {
+        "nboot": 3,
+        "bootstrap_arrays_bytes": 71952
+      },
+      "status": "ok",
+      "process_s": 98.38769873202546,
+      "load_average_before": [
+        9.37,
+        7.13,
+        5.03
+      ],
+      "repeat": 1,
+      "boundary": true,
+      "note": "Scaled down from nboot = 100: three replicates give the per-replicate cost."
+    },
+    {
+      "name": "gradients.local_linear.m100.M1000.centersall",
+      "group": "local_linear_gradients",
+      "params": {
+        "m": 100,
+        "M": 1000,
+        "centers": null
+      },
+      "rss_after_setup_bytes": 73162752,
+      "setup_s": 0.007480553002096713,
+      "rss_peak_bytes": 165945344,
+      "wall_s": 2.942433991993312,
+      "wall_s_all": [
+        2.942433991993312
+      ],
+      "tracemalloc_peak_bytes": 70430341,
+      "warnings": [],
+      "info": {
+        "p_used": 170,
+        "n_centers": 1000
+      },
+      "status": "ok",
+      "process_s": 7.205814315006137,
+      "load_average_before": [
+        9.92,
+        8.04,
+        5.62
+      ],
+      "repeat": 1,
+      "boundary": false,
+      "note": ""
+    },
+    {
+      "name": "gradients.local_linear.m300.M1000.centersall",
+      "group": "local_linear_gradients",
+      "params": {
+        "m": 300,
+        "M": 1000,
+        "centers": null
+      },
+      "rss_after_setup_bytes": 77824000,
+      "setup_s": 0.012656768027227372,
+      "rss_peak_bytes": 208072704,
+      "wall_s": 20.482100780005567,
+      "wall_s_all": [
+        20.482100780005567
+      ],
+      "tracemalloc_peak_bytes": 74200397,
+      "warnings": [],
+      "info": {
+        "p_used": 510,
+        "n_centers": 1000
+      },
+      "status": "ok",
+      "process_s": 43.282528312003706,
+      "load_average_before": [
+        9.76,
+        8.04,
+        5.64
+      ],
+      "repeat": 1,
+      "boundary": false,
+      "note": ""
+    },
+    {
+      "name": "gradients.local_linear.m1000.M2000.centers10",
+      "group": "local_linear_gradients",
+      "params": {
+        "m": 1000,
+        "M": 2000,
+        "centers": 10
+      },
+      "rss_after_setup_bytes": 116744192,
+      "setup_s": 0.06700658897170797,
+      "rss_peak_bytes": 270688256,
+      "wall_s": 3.9972922099987045,
+      "wall_s_all": [
+        3.9972922099987045
+      ],
+      "tracemalloc_peak_bytes": 96515260,
+      "warnings": [],
+      "info": {
+        "p_used": 1700,
+        "n_centers": 10
+      },
+      "status": "ok",
+      "process_s": 8.867642383032944,
+      "load_average_before": [
+        8.22,
+        7.87,
+        5.7
+      ],
+      "repeat": 1,
+      "boundary": false,
+      "note": "Scaled down from all 2000 centers: 10 centers give the per-center cost (p = 1700 neighbours, a 1700 x 1001 least-squares fit each)."
+    },
+    {
+      "name": "geometry.zonotope_vertex_count.table",
+      "group": "zonotope_vertex_count",
+      "params": {
+        "n": [
+          2,
+          3,
+          4
+        ],
+        "m": [
+          30,
+          100,
+          300,
+          1000
+        ]
+      },
+      "rss_after_setup_bytes": 69308416,
+      "setup_s": 6.460468284785748e-07,
+      "rss_peak_bytes": 69308416,
+      "wall_s": 2.2504013031721115e-05,
+      "wall_s_all": [
+        3.218802157789469e-05,
+        2.521101851016283e-05,
+        2.2504013031721115e-05
+      ],
+      "tracemalloc_peak_bytes": 1421,
+      "warnings": [],
+      "info": {
+        "table": {
+          "n=2,m=30": {
+            "N_v": 60,
+            "Nv_times_m_plus_n": 1920,
+            "within_1e8": true
+          },
+          "n=2,m=100": {
+            "N_v": 200,
+            "Nv_times_m_plus_n": 20400,
+            "within_1e8": true
+          },
+          "n=2,m=300": {
+            "N_v": 600,
+            "Nv_times_m_plus_n": 181200,
+            "within_1e8": true
+          },
+          "n=2,m=1000": {
+            "N_v": 2000,
+            "Nv_times_m_plus_n": 2004000,
+            "within_1e8": true
+          },
+          "n=3,m=30": {
+            "N_v": 872,
+            "Nv_times_m_plus_n": 28776,
+            "within_1e8": true
+          },
+          "n=3,m=100": {
+            "N_v": 9902,
+            "Nv_times_m_plus_n": 1019906,
+            "within_1e8": true
+          },
+          "n=3,m=300": {
+            "N_v": 89702,
+            "Nv_times_m_plus_n": 27179706,
+            "within_1e8": true
+          },
+          "n=3,m=1000": {
+            "N_v": 999002,
+            "Nv_times_m_plus_n": 1001999006,
+            "within_1e8": false
+          },
+          "n=4,m=30": {
+            "N_v": 8180,
+            "Nv_times_m_plus_n": 278120,
+            "within_1e8": true
+          },
+          "n=4,m=100": {
+            "N_v": 323600,
+            "Nv_times_m_plus_n": 33654400,
+            "within_1e8": true
+          },
+          "n=4,m=300": {
+            "N_v": 8910800,
+            "Nv_times_m_plus_n": 2708883200,
+            "within_1e8": false
+          },
+          "n=4,m=1000": {
+            "N_v": 332336000,
+            "Nv_times_m_plus_n": 333665344000,
+            "within_1e8": false
+          }
+        }
+      },
+      "status": "ok",
+      "process_s": 0.6504504150361754,
+      "load_average_before": [
+        7.72,
+        7.78,
+        5.69
+      ],
+      "repeat": 3,
+      "boundary": false,
+      "note": "The target/00 \u00a72.3 vertex table, from the public count function."
+    },
+    {
+      "name": "geometry.active_domain.n2.m30",
+      "group": "active_domain",
+      "params": {
+        "m": 30,
+        "n": 2
+      },
+      "rss_after_setup_bytes": 69824512,
+      "setup_s": 0.02415934397140518,
+      "rss_peak_bytes": 70074368,
+      "wall_s": 0.001011190004646778,
+      "wall_s_all": [
+        0.0016697910032235086,
+        0.0010996630298905075,
+        0.001011190004646778
+      ],
+      "tracemalloc_peak_bytes": 132012,
+      "warnings": [],
+      "info": {
+        "N_v": 60,
+        "N_v_formula": 60,
+        "N_f": 60,
+        "general_position": true,
+        "domain_bytes": 16800,
+        "predicted_bytes_8Nv(m+n)": 15360,
+        "Nv_times_m_plus_n": 1920,
+        "signed_area": 65.58028120353767,
+        "counter_clockwise": true
+      },
+      "status": "ok",
+      "process_s": 0.766269485000521,
+      "load_average_before": [
+        7.72,
+        7.78,
+        5.69
+      ],
+      "repeat": 3,
+      "boundary": false,
+      "note": ""
+    },
+    {
+      "name": "geometry.active_domain.n2.m100",
+      "group": "active_domain",
+      "params": {
+        "m": 100,
+        "n": 2
+      },
+      "rss_after_setup_bytes": 69783552,
+      "setup_s": 0.02580589900026098,
+      "rss_peak_bytes": 70701056,
+      "wall_s": 0.002976372023113072,
+      "wall_s_all": [
+        0.004030119976960123,
+        0.0030869419570080936,
+        0.002976372023113072
+      ],
+      "tracemalloc_peak_bytes": 1082634,
+      "warnings": [],
+      "info": {
+        "N_v": 200,
+        "N_v_formula": 200,
+        "N_f": 200,
+        "general_position": true,
+        "domain_bytes": 168000,
+        "predicted_bytes_8Nv(m+n)": 163200,
+        "Nv_times_m_plus_n": 20400,
+        "signed_area": 197.19633770061347,
+        "counter_clockwise": true
+      },
+      "status": "ok",
+      "process_s": 0.7237162450328469,
+      "load_average_before": [
+        7.72,
+        7.78,
+        5.69
+      ],
+      "repeat": 3,
+      "boundary": false,
+      "note": ""
+    },
+    {
+      "name": "geometry.active_domain.n2.m300",
+      "group": "active_domain",
+      "params": {
+        "m": 300,
+        "n": 2
+      },
+      "rss_after_setup_bytes": 76275712,
+      "setup_s": 0.032727177953347564,
+      "rss_peak_bytes": 98295808,
+      "wall_s": 0.015146805963013321,
+      "wall_s_all": [
+        0.0178787829936482,
+        0.015146805963013321,
+        0.018464325985405594
+      ],
+      "tracemalloc_peak_bytes": 8987610,
+      "warnings": [],
+      "info": {
+        "N_v": 600,
+        "N_v_formula": 600,
+        "N_f": 600,
+        "general_position": true,
+        "domain_bytes": 1464000,
+        "predicted_bytes_8Nv(m+n)": 1449600,
+        "Nv_times_m_plus_n": 181200,
+        "signed_area": 597.4283755226845,
+        "counter_clockwise": true
+      },
+      "status": "ok",
+      "process_s": 0.8201646439847536,
+      "load_average_before": [
+        7.72,
+        7.78,
+        5.69
+      ],
+      "repeat": 3,
+      "boundary": false,
+      "note": ""
+    },
+    {
+      "name": "geometry.active_domain.n2.m1000",
+      "group": "active_domain",
+      "params": {
+        "m": 1000,
+        "n": 2
+      },
+      "rss_after_setup_bytes": 153620480,
+      "setup_s": 0.11727750697173178,
+      "rss_peak_bytes": 270659584,
+      "wall_s": 0.14169856102671474,
+      "wall_s_all": [
+        0.14169856102671474
+      ],
+      "tracemalloc_peak_bytes": 98396854,
+      "warnings": [],
+      "info": {
+        "N_v": 2000,
+        "N_v_formula": 2000,
+        "N_f": 2000,
+        "general_position": true,
+        "domain_bytes": 16080000,
+        "predicted_bytes_8Nv(m+n)": 16032000,
+        "Nv_times_m_plus_n": 2004000,
+        "signed_area": 2021.0980350738475,
+        "counter_clockwise": true
+      },
+      "status": "ok",
+      "process_s": 1.0932021329645067,
+      "load_average_before": [
+        7.72,
+        7.78,
+        5.69
+      ],
+      "repeat": 1,
+      "boundary": false,
+      "note": "spec 08 \u00a78: 2m vertices, counter-clockwise, in < 1 s."
+    },
+    {
+      "name": "geometry.active_domain.n3.m30",
+      "group": "active_domain",
+      "params": {
+        "m": 30,
+        "n": 3
+      },
+      "rss_after_setup_bytes": 68894720,
+      "setup_s": 0.02613361697876826,
+      "rss_peak_bytes": 96530432,
+      "wall_s": 0.0228543319972232,
+      "wall_s_all": [
+        0.027411117975134403,
+        0.0228543319972232,
+        0.025525161006953567
+      ],
+      "tracemalloc_peak_bytes": 12885010,
+      "warnings": [],
+      "info": {
+        "N_v": 872,
+        "N_v_formula": 872,
+        "N_f": 870,
+        "general_position": true,
+        "domain_bytes": 258048,
+        "predicted_bytes_8Nv(m+n)": 230208,
+        "Nv_times_m_plus_n": 28776
+      },
+      "status": "ok",
+      "process_s": 0.8532217309693806,
+      "load_average_before": [
+        7.72,
+        7.78,
+        5.69
+      ],
+      "repeat": 3,
+      "boundary": false,
+      "note": ""
+    },
+    {
+      "name": "geometry.active_domain.n3.m100",
+      "group": "active_domain",
+      "params": {
+        "m": 100,
+        "n": 3
+      },
+      "rss_after_setup_bytes": 69853184,
+      "setup_s": 0.02557687199441716,
+      "rss_peak_bytes": 129789952,
+      "wall_s": 0.5191733159590513,
+      "wall_s_all": [
+        0.5191733159590513
+      ],
+      "tracemalloc_peak_bytes": 35374400,
+      "warnings": [],
+      "info": {
+        "N_v": 9902,
+        "N_v_formula": 9902,
+        "N_f": 9900,
+        "general_position": true,
+        "domain_bytes": 8476048,
+        "predicted_bytes_8Nv(m+n)": 8159248,
+        "Nv_times_m_plus_n": 1019906
+      },
+      "status": "ok",
+      "process_s": 1.9729541880078614,
+      "load_average_before": [
+        7.35,
+        7.7,
+        5.67
+      ],
+      "repeat": 1,
+      "boundary": false,
+      "note": ""
+    },
+    {
+      "name": "geometry.active_domain.n3.m300",
+      "group": "active_domain",
+      "params": {
+        "m": 300,
+        "n": 3
+      },
+      "rss_after_setup_bytes": 76627968,
+      "setup_s": 0.03335474099731073,
+      "rss_peak_bytes": 1401602048,
+      "wall_s": 14.9093030699878,
+      "wall_s_all": [
+        14.9093030699878
+      ],
+      "tracemalloc_peak_bytes": 911297296,
+      "warnings": [],
+      "info": {
+        "N_v": 89702,
+        "N_v_formula": 89702,
+        "N_f": 89700,
+        "general_position": true,
+        "domain_bytes": 220308048,
+        "predicted_bytes_8Nv(m+n)": 217437648,
+        "Nv_times_m_plus_n": 27179706
+      },
+      "status": "ok",
+      "process_s": 36.23193306697067,
+      "load_average_before": [
+        7.35,
+        7.7,
+        5.67
+      ],
+      "repeat": 1,
+      "boundary": false,
+      "note": ""
+    },
+    {
+      "name": "geometry.active_domain.n3.m450",
+      "group": "active_domain",
+      "params": {
+        "m": 450,
+        "n": 3
+      },
+      "rss_after_setup_bytes": 87298048,
+      "setup_s": 0.06042157200863585,
+      "rss_peak_bytes": 4471615488,
+      "wall_s": 56.278121846029535,
+      "wall_s_all": [
+        56.278121846029535
+      ],
+      "tracemalloc_peak_bytes": null,
+      "warnings": [],
+      "info": {
+        "N_v": 202052,
+        "N_v_formula": 202052,
+        "N_f": 202050,
+        "general_position": true,
+        "domain_bytes": 738702048,
+        "predicted_bytes_8Nv(m+n)": 732236448,
+        "Nv_times_m_plus_n": 91529556
+      },
+      "status": "ok",
+      "process_s": 57.23800030298298,
+      "load_average_before": [
+        8.23,
+        7.9,
+        5.83
+      ],
+      "repeat": 1,
+      "boundary": true,
+      "note": "Just inside N_v (m + n) <= 1e8 (9.2e7); the n = 3 edge of the guidance."
+    },
+    {
+      "name": "geometry.active_domain.n4.m30",
+      "group": "active_domain",
+      "params": {
+        "m": 30,
+        "n": 4
+      },
+      "rss_after_setup_bytes": 69918720,
+      "setup_s": 0.023117555014323443,
+      "rss_peak_bytes": 105316352,
+      "wall_s": 0.34699312498560175,
+      "wall_s_all": [
+        0.3689082369673997,
+        0.34699312498560175,
+        0.3889680730062537
+      ],
+      "tracemalloc_peak_bytes": 10637978,
+      "warnings": [],
+      "info": {
+        "N_v": 8180,
+        "N_v_formula": 8180,
+        "N_f": 8120,
+        "general_position": true,
+        "domain_bytes": 2549760,
+        "predicted_bytes_8Nv(m+n)": 2224960,
+        "Nv_times_m_plus_n": 278120
+      },
+      "status": "ok",
+      "process_s": 2.3384116460219957,
+      "load_average_before": [
+        6.84,
+        7.59,
+        5.85
+      ],
+      "repeat": 3,
+      "boundary": false,
+      "note": ""
+    },
+    {
+      "name": "geometry.active_domain.n4.m60",
+      "group": "active_domain",
+      "params": {
+        "m": 60,
+        "n": 4
+      },
+      "rss_after_setup_bytes": 69906432,
+      "setup_s": 0.025979905971325934,
+      "rss_peak_bytes": 279506944,
+      "wall_s": 5.593677189026494,
+      "wall_s_all": [
+        5.593677189026494
+      ],
+      "tracemalloc_peak_bytes": 156085192,
+      "warnings": [],
+      "info": {
+        "N_v": 68560,
+        "N_v_formula": 68560,
+        "N_f": 68440,
+        "general_position": true,
+        "domain_bytes": 37840320,
+        "predicted_bytes_8Nv(m+n)": 35102720,
+        "Nv_times_m_plus_n": 4387840
+      },
+      "status": "ok",
+      "process_s": 14.043838295037858,
+      "load_average_before": [
+        6.84,
+        7.59,
+        5.85
+      ],
+      "repeat": 1,
+      "boundary": false,
+      "note": ""
+    },
+    {
+      "name": "geometry.active_domain.n4.m100",
+      "group": "active_domain",
+      "params": {
+        "m": 100,
+        "n": 4
+      },
+      "rss_after_setup_bytes": 72134656,
+      "setup_s": 0.03105674299877137,
+      "rss_peak_bytes": 1690644480,
+      "wall_s": 45.95086192799499,
+      "wall_s_all": [
+        45.95086192799499
+      ],
+      "tracemalloc_peak_bytes": null,
+      "warnings": [],
+      "info": {
+        "N_v": 323600,
+        "N_v_formula": 323600,
+        "N_f": 323400,
+        "general_position": true,
+        "domain_bytes": 282171200,
+        "predicted_bytes_8Nv(m+n)": 269235200,
+        "Nv_times_m_plus_n": 33654400
+      },
+      "status": "ok",
+      "process_s": 46.79544219002128,
+      "load_average_before": [
+        6.76,
+        7.53,
+        5.86
+      ],
+      "repeat": 1,
+      "boundary": false,
+      "note": ""
+    },
+    {
+      "name": "geometry.active_domain.n4.m130",
+      "group": "active_domain",
+      "params": {
+        "m": 130,
+        "n": 4
+      },
+      "rss_after_setup_bytes": 71790592,
+      "setup_s": 0.0331615200266242,
+      "rss_peak_bytes": 4357042176,
+      "wall_s": 141.99809611198725,
+      "wall_s_all": [
+        141.99809611198725
+      ],
+      "tracemalloc_peak_bytes": null,
+      "warnings": [],
+      "info": {
+        "N_v": 715780,
+        "N_v_formula": 715780,
+        "N_f": 715520,
+        "general_position": true,
+        "domain_bytes": 795936960,
+        "predicted_bytes_8Nv(m+n)": 767316160,
+        "Nv_times_m_plus_n": 95914520
+      },
+      "status": "ok",
+      "process_s": 142.81083011999726,
+      "load_average_before": [
+        5.8,
+        7.11,
+        5.79
+      ],
+      "repeat": 1,
+      "boundary": true,
+      "note": "Just inside N_v (m + n) <= 1e8 (9.6e7); the n = 4 edge of the guidance."
+    },
+    {
+      "name": "geometry.inverse_map.uniform.n2.m100.points64.draws50",
+      "group": "inverse_map",
+      "params": {
+        "space": "uniform",
+        "m": 100,
+        "n": 2,
+        "points": 64,
+        "n_draws": 50
+      },
+      "rss_after_setup_bytes": 70053888,
+      "setup_s": 0.024657444038894027,
+      "rss_peak_bytes": 186671104,
+      "wall_s": 5.0397665099590085,
+      "wall_s_all": [
+        5.0397665099590085
+      ],
+      "tracemalloc_peak_bytes": 30886260,
+      "warnings": [],
+      "info": {
+        "sampler": "hit_and_run",
+        "burn_in": 980,
+        "thin": 98,
+        "X_bytes": 2560000,
+        "steps_per_chain": 5880
+      },
+      "status": "ok",
+      "process_s": 12.000201285001822,
+      "load_average_before": [
+        3.26,
+        5.78,
+        5.47
+      ],
+      "repeat": 1,
+      "boundary": false,
+      "note": "Hit-and-run from the Chebyshev centre; one lockstep block of 64 chains."
+    },
+    {
+      "name": "geometry.inverse_map.uniform.n2.m1000.points10.draws50",
+      "group": "inverse_map",
+      "params": {
+        "space": "uniform",
+        "m": 1000,
+        "n": 2,
+        "points": 10,
+        "n_draws": 50
+      },
+      "rss_after_setup_bytes": 129548288,
+      "setup_s": 0.10745146399131045,
+      "rss_peak_bytes": 373551104,
+      "wall_s": 73.83840124105336,
+      "wall_s_all": [
+        73.83840124105336
+      ],
+      "tracemalloc_peak_bytes": null,
+      "warnings": [],
+      "info": {
+        "sampler": "hit_and_run",
+        "burn_in": 9980,
+        "thin": 998,
+        "X_bytes": 4000000,
+        "steps_per_chain": 59880
+      },
+      "status": "ok",
+      "process_s": 74.5541426280397,
+      "load_average_before": [
+        3.29,
+        5.71,
+        5.44
+      ],
+      "repeat": 1,
+      "boundary": false,
+      "note": "Hit-and-run; burn-in 10(m-n) and thinning m-n by default."
+    },
+    {
+      "name": "geometry.inverse_map.gaussian.n2.m1000.points64.draws50",
+      "group": "inverse_map",
+      "params": {
+        "space": "gaussian",
+        "m": 1000,
+        "n": 2,
+        "points": 64,
+        "n_draws": 50
+      },
+      "rss_after_setup_bytes": 145178624,
+      "setup_s": 0.108497756998986,
+      "rss_peak_bytes": 220381184,
+      "wall_s": 0.24948205600958318,
+      "wall_s_all": [
+        0.26979989401297644,
+        0.2596750690136105,
+        0.24948205600958318
+      ],
+      "tracemalloc_peak_bytes": 62997934,
+      "warnings": [],
+      "info": {
+        "sampler": "gaussian",
+        "burn_in": null,
+        "thin": null,
+        "X_bytes": 25600000,
+        "steps_per_chain": null
+      },
+      "status": "ok",
+      "process_s": 1.741314102022443,
+      "load_average_before": [
+        2.14,
+        4.81,
+        5.12
+      ],
+      "repeat": 3,
+      "boundary": false,
+      "note": "Exact Gaussian draws."
+    },
+    {
+      "name": "designs.active_design.uniform.n2.m100.N10",
+      "group": "active_design",
+      "params": {
+        "space": "uniform",
+        "m": 100,
+        "n": 2,
+        "n_points": 10
+      },
+      "rss_after_setup_bytes": 69894144,
+      "setup_s": 0.028104913944844157,
+      "rss_peak_bytes": 82735104,
+      "wall_s": 1.355579986993689,
+      "wall_s_all": [
+        1.355579986993689
+      ],
+      "tracemalloc_peak_bytes": 3597481,
+      "warnings": [],
+      "info": {
+        "N_v": 200,
+        "N_f": 200,
+        "method": "maximin_slsqp",
+        "min_distance": 3.3602921060496067
+      },
+      "status": "ok",
+      "process_s": 3.3760820610332303,
+      "load_average_before": [
+        2.14,
+        4.81,
+        5.12
+      ],
+      "repeat": 1,
+      "boundary": false,
+      "note": "Maximin by SLSQP (N(N-1)/2 <= 2000 pairs), 3 starts."
+    },
+    {
+      "name": "designs.active_design.uniform.n2.m1000.N10",
+      "group": "active_design",
+      "params": {
+        "space": "uniform",
+        "m": 1000,
+        "n": 2,
+        "n_points": 10
+      },
+      "rss_after_setup_bytes": 257601536,
+      "setup_s": 0.23485895700287074,
+      "rss_peak_bytes": 282611712,
+      "wall_s": 25.71744789998047,
+      "wall_s_all": [
+        25.71744789998047
+      ],
+      "tracemalloc_peak_bytes": 38141885,
+      "warnings": [],
+      "info": {
+        "N_v": 2000,
+        "N_f": 2000,
+        "method": "maximin_slsqp",
+        "min_distance": 10.560921431003376
+      },
+      "status": "ok",
+      "process_s": 51.86388031602837,
+      "load_average_before": [
+        2.05,
+        4.74,
+        5.1
+      ],
+      "repeat": 1,
+      "boundary": true,
+      "note": "Maximin by SLSQP; the facet constraints number N N_f = 20 000 here."
+    },
+    {
+      "name": "designs.active_design.uniform.n3.m30.N10",
+      "group": "active_design",
+      "params": {
+        "space": "uniform",
+        "m": 30,
+        "n": 3,
+        "n_points": 10
+      },
+      "rss_after_setup_bytes": 82415616,
+      "setup_s": 0.04788532800739631,
+      "rss_peak_bytes": 178434048,
+      "wall_s": 18.835853871016297,
+      "wall_s_all": [
+        18.835853871016297
+      ],
+      "tracemalloc_peak_bytes": 26433581,
+      "warnings": [],
+      "info": {
+        "N_v": 872,
+        "N_f": 870,
+        "method": "maximin_slsqp",
+        "min_distance": 2.2364833286291397
+      },
+      "status": "ok",
+      "process_s": 40.47824127704371,
+      "load_average_before": [
+        1.65,
+        4.22,
+        4.88
+      ],
+      "repeat": 1,
+      "boundary": false,
+      "note": "Maximin by SLSQP; N N_f = 8 700 facet constraints."
+    },
+    {
+      "name": "designs.active_design.uniform.n3.m100.N10",
+      "group": "active_design",
+      "params": {
+        "space": "uniform",
+        "m": 100,
+        "n": 3,
+        "n_points": 10
+      },
+      "rss_after_setup_bytes": 128684032,
+      "setup_s": 0.5638560180086643,
+      "rss_peak_bytes": 714620928,
+      "wall_s": 250.60206791595556,
+      "wall_s_all": [
+        250.60206791595556
+      ],
+      "tracemalloc_peak_bytes": null,
+      "warnings": [],
+      "info": {
+        "N_v": 9902,
+        "N_f": 9900,
+        "method": "maximin_slsqp",
+        "min_distance": 4.026319803058469
+      },
+      "status": "ok",
+      "process_s": 251.81041361798998,
+      "load_average_before": [
+        2.72,
+        4.15,
+        4.83
+      ],
+      "repeat": 1,
+      "boundary": true,
+      "note": "Maximin by SLSQP; N N_f = 99 020 facet constraints. Capped at 300 s."
+    },
+    {
+      "name": "designs.active_design.uniform.n3.m100.N100",
+      "group": "active_design",
+      "params": {
+        "space": "uniform",
+        "m": 100,
+        "n": 3,
+        "n_points": 100
+      },
+      "rss_after_setup_bytes": 143187968,
+      "setup_s": 0.5424083269899711,
+      "rss_peak_bytes": 2519658496,
+      "wall_s": 2.6246761640068144,
+      "wall_s_all": [
+        2.6246761640068144
+      ],
+      "tracemalloc_peak_bytes": 1584449073,
+      "warnings": [],
+      "info": {
+        "N_v": 9902,
+        "N_f": 9900,
+        "method": "maximin_greedy",
+        "min_distance": 1.8301308257561948
+      },
+      "status": "ok",
+      "process_s": 6.0326397600001656,
+      "load_average_before": [
+        2.44,
+        3.33,
+        4.3
+      ],
+      "repeat": 1,
+      "boundary": false,
+      "note": "Greedy farthest-point (N(N-1)/2 = 4 950 > 2000 pairs)."
+    },
+    {
+      "name": "integration.quadrature_rule.uniform.n2.m100.Nd0",
+      "group": "active_quadrature_rule",
+      "params": {
+        "space": "uniform",
+        "m": 100,
+        "n": 2,
+        "n_nodes": 0
+      },
+      "rss_after_setup_bytes": 69304320,
+      "setup_s": 0.025753413035999984,
+      "rss_peak_bytes": 126160896,
+      "wall_s": 0.13248426199425012,
+      "wall_s_all": [
+        0.13248426199425012
+      ],
+      "tracemalloc_peak_bytes": 53501448,
+      "warnings": [],
+      "info": {
+        "N_v": 200,
+        "nodes_Q": 8,
+        "weight_deficit": 0.0
+      },
+      "status": "ok",
+      "process_s": 0.8656321010203101,
+      "load_average_before": [
+        2.22,
+        3.25,
+        4.26
+      ],
+      "repeat": 1,
+      "boundary": false,
+      "note": "Delaunay triangulation of the vertices (N_d = 0) and 100 000 weight samples; the maximin points are timed in the designs cases."
+    },
+    {
+      "name": "integration.quadrature_rule.uniform.n2.m1000.Nd0",
+      "group": "active_quadrature_rule",
+      "params": {
+        "space": "uniform",
+        "m": 1000,
+        "n": 2,
+        "n_nodes": 0
+      },
+      "rss_after_setup_bytes": 260485120,
+      "setup_s": 0.23002331994939595,
+      "rss_peak_bytes": 786006016,
+      "wall_s": 1.391802350000944,
+      "wall_s_all": [
+        1.391802350000944
+      ],
+      "tracemalloc_peak_bytes": 525526248,
+      "warnings": [],
+      "info": {
+        "N_v": 2000,
+        "nodes_Q": 8,
+        "weight_deficit": 0.0
+      },
+      "status": "ok",
+      "process_s": 3.4575729969656095,
+      "load_average_before": [
+        2.22,
+        3.25,
+        4.26
+      ],
+      "repeat": 1,
+      "boundary": false,
+      "note": "Delaunay triangulation of the vertices (N_d = 0) and 100 000 weight samples; the maximin points are timed in the designs cases."
+    },
+    {
+      "name": "integration.quadrature_rule.uniform.n3.m30.Nd0",
+      "group": "active_quadrature_rule",
+      "params": {
+        "space": "uniform",
+        "m": 30,
+        "n": 3,
+        "n_nodes": 0
+      },
+      "rss_after_setup_bytes": 82747392,
+      "setup_s": 0.0486841140082106,
+      "rss_peak_bytes": 102903808,
+      "wall_s": 0.0665713760536164,
+      "wall_s_all": [
+        0.0665713760536164
+      ],
+      "tracemalloc_peak_bytes": 17589796,
+      "warnings": [],
+      "info": {
+        "N_v": 872,
+        "nodes_Q": 64,
+        "weight_deficit": 0.0
+      },
+      "status": "ok",
+      "process_s": 0.7706294740200974,
+      "load_average_before": [
+        2.22,
+        3.25,
+        4.26
+      ],
+      "repeat": 1,
+      "boundary": false,
+      "note": "Delaunay triangulation of the vertices (N_d = 0) and 100 000 weight samples; the maximin points are timed in the designs cases."
+    },
+    {
+      "name": "integration.quadrature_rule.uniform.n3.m100.Nd0",
+      "group": "active_quadrature_rule",
+      "params": {
+        "space": "uniform",
+        "m": 100,
+        "n": 3,
+        "n_nodes": 0
+      },
+      "rss_after_setup_bytes": 136208384,
+      "setup_s": 0.532318094978109,
+      "rss_peak_bytes": 591986688,
+      "wall_s": 0.7325837620301172,
+      "wall_s_all": [
+        0.7325837620301172
+      ],
+      "tracemalloc_peak_bytes": 395329328,
+      "warnings": [],
+      "info": {
+        "N_v": 9902,
+        "nodes_Q": 71,
+        "weight_deficit": 0.0
+      },
+      "status": "ok",
+      "process_s": 2.467560932971537,
+      "load_average_before": [
+        2.2,
+        3.23,
+        4.25
+      ],
+      "repeat": 1,
+      "boundary": false,
+      "note": "Delaunay triangulation of the vertices (N_d = 0) and 100 000 weight samples; the maximin points are timed in the designs cases."
+    },
+    {
+      "name": "integration.integrate.uniform.n2.m10.nodes10.nmc50",
+      "group": "integrate",
+      "params": {
+        "space": "uniform",
+        "m": 10,
+        "n": 2,
+        "n_nodes": 10,
+        "n_mc": 50
+      },
+      "rss_after_setup_bytes": 69722112,
+      "setup_s": 0.025004861992783844,
+      "rss_peak_bytes": 82259968,
+      "wall_s": 0.2841767590143718,
+      "wall_s_all": [
+        0.2841767590143718
+      ],
+      "tracemalloc_peak_bytes": 6308680,
+      "warnings": [],
+      "info": {
+        "nodes_Q": 38,
+        "model_evaluations": 1900,
+        "sampler": "hit_and_run",
+        "estimate": 1.6901394510533263,
+        "exact": 1.6666666666666667
+      },
+      "status": "ok",
+      "process_s": 1.434193075983785,
+      "load_average_before": [
+        2.2,
+        3.23,
+        4.25
+      ],
+      "repeat": 1,
+      "boundary": false,
+      "note": "Includes the maximin design of the 10 interior points."
+    },
+    {
+      "name": "integration.integrate.uniform.n2.m30.nodes10.nmc50",
+      "group": "integrate",
+      "params": {
+        "space": "uniform",
+        "m": 30,
+        "n": 2,
+        "n_nodes": 10,
+        "n_mc": 50
+      },
+      "rss_after_setup_bytes": 68939776,
+      "setup_s": 0.024670615966897458,
+      "rss_peak_bytes": 104837120,
+      "wall_s": 0.5055170609848574,
+      "wall_s_all": [
+        0.5055170609848574
+      ],
+      "tracemalloc_peak_bytes": 16797102,
+      "warnings": [],
+      "info": {
+        "nodes_Q": 12,
+        "model_evaluations": 600,
+        "sampler": "hit_and_run",
+        "estimate": 5.297377756189903,
+        "exact": 5.0
+      },
+      "status": "ok",
+      "process_s": 1.9464246720308438,
+      "load_average_before": [
+        2.2,
+        3.23,
+        4.25
+      ],
+      "repeat": 1,
+      "boundary": false,
+      "note": "Includes the maximin design of the 10 interior points."
+    },
+    {
+      "name": "integration.integrate.uniform.n2.m100.nodes0.nmc50",
+      "group": "integrate",
+      "params": {
+        "space": "uniform",
+        "m": 100,
+        "n": 2,
+        "n_nodes": 0,
+        "n_mc": 50
+      },
+      "rss_after_setup_bytes": 70107136,
+      "setup_s": 0.027801121002994478,
+      "rss_peak_bytes": 176562176,
+      "wall_s": 0.89521866600262,
+      "wall_s_all": [
+        0.89521866600262
+      ],
+      "tracemalloc_peak_bytes": 53504272,
+      "warnings": [],
+      "info": {
+        "nodes_Q": 8,
+        "model_evaluations": 400,
+        "sampler": "hit_and_run",
+        "estimate": 17.756849437622126,
+        "exact": 16.666666666666668
+      },
+      "status": "ok",
+      "process_s": 3.2961486449930817,
+      "load_average_before": [
+        2.1,
+        3.19,
+        4.23
+      ],
+      "repeat": 1,
+      "boundary": false,
+      "note": "Vertices only (N_d = 0); hit-and-run inactive draws."
+    },
+    {
+      "name": "integration.integrate.uniform.n2.m1000.nodes0.nmc50",
+      "group": "integrate",
+      "params": {
+        "space": "uniform",
+        "m": 1000,
+        "n": 2,
+        "n_nodes": 0,
+        "n_mc": 50
+      },
+      "rss_after_setup_bytes": 255733760,
+      "setup_s": 0.2527998620062135,
+      "rss_peak_bytes": 972546048,
+      "wall_s": 79.9659343159874,
+      "wall_s_all": [
+        79.9659343159874
+      ],
+      "tracemalloc_peak_bytes": null,
+      "warnings": [],
+      "info": {
+        "nodes_Q": 8,
+        "model_evaluations": 400,
+        "sampler": "hit_and_run",
+        "estimate": 164.74832705020862,
+        "exact": 166.66666666666666
+      },
+      "status": "ok",
+      "process_s": 80.86378745996626,
+      "load_average_before": [
+        2.1,
+        3.19,
+        4.23
+      ],
+      "repeat": 1,
+      "boundary": false,
+      "note": "Vertices only (N_d = 0); hit-and-run inactive draws."
+    },
+    {
+      "name": "integration.integrate.gaussian.n2.m1000.nodes25.nmc50",
+      "group": "integrate",
+      "params": {
+        "space": "gaussian",
+        "m": 1000,
+        "n": 2,
+        "n_nodes": 25,
+        "n_mc": 50
+      },
+      "rss_after_setup_bytes": 142094336,
+      "setup_s": 0.11245682300068438,
+      "rss_peak_bytes": 202559488,
+      "wall_s": 0.14508543501142412,
+      "wall_s_all": [
+        0.14508543501142412
+      ],
+      "tracemalloc_peak_bytes": 50115019,
+      "warnings": [],
+      "info": {
+        "nodes_Q": 25,
+        "model_evaluations": 1250,
+        "sampler": "gaussian",
+        "estimate": 501.73676213762695,
+        "exact": 500.0
+      },
+      "status": "ok",
+      "process_s": 0.9969602980418131,
+      "load_average_before": [
+        2.65,
+        3.13,
+        4.11
+      ],
+      "repeat": 1,
+      "boundary": false,
+      "note": "5 x 5 Gauss-Hermite nodes; exact Gaussian inactive draws."
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+{
+ "area": "test_functions",
+ "case": "otl_circuit",
+ "case_index": 24,
+ "environment": {
+  "blas": "accelerate unknown",
+  "legacy_branch": "master",
+  "legacy_commit": "64817a19db250e4b01bcd51055ad0f7d2a5665b8",
+  "machine": "x86_64",
+  "numpy": "2.5.4",
+  "platform": "macOS-14.8.9-x86_64-i386-64bit-Mach-O",
+  "port_digest": "feb87c4f57e6ddc637b7d9874635645acebb788c000483c5b85bc3d72d0b37db",
+  "python": "3.14.0",
+  "scipy": "1.18.1"
+ },
+ "inputs": {
+  "X": {
+   "dtype": "float64",
+   "shape": [
+    250,
+    6
+   ]
+  }
+ },
+ "inputs_from": "SeedSequence",
+ "legacy_call": "tutorials/test_functions/otl_circuit/otlcircuit_functions.py: circuit(X), circuit_grad(X)  # normalized inputs",
+ "legacy_seeds": {},
+ "not_stored": {},
+ "notes": [],
+ "outputs": {
+  "grads": {
+   "compare": "array",
+   "dtype": "float64",
+   "shape": [
+    250,
+    6
+   ],
+   "status": "reference",
+   "tolerance": {
+    "scale": "row max",
+    "tier": "F12"
+   }
+  },
+  "values": {
+   "compare": "array",
+   "dtype": "float64",
+   "shape": [
+    250
+   ],
+   "spec": "12: 1e-13 relative",
+   "status": "reference",
+   "tolerance": {
+    "scale": "max|f|",
+    "tier": "F14"
+   }
+  }
+ },
+ "seed_sequence": [
+  37,
+  24
+ ]
+}

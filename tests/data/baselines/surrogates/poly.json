@@ -1,0 +1,183 @@
+{
+ "area": "surrogates",
+ "case": "poly",
+ "case_index": 17,
+ "environment": {
+  "blas": "accelerate unknown",
+  "legacy_branch": "master",
+  "legacy_commit": "64817a19db250e4b01bcd51055ad0f7d2a5665b8",
+  "machine": "x86_64",
+  "numpy": "2.5.4",
+  "platform": "macOS-14.8.9-x86_64-i386-64bit-Mach-O",
+  "port_digest": "feb87c4f57e6ddc637b7d9874635645acebb788c000483c5b85bc3d72d0b37db",
+  "python": "3.14.0",
+  "scipy": "1.18.1"
+ },
+ "inputs": {
+  "X_k1": {
+   "dtype": "float64",
+   "shape": [
+    30,
+    1
+   ]
+  },
+  "X_k2": {
+   "dtype": "float64",
+   "shape": [
+    30,
+    2
+   ]
+  },
+  "Xtest_k1": {
+   "dtype": "float64",
+   "shape": [
+    20,
+    1
+   ]
+  },
+  "Xtest_k2": {
+   "dtype": "float64",
+   "shape": [
+    20,
+    2
+   ]
+  },
+  "indices_k1_d2": {
+   "dtype": "int64",
+   "shape": [
+    3,
+    1
+   ]
+  },
+  "indices_k1_d3": {
+   "dtype": "int64",
+   "shape": [
+    4,
+    1
+   ]
+  },
+  "indices_k2_d2": {
+   "dtype": "int64",
+   "shape": [
+    6,
+    2
+   ]
+  },
+  "indices_k2_d3": {
+   "dtype": "int64",
+   "shape": [
+    10,
+    2
+   ]
+  }
+ },
+ "inputs_from": "SeedSequence",
+ "legacy_call": "PolynomialApproximation(d).train(X, f[:, None]); .poly_weights; .predict(Xtest)  # uniform weights",
+ "legacy_seeds": {},
+ "not_stored": {},
+ "notes": [
+  "f = poly_function(X): exp(0.5 x1) (+ sin(2 x2) for k = 2); coefficients are in the order of the stored 2016 index set."
+ ],
+ "outputs": {
+  "coef_k1_d2": {
+   "compare": "array",
+   "dtype": "float64",
+   "shape": [
+    3
+   ],
+   "status": "reference",
+   "tolerance": {
+    "scale": "max",
+    "tier": "F10"
+   }
+  },
+  "coef_k1_d3": {
+   "compare": "array",
+   "dtype": "float64",
+   "shape": [
+    4
+   ],
+   "status": "reference",
+   "tolerance": {
+    "scale": "max",
+    "tier": "F10"
+   }
+  },
+  "coef_k2_d2": {
+   "compare": "array",
+   "dtype": "float64",
+   "shape": [
+    6
+   ],
+   "status": "reference",
+   "tolerance": {
+    "scale": "max",
+    "tier": "F10"
+   }
+  },
+  "coef_k2_d3": {
+   "compare": "array",
+   "dtype": "float64",
+   "shape": [
+    10
+   ],
+   "status": "reference",
+   "tolerance": {
+    "scale": "max",
+    "tier": "F10"
+   }
+  },
+  "pred_k1_d2": {
+   "compare": "array",
+   "dtype": "float64",
+   "shape": [
+    20
+   ],
+   "status": "reference",
+   "tolerance": {
+    "scale": "max",
+    "tier": "F10"
+   }
+  },
+  "pred_k1_d3": {
+   "compare": "array",
+   "dtype": "float64",
+   "shape": [
+    20
+   ],
+   "status": "reference",
+   "tolerance": {
+    "scale": "max",
+    "tier": "F10"
+   }
+  },
+  "pred_k2_d2": {
+   "compare": "array",
+   "dtype": "float64",
+   "shape": [
+    20
+   ],
+   "status": "reference",
+   "tolerance": {
+    "scale": "max",
+    "tier": "F10"
+   }
+  },
+  "pred_k2_d3": {
+   "compare": "array",
+   "dtype": "float64",
+   "shape": [
+    20
+   ],
+   "status": "reference",
+   "tolerance": {
+    "scale": "max",
+    "tier": "F10"
+   }
+  }
+ },
+ "seed_sequence": [
+  37,
+  17
+ ]
+}

@@ -1,0 +1,22 @@
+# Optional for contributors: CI runs the same checks (spec 15 §5.6).
+# Install with `pre-commit install`; run on everything with `pre-commit run --all-files`.
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.3
+    hooks:
+      - id: ruff-check
+        files: ^(src|tests)/
+      - id: ruff-format
+        files: ^(src|tests)/
+  - repo: https://github.com/kynan/nbstripout
+    rev: 0.9.1
+    hooks:
+      - id: nbstripout
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: end-of-file-fixer
+        exclude: ^(legacy|tests/data)/
+      - id: trailing-whitespace
+        exclude: ^(legacy|tests/data)/
+      - id: check-yaml

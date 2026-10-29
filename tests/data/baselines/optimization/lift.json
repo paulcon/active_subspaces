@@ -1,0 +1,119 @@
+{
+ "area": "optimization",
+ "case": "lift",
+ "case_index": 22,
+ "environment": {
+  "blas": "accelerate unknown",
+  "legacy_branch": "master",
+  "legacy_commit": "64817a19db250e4b01bcd51055ad0f7d2a5665b8",
+  "machine": "x86_64",
+  "numpy": "2.5.4",
+  "platform": "macOS-14.8.9-x86_64-i386-64bit-Mach-O",
+  "port_digest": "feb87c4f57e6ddc637b7d9874635645acebb788c000483c5b85bc3d72d0b37db",
+  "python": "3.14.0",
+  "scipy": "1.18.1"
+ },
+ "inputs": {
+  "A": {
+   "dtype": "float64",
+   "shape": [
+    4,
+    4
+   ]
+  },
+  "X": {
+   "dtype": "float64",
+   "shape": [
+    400,
+    4
+   ]
+  },
+  "f": {
+   "dtype": "float64",
+   "shape": [
+    400
+   ]
+  },
+  "grads": {
+   "dtype": "float64",
+   "shape": [
+    400,
+    4
+   ]
+  },
+  "x0": {
+   "dtype": "float64",
+   "shape": [
+    4
+   ]
+  }
+ },
+ "inputs_from": "repro:C-16 (np.random.default_rng(0))",
+ "legacy_call": "s.compute(df=grads); s.partition(1); {Unbounded,Bounded}MinVariableMap(...).train(X, f); f(inverse(W1^T x0))",
+ "legacy_seeds": {},
+ "not_stored": {},
+ "notes": [
+  "2016 lift_dim p = n + 2 = 3 (m - n > 2), the v1 default [D-107]; the true minimum is f(x0) = 0."
+ ],
+ "outputs": {
+  "f_xstar_gaussian": {
+   "decision": "D-49",
+   "dtype": "float64",
+   "finding": "C-16",
+   "relation": {
+    "direction": "lower",
+    "kind": "improves",
+    "metric": "f(x*)"
+   },
+   "shape": [],
+   "status": "known_wrong"
+  },
+  "f_xstar_uniform": {
+   "decision": "D-49",
+   "dtype": "float64",
+   "finding": "C-16",
+   "relation": {
+    "direction": "lower",
+    "kind": "improves",
+    "metric": "f(x*)"
+   },
+   "shape": [],
+   "status": "known_wrong"
+  },
+  "v1_f_xstar_gaussian": {
+   "call": "lift(W1^T x0, domain=active_domain(active_subspace(grads, Gaussian.reference(4), n=1)), X, f)  # default lift_dim = 3",
+   "decision": "D-163",
+   "dtype": "float64",
+   "shape": [],
+   "status": "v1_reference",
+   "tolerance": {
+    "scale": "max",
+    "tier": "F8"
+   }
+  },
+  "v1_f_xstar_uniform": {
+   "call": "lift(W1^T x0, domain=active_domain(active_subspace(grads, Uniform.reference(4), n=1)), X, f)  # default lift_dim = 3",
+   "decision": "D-163",
+   "dtype": "float64",
+   "shape": [],
+   "status": "v1_reference",
+   "tolerance": {
+    "scale": "max",
+    "tier": "F8"
+   }
+  }
+ },
+ "seed_sequence": [
+  37,
+  22
+ ],
+ "v1_environment": {
+  "active_subspaces": "1.0.0.dev0",
+  "blas": "accelerate unknown",
+  "machine": "x86_64",
+  "numpy": "2.5.4",
+  "platform": "macOS-14.8.9-x86_64-i386-64bit-Mach-O",
+  "python": "3.14.0",
+  "scipy": "1.18.1"
+ }
+}

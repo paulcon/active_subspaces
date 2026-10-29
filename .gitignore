@@ -1,52 +1,57 @@
-# matlab outsave viles
-*.m~
-# this weird thing for mac file systems
+# Byte-compiled files and extensions
+__pycache__/
+*.py[cod]
+*.so
+
+# Packaging and build output
+build/
+dist/
+sdist/
+wheels/
+*.egg
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+MANIFEST
+
+# Environments
+.venv/
+venv/
+env/
+.env
+
+# Test, coverage and tool caches
+.pytest_cache/
+.hypothesis/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.tox/
+.nox/
+.ruff_cache/
+.mypy_cache/
+.dmypy.json
+.import_linter_cache/
+
+# Documentation build output
+docs/_build/
+docs/jupyter_execute/
+docs/api/generated/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Editors and operating systems
+.idea/
+.vscode/
+*.swp
+*~
 .DS_Store
+Thumbs.db
 
-# compiled python codes
-*.pyc
-
-# figs directory
+# Guard: the 2016 plotting code wrote figures here; v1 writes no files
 figs/
 
-# test data
-
-# *.npz
-
-# the etc directory
-etc/
-
-# logs
-gurobi.log
-
-# Python Packages
-*.egg
-*.egg-info
-dist
-build
-eggs
-parts
-bin
-var
-sdist
-develop-eggs
-.installed.cfg
-lib
-lib64
-__pycache__
-
-# Installer logs
-pip-log.txt
-
-# Unit test / coverage reports
-.coverage
-.tox
-nosetests.xml
-
-# Translations
-*.mo
-.eggs
-
-# Jupyter Checkpoints
-*.ipynb_checkpoints*
-*checkpoint.ipynb
+# benchmarks/results/ is tracked (spec 15 §5.5): do not ignore it
+!benchmarks/results/

@@ -1,0 +1,225 @@
+# Continuous integration (spec 15 §5.5). PRs to main require lint, build, test, min-deps, slow
+# and docs to pass; the branch protection that enforces this is set by the maintainer.
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+    tags-ignore: ["**"]          # tags run release.yml
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  OPENBLAS_NUM_THREADS: "1"
+  MKL_NUM_THREADS: "1"
+  OMP_NUM_THREADS: "1"
+  MPLBACKEND: agg
+  PIP_DISABLE_PIP_VERSION_CHECK: "1"
+  FORCE_COLOR: "1"
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --group lint -e . nbstripout
+      - run: ruff check src tests
+      - run: ruff format --check src tests
+      - run: mypy
+      - run: lint-imports
+      - run: validate-pyproject pyproject.toml
+      - run: cffconvert --validate
+      - name: Notebooks committed without outputs
+        run: git ls-files -z '*.ipynb' | xargs -0 -r nbstripout --verify
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build twine
+      - run: python -m build
+      - run: twine check --strict dist/*
+      - name: The wheel holds only the package and its dist-info
+        run: |
+          python - <<'EOF'
+          import glob, sys, zipfile
+          (wheel,) = glob.glob("dist/*.whl")
+          names = zipfile.ZipFile(wheel).namelist()
+          bad = [n for n in names
+                 if not n.startswith("active_subspaces/")
+                 and not (n.split("/")[0].startswith("active_subspaces-")
+                          and n.split("/")[0].endswith(".dist-info"))]
+          print(f"{wheel}: {len(names)} files")
+          if bad:
+              sys.exit("unexpected files in the wheel:\n" + "\n".join(bad))
+          EOF
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+
+  test:
+    needs: build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist
+      - name: Install the built wheel and the test group
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --group test
+          python -m pip install dist/*.whl
+      # pythonpath=tests drops "src" from the configured path, so the tests import the wheel.
+      - run: python -m pytest -m "not slow" -o pythonpath=tests
+
+  min-deps:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist
+      - name: Install with the dependency floors pinned
+        run: |
+          printf '%s\n' 'numpy==2.2.*' 'scipy==1.15.*' 'matplotlib==3.10.*' > constraints.txt
+          python -m pip install --upgrade pip
+          python -m pip install -c constraints.txt --group test
+          python -m pip install -c constraints.txt dist/*.whl
+          python -c "import numpy, scipy, matplotlib; print(numpy.__version__, scipy.__version__, matplotlib.__version__)"
+      - run: python -m pytest -m "not slow" -o pythonpath=tests
+
+  slow:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --group test
+          python -m pip install dist/*.whl
+      - run: python -m pytest -m slow -o pythonpath=tests
+
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --group test .
+      # Branch coverage, the experimental exclusion and the threshold come from [tool.coverage].
+      - run: >-
+          python -m pytest -o pythonpath=tests
+          --cov=active_subspaces --cov-branch
+          --cov-report=term-missing --cov-report=xml
+      - uses: actions/upload-artifact@v7
+        with:
+          name: coverage
+          path: coverage.xml
+
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --group docs --group test .
+      # Tutorials and code pages are executed by myst-nb; a failing cell fails the build (§5.8).
+      - run: sphinx-build -W --keep-going -b html docs docs/_build/html
+      - name: Doctests
+        run: >-
+          python -m pytest --doctest-modules src/active_subspaces
+          -o doctest_optionflags="NORMALIZE_WHITESPACE ELLIPSIS NUMBER"
+          -W "ignore::active_subspaces.errors.ExperimentalWarning"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: docs-html
+          path: docs/_build/html
+
+  # The Python 3 reference ports of the 2016 code (spec 15 §5.13). Runs only while legacy/ exists,
+  # in an environment without v1 installed, one branch per process. Not a required check: the
+  # ports still have known failures (master 4 of 138, dev 14 of 166).
+  legacy:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.14"]
+    steps:
+      - uses: actions/checkout@v7
+      - id: present
+        run: |
+          if [ -d legacy ]; then echo "legacy=true" >> "$GITHUB_OUTPUT"; else echo "legacy=false" >> "$GITHUB_OUTPUT"; fi
+      - if: steps.present.outputs.legacy == 'true'
+        uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+      - if: steps.present.outputs.legacy == 'true'
+        name: Install the legacy dependencies (not v1)
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy scipy matplotlib pytest
+      - if: steps.present.outputs.legacy == 'true'
+        name: 2016 master (Python 3 port)
+        working-directory: legacy/port-master
+        run: PYTHONPATH="$PWD" python -m pytest -c /dev/null -p no:cacheprovider tests
+      - if: steps.present.outputs.legacy == 'true' && (success() || failure())
+        name: 2016 dev (Python 3 port)
+        working-directory: legacy/port-dev
+        run: PYTHONPATH="$PWD" python -m pytest -c /dev/null -p no:cacheprovider tests

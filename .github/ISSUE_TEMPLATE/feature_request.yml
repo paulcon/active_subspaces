@@ -1,0 +1,31 @@
+name: Feature request
+description: Suggest a new method, option or improvement.
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What do you want to do that the library does not support, or supports badly?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: >-
+        The function, option or result you have in mind. For a new or changed method, give the
+        formulas and a published reference: changes to the mathematics need a ruling by the
+        maintainer.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives
+      description: Workarounds or other designs you considered.
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Your application, problem sizes, or anything else that helps.

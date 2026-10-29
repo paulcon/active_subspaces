@@ -1,0 +1,60 @@
+{
+ "area": "subspaces",
+ "case": "li_ridge",
+ "case_index": 5,
+ "environment": {
+  "blas": "accelerate unknown",
+  "legacy_branch": "master",
+  "legacy_commit": "64817a19db250e4b01bcd51055ad0f7d2a5665b8",
+  "machine": "x86_64",
+  "numpy": "2.5.4",
+  "platform": "macOS-14.8.9-x86_64-i386-64bit-Mach-O",
+  "port_digest": "feb87c4f57e6ddc637b7d9874635645acebb788c000483c5b85bc3d72d0b37db",
+  "python": "3.14.0",
+  "scipy": "1.18.1"
+ },
+ "inputs": {
+  "a": {
+   "dtype": "float64",
+   "shape": [
+    5
+   ]
+  },
+  "grads": {
+   "dtype": "float64",
+   "shape": [
+    300,
+    5
+   ]
+  },
+  "nboot": {
+   "dtype": "int64",
+   "shape": []
+  }
+ },
+ "inputs_from": "SeedSequence; the repro:C-17 ridge f = exp(a^T x), a = (2, 1, 0, 0, 0)/sqrt(5)",
+ "legacy_call": "Subspaces().compute(df=grads, ptype='LI', nboot=50)",
+ "legacy_seeds": {
+  "np.random.seed": 0
+ },
+ "not_stored": {},
+ "notes": [
+  "Every bootstrap replicate has the same W1 (KA-2), so n is deterministic; the 2016 ladle returns argmin + 1."
+ ],
+ "outputs": {
+  "n": {
+   "dtype": "int64",
+   "finding": "C-17",
+   "relation": {
+    "by": -1,
+    "kind": "shift"
+   },
+   "shape": [],
+   "status": "known_wrong"
+  }
+ },
+ "seed_sequence": [
+  37,
+  5
+ ]
+}

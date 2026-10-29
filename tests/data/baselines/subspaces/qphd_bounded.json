@@ -1,0 +1,63 @@
+{
+ "area": "subspaces",
+ "case": "qphd_bounded",
+ "case_index": 4,
+ "environment": {
+  "blas": "accelerate unknown",
+  "legacy_branch": "master",
+  "legacy_commit": "64817a19db250e4b01bcd51055ad0f7d2a5665b8",
+  "machine": "x86_64",
+  "numpy": "2.5.4",
+  "platform": "macOS-14.8.9-x86_64-i386-64bit-Mach-O",
+  "port_digest": "feb87c4f57e6ddc637b7d9874635645acebb788c000483c5b85bc3d72d0b37db",
+  "python": "3.14.0",
+  "scipy": "1.18.1"
+ },
+ "inputs": {
+  "X": {
+   "dtype": "float64",
+   "shape": [
+    200,
+    4
+   ]
+  },
+  "c": {
+   "dtype": "float64",
+   "shape": [
+    4
+   ]
+  },
+  "f": {
+   "dtype": "float64",
+   "shape": [
+    200
+   ]
+  }
+ },
+ "inputs_from": "repro:C-01 (np.random.default_rng(0))",
+ "legacy_call": "qphd_subspace(X, f[:, None], np.ones((200, 1)) / 200)",
+ "legacy_seeds": {},
+ "not_stored": {},
+ "notes": [
+  "v1 returns C = g g^T + H Sigma H with Sigma = I/3 (KA-4 with g = 0, H = 2 c c^T) [D-40]."
+ ],
+ "outputs": {
+  "C": {
+   "dtype": "float64",
+   "finding": "C-01",
+   "relation": {
+    "exception": "TypeError",
+    "kind": "raises",
+    "message": "'<' not supported between instances of 'numpy._ArrayFunctionDispatcher' and 'float'"
+   },
+   "shape": [
+    0
+   ],
+   "status": "known_wrong"
+  }
+ },
+ "seed_sequence": [
+  37,
+  4
+ ]
+}

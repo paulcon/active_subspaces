@@ -1,0 +1,62 @@
+{
+ "area": "surrogates",
+ "case": "rbf_scale",
+ "case_index": 19,
+ "environment": {
+  "blas": "accelerate unknown",
+  "legacy_branch": "master",
+  "legacy_commit": "64817a19db250e4b01bcd51055ad0f7d2a5665b8",
+  "machine": "x86_64",
+  "numpy": "2.5.4",
+  "platform": "macOS-14.8.9-x86_64-i386-64bit-Mach-O",
+  "port_digest": "feb87c4f57e6ddc637b7d9874635645acebb788c000483c5b85bc3d72d0b37db",
+  "python": "3.14.0",
+  "scipy": "1.18.1"
+ },
+ "inputs": {
+  "Y": {
+   "dtype": "float64",
+   "shape": [
+    25
+   ]
+  },
+  "Ytest": {
+   "dtype": "float64",
+   "shape": [
+    200
+   ]
+  },
+  "scales": {
+   "dtype": "float64",
+   "shape": [
+    2
+   ]
+  }
+ },
+ "inputs_from": "repro:C-18 (deterministic)",
+ "legacy_call": "RadialBasisApproximation(2).train(Y, c sin(3Y), v=c^2 1e-2) for c in (1, 100); relative 2-norm error at Ytest",
+ "legacy_seeds": {},
+ "not_stored": {},
+ "notes": [
+  "The 2016 error at scale 1 (0.007363) is not known wrong and is kept only in the relation, for context; the defect is the loss of accuracy under scaling."
+ ],
+ "outputs": {
+  "rel_error_scale100": {
+   "also": "N-05",
+   "dtype": "float64",
+   "finding": "C-18",
+   "relation": {
+    "direction": "lower",
+    "kind": "improves",
+    "legacy_at_scale_1": 0.00736332,
+    "metric": "relative prediction error at scale 100"
+   },
+   "shape": [],
+   "status": "known_wrong"
+  }
+ },
+ "seed_sequence": [
+  37,
+  19
+ ]
+}
