@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import concurrent.futures
 import logging
+from collections.abc import Sequence
 from typing import Any, Literal, cast
 
 import numpy as np
@@ -26,9 +27,14 @@ from active_subspaces.results import (
 )
 from active_subspaces.spaces import InputSpace, Uniform
 
-__all__ = ("GradientResult", "finite_difference_gradients", "local_linear_gradients")
+__all__ = (
+    "GradientResult",
+    "finite_difference_gradients",
+    "finite_difference_gradients_multi",
+    "local_linear_gradients",
+)
 
-_toplevel = ("GradientResult", "finite_difference_gradients", "local_linear_gradients")
+_toplevel = __all__
 
 _log = logging.getLogger(__name__)
 
@@ -459,6 +465,131 @@ def _step(h: Any, m: int) -> np.ndarray:
     return arr
 
 
+class _Stencil:
+    """The stencil of a finite-difference call: steps, stacked batch and the quotient arithmetic.
+
+    Shared by :func:`finite_difference_gradients` and
+    :func:`finite_difference_gradients_multi`, so both use the same steps, batch and arithmetic.
+    """
+
+    def __init__(
+        self,
+        mdl: models.Model,
+        scheme: str,
+        h_param: float | list[float],
+        digests: Any,
+        Xn: np.ndarray,
+        S: np.ndarray,
+        H: np.ndarray,
+        central: np.ndarray,
+        batch: np.ndarray,
+    ) -> None:
+        self.mdl = mdl
+        self.sp = mdl.space
+        self.scheme = scheme
+        self.h_param = h_param
+        self.digests = digests
+        self.Xn = Xn
+        self.S = S
+        self.H = H
+        self.central = central
+        self.batch = batch
+        self.n_eval = int(batch.shape[0])
+
+    @classmethod
+    def build(
+        cls, model: Any, X: ArrayLike, space: InputSpace | None, h: Any, scheme: Any
+    ) -> _Stencil:
+        mdl = models.as_model(model, space=space)
+        sp = mdl.space
+        scheme = cast(Literal["forward", "central"], _v.choice(scheme, "scheme", _SCHEMES))
+        hv = _step(h, sp.dim)
+        d = _v.data(sp, X=X, require=("X",))
+        M, m = d.M, d.m
+        Xn = d.X
+        assert Xn is not None  # required above
+        Xphys = _v.points(X, sp, normalize=False)
+
+        H = hv[None, :] * np.maximum(1.0, np.abs(Xn))
+        bounded = sp.kind == "uniform"
+        if bounded:
+            S = np.where(Xn + H > 1.0, -H, H)
+            central = (
+                (np.abs(Xn) + H <= 1.0) if scheme == "central" else np.zeros((M, m), dtype=bool)
+            )
+        else:
+            S = H.copy()
+            central = np.full((M, m), scheme == "central")
+        S = np.where(central, H, S)
+
+        # Stacked batch: base points; x_i + s_ij e_j for j = 1..m; x_i - h_ij e_j where central,
+        # for j = 1..m.
+        plus = np.repeat(Xn[None, :, :], m, axis=0)  # (m, M, m)
+        jj = np.arange(m)
+        plus[jj, :, jj] += S.T
+        minus_parts = []
+        for j in range(m):
+            rows = np.flatnonzero(central[:, j])
+            if rows.size:
+                pts = Xn[rows].copy()
+                pts[:, j] -= H[rows, j]
+                minus_parts.append(pts)
+        pert = np.concatenate([plus.reshape(m * M, m), *minus_parts], axis=0)
+        pert_phys = sp.from_normalized(pert)
+        if bounded:
+            box = cast(Uniform, sp)  # kind == "uniform"
+            np.clip(pert_phys, box.lower, box.upper, out=pert_phys)
+        batch = np.concatenate([Xphys, pert_phys], axis=0)
+        h_param = float(hv[0]) if np.ndim(h) == 0 else hv.tolist()
+        return cls(mdl, scheme, h_param, d.digests, Xn, S, H, central, batch)
+
+    def quotients(self, vals: np.ndarray, function: str) -> tuple[np.ndarray, np.ndarray]:
+        """Return ``(grads, f0)`` from the ``(L,)`` values at the rows of ``batch``."""
+        M, m = self.Xn.shape
+        central = self.central
+        f0 = vals[:M]
+        fplus = vals[M : M + m * M].reshape(m, M).T  # (M, m)
+        fminus = np.zeros((M, m))  # zeros where unused: np.where evaluates both branches
+        pos = M + m * M
+        for j in range(m):
+            rows = np.flatnonzero(central[:, j])
+            fminus[rows, j] = vals[pos : pos + rows.size]
+            pos += rows.size
+
+        with np.errstate(over="ignore", invalid="ignore"):
+            grads = np.where(
+                central, (fplus - fminus) / (2.0 * self.H), (fplus - f0[:, None]) / self.S
+            )
+        _check_finite_grads(grads, function)
+        if self.scheme == "central" and _log.isEnabledFor(logging.DEBUG):
+            _log.debug(
+                "%s: %d of %d entries fell back to one-sided differences",
+                function,
+                int((~central).sum()),
+                M * m,
+            )
+        return grads, f0
+
+    def result(
+        self, grads: np.ndarray, f0: np.ndarray, *, mdl_qoi: str, provenance: Any
+    ) -> GradientResult:
+        return GradientResult(
+            space=self.sp,
+            method="finite_difference",
+            points=self.Xn,
+            grads=grads,
+            values=f0,
+            centers=None,
+            p=None,
+            scheme=self.scheme,
+            steps=self.S,
+            central_mask=self.central,
+            n_evaluations=self.n_eval,
+            qoi=mdl_qoi,
+            provenance=provenance,
+        )
+
+
 def finite_difference_gradients(
     model: Any,
     *,
@@ -544,87 +675,163 @@ def finite_difference_gradients(
     array([[ True,  True],
            [False,  True]])
     """
-    mdl = models.as_model(model, space=space)
-    sp = mdl.space
-    scheme = cast(Literal["forward", "central"], _v.choice(scheme, "scheme", _SCHEMES))
-    hv = _step(h, sp.dim)
-    d = _v.data(sp, X=X, require=("X",))
-    M, m = d.M, d.m
-    Xn = d.X
-    assert Xn is not None  # required above
-    Xphys = _v.points(X, sp, normalize=False)
-
-    H = hv[None, :] * np.maximum(1.0, np.abs(Xn))
-    bounded = sp.kind == "uniform"
-    if bounded:
-        S = np.where(Xn + H > 1.0, -H, H)
-        central = (np.abs(Xn) + H <= 1.0) if scheme == "central" else np.zeros((M, m), dtype=bool)
-    else:
-        S = H.copy()
-        central = np.full((M, m), scheme == "central")
-    S = np.where(central, H, S)
-
-    # Stacked batch: base points; x_i + s_ij e_j for j = 1..m; x_i - h_ij e_j where central, for j
-    # = 1..m.
-    plus = np.repeat(Xn[None, :, :], m, axis=0)  # (m, M, m)
-    jj = np.arange(m)
-    plus[jj, :, jj] += S.T
-    minus_parts = []
-    for j in range(m):
-        rows = np.flatnonzero(central[:, j])
-        if rows.size:
-            pts = Xn[rows].copy()
-            pts[:, j] -= H[rows, j]
-            minus_parts.append(pts)
-    pert = np.concatenate([plus.reshape(m * M, m), *minus_parts], axis=0)
-    pert_phys = sp.from_normalized(pert)
-    if bounded:
-        box = cast(Uniform, sp)  # kind == "uniform"
-        np.clip(pert_phys, box.lower, box.upper, out=pert_phys)
-    batch = np.concatenate([Xphys, pert_phys], axis=0)
-    n_eval = int(batch.shape[0])
-
-    vals = models.evaluate(mdl, X=batch, executor=executor, batch_size=batch_size)
+    st = _Stencil.build(model, X, space, h, scheme)
+    vals = models.evaluate(st.mdl, X=st.batch, executor=executor, batch_size=batch_size)
     vals = np.asarray(vals, dtype=np.float64).reshape(-1)
-    f0 = vals[:M]
-    fplus = vals[M : M + m * M].reshape(m, M).T  # (M, m)
-    fminus = np.zeros((M, m))  # zeros where unused: np.where evaluates both branches
-    pos = M + m * M
-    for j in range(m):
-        rows = np.flatnonzero(central[:, j])
-        fminus[rows, j] = vals[pos : pos + rows.size]
-        pos += rows.size
-
-    with np.errstate(over="ignore", invalid="ignore"):
-        grads = np.where(central, (fplus - fminus) / (2.0 * H), (fplus - f0[:, None]) / S)
-    _check_finite_grads(grads, "finite_difference_gradients")
-    if scheme == "central" and _log.isEnabledFor(logging.DEBUG):
-        _log.debug(
-            "finite_difference_gradients: %d of %d entries fell back to one-sided differences",
-            int((~central).sum()),
-            M * m,
-        )
+    grads, f0 = st.quotients(vals, "finite_difference_gradients")
 
     params = {
-        "model": mdl.name,
+        "model": st.mdl.name,
         "batch_size": batch_size,
-        "h": float(hv[0]) if np.ndim(h) == 0 else hv.tolist(),
-        "scheme": scheme,
-        "qoi": mdl.qoi,
+        "h": st.h_param,
+        "scheme": st.scheme,
+        "qoi": st.mdl.qoi,
     }
-    prov = _make_provenance("finite_difference_gradients", params, space=sp, digests=d.digests)
-    return GradientResult(
-        space=sp,
-        method="finite_difference",
-        points=Xn,
-        grads=grads,
-        values=f0,
-        centers=None,
-        p=None,
-        scheme=scheme,
-        steps=S,
-        central_mask=central,
-        n_evaluations=n_eval,
-        qoi=mdl.qoi,
-        provenance=prov,
+    prov = _make_provenance("finite_difference_gradients", params, space=st.sp, digests=st.digests)
+    return st.result(grads, f0, mdl_qoi=st.mdl.qoi, provenance=prov)
+
+
+def finite_difference_gradients_multi(
+    model: Any,
+    *,
+    X: ArrayLike,
+    space: InputSpace | None = None,
+    outputs: int,
+    h: float | ArrayLike = 1e-6,
+    scheme: Literal["forward", "central"] = "forward",
+    qoi_names: Sequence[str] | None = None,
+    executor: concurrent.futures.Executor | None = None,
+    batch_size: int | None = None,
+) -> tuple[GradientResult, ...]:
+    r"""Estimate the gradients of every output of a model that returns several values.
+
+    Each stencil point is evaluated once, whatever the number of outputs.
+
+    Parameters
+    ----------
+    model : Model or callable
+        A :class:`~active_subspaces.Model`, or a batch value callable mapping
+        physical points ``(k, m)`` to ``(k, outputs)`` (then ``space`` is
+        required). The model's own ``qoi`` is not used.
+    X : array_like, shape (M, m), float, keyword-only
+        Points in physical coordinates, validated against the model's space.
+    space : Uniform or Gaussian, optional, keyword-only
+        As for :func:`finite_difference_gradients`.
+    outputs : int, keyword-only
+        Number of value columns :math:`P \ge 1`.
+    h : float or array_like, shape (m,), default 1e-6, keyword-only
+        Relative step in normalized units, :math:`0 < h_j \le 1/2`.
+    scheme : {"forward", "central"}, default "forward", keyword-only
+        Difference scheme.
+    qoi_names : sequence of str, optional, keyword-only
+        One unique, non-empty name per output; default ``("f0", "f1", ...)``.
+    executor : concurrent.futures.Executor, optional, keyword-only
+        Runs the model batches; never changes the result.
+    batch_size : int, optional, keyword-only
+        Rows per model call, as for :func:`~active_subspaces.evaluate`.
+
+    Returns
+    -------
+    tuple of GradientResult
+        One result per output, in output order. They share ``steps`` and
+        ``central_mask`` and carry their own ``qoi``. Result :math:`p` equals,
+        bitwise, :func:`finite_difference_gradients` on a model returning column
+        :math:`p`; ``n_evaluations`` is the number of rows evaluated once for all
+        outputs.
+
+    Raises
+    ------
+    InputError
+        As for :func:`finite_difference_gradients`; ``input.parameter`` for an
+        ``outputs`` that is not an integer >= 1 or a ``qoi_names`` of the wrong
+        length, with a duplicate or with an empty or non-string entry.
+    ModelError
+        ``model.*`` as for :func:`finite_difference_gradients`; ``model.shape``
+        unless the model returns exactly ``(k, outputs)``.
+    NumericalError
+        ``numerical.nonfinite`` if a difference quotient overflows.
+
+    See Also
+    --------
+    finite_difference_gradients : One output.
+    active_subspaces.evaluate_multi : Evaluate a model with several outputs.
+
+    Notes
+    -----
+    The steps, the stacked batch and the arithmetic are those of
+    :func:`finite_difference_gradients`; see its Notes.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> import active_subspaces as ac
+    >>> space = ac.Uniform([0.0, 0.0], [2.0, 4.0])
+    >>> def model(X):
+    ...     return np.stack([X[:, 0] ** 2 + X[:, 1], 3.0 * X[:, 1]], axis=1)
+    >>> res = ac.finite_difference_gradients_multi(
+    ...     model, X=[[1.0, 1.0]], space=space, outputs=2, scheme="central"
+    ... )
+    >>> [r.qoi for r in res], res[0].n_evaluations == res[1].n_evaluations
+    (['f0', 'f1'], True)
+    >>> res[0].grads_physical.round(4), res[1].grads_physical.round(4)
+    (array([[2., 1.]]), array([[0., 3.]]))
+    """
+    P = models._outputs(outputs)
+    names = _qoi_names(qoi_names, P)
+    st = _Stencil.build(model, X, space, h, scheme)
+    vals = models.evaluate_multi(
+        st.mdl, X=st.batch, outputs=P, executor=executor, batch_size=batch_size
     )
+    out = []
+    for p in range(P):
+        grads, f0 = st.quotients(
+            np.ascontiguousarray(vals[:, p]), "finite_difference_gradients_multi"
+        )
+        params = {
+            "model": st.mdl.name,
+            "batch_size": batch_size,
+            "h": st.h_param,
+            "scheme": st.scheme,
+            "qoi": names[p],
+            "outputs": P,
+            "output": p,
+            "qoi_names": list(names),
+        }
+        prov = _make_provenance(
+            "finite_difference_gradients_multi", params, space=st.sp, digests=st.digests
+        )
+        out.append(st.result(grads, f0, mdl_qoi=names[p], provenance=prov))
+    return tuple(out)
+
+
+def _qoi_names(qoi_names: Sequence[str] | None, P: int) -> tuple[str, ...]:
+    """Validate ``qoi_names``: ``P`` unique non-empty strings; default ``f0, f1, ...``."""
+    if qoi_names is None:
+        return tuple(f"f{p}" for p in range(P))
+    if isinstance(qoi_names, str) or not isinstance(qoi_names, Sequence):
+        raise InputError(
+            f"qoi_names: expected a sequence of strings, got {type(qoi_names).__name__}",
+            code="input.parameter",
+            details={"param": "qoi_names", "got": type(qoi_names).__name__},
+        )
+    names = tuple(qoi_names)
+    if len(names) != P:
+        raise InputError(
+            f"qoi_names: expected {P} names, got {len(names)}",
+            code="input.parameter",
+            details={"param": "qoi_names", "expected": P, "got": len(names)},
+        )
+    for i, q in enumerate(names):
+        if not isinstance(q, str) or not q:
+            raise InputError(
+                f"qoi_names: entry {i} is not a non-empty string",
+                code="input.parameter",
+                details={"param": "qoi_names", "index": i, "got": repr(q)},
+            )
+    if len(set(names)) != len(names):
+        raise InputError(
+            "qoi_names: names must be unique",
+            code="input.parameter",
+            details={"param": "qoi_names", "reason": "duplicate"},
+        )
+    return names
