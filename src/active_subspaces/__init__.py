@@ -137,6 +137,7 @@ from active_subspaces.subspaces import (
     with_dimension,
 )
 from active_subspaces.surrogates import (
+    IntervalResult,
     PolynomialSurrogate,
     RBFSurrogate,
     Surrogate,
@@ -144,6 +145,7 @@ from active_subspaces.surrogates import (
     fit_surrogate_from_model,
     predict,
     predict_gradient,
+    predict_interval,
     quadratic_terms,
 )
 
@@ -172,6 +174,7 @@ __all__ = (
     "InputSpace",
     "IntegrationDesign",
     "IntegrationResult",
+    "IntervalResult",
     "InverseMapResult",
     "LiftResult",
     "MinimizationResult",
@@ -241,6 +244,7 @@ __all__ = (
     "pointwise",
     "predict",
     "predict_gradient",
+    "predict_interval",
     "quadratic_terms",
     "reduced_model",
     "registry",

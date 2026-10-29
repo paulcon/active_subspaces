@@ -9,6 +9,7 @@ for ``Gaussian``.
 
 from __future__ import annotations
 
+import math
 import typing
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
@@ -20,7 +21,7 @@ from numpy.typing import ArrayLike, NDArray
 
 from active_subspaces import _random
 from active_subspaces import _validation as _v
-from active_subspaces.errors import InputError, SchemaError
+from active_subspaces.errors import InputError, SchemaError, UnsupportedError
 
 __all__ = ("Gaussian", "InputSpace", "Uniform")
 
@@ -275,6 +276,27 @@ def _orient_columns(W: ArrayLike) -> NDArray[np.float64]:
     signs[signs == 0] = 1.0
     out: _F64 = W * signs
     return out
+
+
+def _poincare_constant(space: Any) -> float:
+    r"""Poincaré constant :math:`C_1` of the reference density (spec 03 §3.5) [D-193, D-204].
+
+    :math:`\mathrm{Var}_\rho f \le C_1 E_\rho \lVert\nabla_x f\rVert^2`: 1 for ``N(0, I)``
+    [Chen 1982], and :math:`4/\pi^2` for the uniform density on :math:`[-1, 1]^m` in every
+    dimension (the Neumann gap of :math:`[-1, 1]`, Payne-Weinberger, and tensorization: the
+    constant of a product measure is the largest factor constant). CDW (4.10) prints
+    :math:`2\sqrt m/\pi`; Bebendorf's diameter bound gives :math:`4m/\pi^2`; both are loose.
+    """
+    kind = space.kind
+    if kind == "gaussian":
+        return 1.0
+    if kind == "uniform":
+        return 4.0 / math.pi**2
+    raise UnsupportedError(
+        f"no Poincaré constant for a {kind!r} space",
+        code="unsupported.space",
+        details={"kind": kind},
+    )
 
 
 def _param_error(msg: str, **details: Any) -> InputError:

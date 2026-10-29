@@ -22,7 +22,7 @@ from active_subspaces.results import _make_provenance as make_provenance
 from active_subspaces.results import _register_result as register_result
 from active_subspaces.spaces import InputSpace
 
-SCHEMA_DIR = Path(__file__).resolve().parent / "data" / "schemas"
+SCHEMA_DIR = Path(__file__).resolve().parents[1] / "data" / "schemas"  # tests/data/schemas (04 §8)
 
 
 @register_result
@@ -722,3 +722,17 @@ def test_results_exports():
         "InvariantError",
     ):
         assert not hasattr(results, name), name
+
+
+def test_migration_rbf_v1():
+    """A version-1 RBFSurrogate loads with training_variance = the stored f_variance [D-206]."""
+    d = json.loads((SCHEMA_DIR / "RBFSurrogate" / "v1.json").read_text())
+    assert d["schema_version"] == 1
+    old = d["fields"]["f_variance"]
+    r = asub.from_dict(d)
+    assert r.training_variance == old
+    assert not hasattr(r, "f_variance")
+    again = r.to_dict()
+    assert again["schema_version"] == 2
+    assert "f_variance" not in again["fields"]
+    assert asub.from_dict(again) == r
