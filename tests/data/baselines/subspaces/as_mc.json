@@ -1,0 +1,80 @@
+{
+ "area": "subspaces",
+ "case": "as_mc",
+ "case_index": 1,
+ "environment": {
+  "blas": "accelerate unknown",
+  "legacy_branch": "master",
+  "legacy_commit": "64817a19db250e4b01bcd51055ad0f7d2a5665b8",
+  "machine": "x86_64",
+  "numpy": "2.5.4",
+  "platform": "macOS-14.8.9-x86_64-i386-64bit-Mach-O",
+  "port_digest": "feb87c4f57e6ddc637b7d9874635645acebb788c000483c5b85bc3d72d0b37db",
+  "python": "3.14.0",
+  "scipy": "1.18.1"
+ },
+ "inputs": {
+  "K": {
+   "dtype": "float64",
+   "shape": [
+    5,
+    5
+   ]
+  },
+  "grads": {
+   "dtype": "float64",
+   "shape": [
+    500,
+    5
+   ]
+  }
+ },
+ "inputs_from": "SeedSequence",
+ "legacy_call": "Subspaces().compute(df=grads)  # weights 1/M, EVG",
+ "legacy_seeds": {},
+ "not_stored": {},
+ "notes": [
+  "grads = X K with X ~ U[-1, 1]^5 (X not stored)."
+ ],
+ "outputs": {
+  "W": {
+   "compare": "eigvecs",
+   "dtype": "float64",
+   "shape": [
+    5,
+    5
+   ],
+   "status": "reference",
+   "tolerance": {
+    "scale": "max",
+    "tier": "F10"
+   }
+  },
+  "e": {
+   "compare": "array",
+   "dtype": "float64",
+   "shape": [
+    5
+   ],
+   "status": "reference",
+   "tolerance": {
+    "scale": "lambda1",
+    "tier": "F12"
+   }
+  },
+  "n": {
+   "compare": "exact",
+   "dtype": "int64",
+   "shape": [],
+   "status": "reference",
+   "tolerance": {
+    "scale": "max",
+    "tier": "X"
+   }
+  }
+ },
+ "seed_sequence": [
+  37,
+  1
+ ]
+}

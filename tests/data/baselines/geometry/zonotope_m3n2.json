@@ -1,0 +1,73 @@
+{
+ "area": "geometry",
+ "case": "zonotope_m3n2",
+ "case_index": 14,
+ "environment": {
+  "blas": "accelerate unknown",
+  "legacy_branch": "master",
+  "legacy_commit": "64817a19db250e4b01bcd51055ad0f7d2a5665b8",
+  "machine": "x86_64",
+  "numpy": "2.5.4",
+  "platform": "macOS-14.8.9-x86_64-i386-64bit-Mach-O",
+  "port_digest": "feb87c4f57e6ddc637b7d9874635645acebb788c000483c5b85bc3d72d0b37db",
+  "python": "3.14.0",
+  "scipy": "1.18.1"
+ },
+ "inputs": {
+  "W1": {
+   "dtype": "float64",
+   "shape": [
+    3,
+    2
+   ]
+  },
+  "grads": {
+   "dtype": "float64",
+   "shape": [
+    10,
+    3
+   ]
+  }
+ },
+ "inputs_from": "SeedSequence; the 2016 test fixture shape (10 N(0, 1) gradients, m = 3, n = 2)",
+ "legacy_call": "s = Subspaces(); s.compute(df=grads); s.partition(2); BoundedActiveVariableDomain(s).vertY  # zonotope_vertices, random search",
+ "legacy_seeds": {
+  "np.random.seed": 42
+ },
+ "not_stored": {},
+ "notes": [
+  "The search is random but the vertex set is complete (nzv(3, 2) = 6 found), hence deterministic; the 2016 row order is not."
+ ],
+ "outputs": {
+  "preimages": {
+   "compare": "set",
+   "dtype": "float64",
+   "shape": [
+    6,
+    3
+   ],
+   "status": "reference",
+   "tolerance": {
+    "scale": "max",
+    "tier": "X"
+   }
+  },
+  "vertices": {
+   "compare": "set",
+   "dtype": "float64",
+   "shape": [
+    6,
+    2
+   ],
+   "status": "reference",
+   "tolerance": {
+    "scale": "max",
+    "tier": "F12"
+   }
+  }
+ },
+ "seed_sequence": [
+  37,
+  14
+ ]
+}

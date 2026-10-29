@@ -1,0 +1,85 @@
+{
+ "area": "quadrature",
+ "case": "gauss",
+ "case_index": 16,
+ "environment": {
+  "blas": "accelerate unknown",
+  "legacy_branch": "master",
+  "legacy_commit": "64817a19db250e4b01bcd51055ad0f7d2a5665b8",
+  "machine": "x86_64",
+  "numpy": "2.5.4",
+  "platform": "macOS-14.8.9-x86_64-i386-64bit-Mach-O",
+  "port_digest": "feb87c4f57e6ddc637b7d9874635645acebb788c000483c5b85bc3d72d0b37db",
+  "python": "3.14.0",
+  "scipy": "1.18.1"
+ },
+ "inputs": {
+  "k": {
+   "dtype": "int64",
+   "shape": [
+    10
+   ]
+  }
+ },
+ "inputs_from": "deterministic (k = 1..10)",
+ "legacy_call": "gauss_hermite(k), gauss_legendre(k) for k = 1..10 (port with the [P-08] eigh fix); concatenated in k order",
+ "legacy_seeds": {},
+ "not_stored": {},
+ "notes": [
+  "Both 2016 rules are probability rules (weights sum to 1; probabilists' Hermite), as in v1."
+ ],
+ "outputs": {
+  "hermite_nodes": {
+   "compare": "array",
+   "dtype": "float64",
+   "shape": [
+    55
+   ],
+   "status": "reference",
+   "tolerance": {
+    "scale": "max",
+    "tier": "F14"
+   }
+  },
+  "hermite_weights": {
+   "compare": "array",
+   "dtype": "float64",
+   "shape": [
+    55
+   ],
+   "status": "reference",
+   "tolerance": {
+    "scale": "max",
+    "tier": "F14"
+   }
+  },
+  "legendre_nodes": {
+   "compare": "array",
+   "dtype": "float64",
+   "shape": [
+    55
+   ],
+   "status": "reference",
+   "tolerance": {
+    "scale": "max",
+    "tier": "F14"
+   }
+  },
+  "legendre_weights": {
+   "compare": "array",
+   "dtype": "float64",
+   "shape": [
+    55
+   ],
+   "status": "reference",
+   "tolerance": {
+    "scale": "max",
+    "tier": "F14"
+   }
+  }
+ },
+ "seed_sequence": [
+  37,
+  16
+ ]
+}

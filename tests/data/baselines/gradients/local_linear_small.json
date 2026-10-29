@@ -1,0 +1,57 @@
+{
+ "area": "gradients",
+ "case": "local_linear_small",
+ "case_index": 12,
+ "environment": {
+  "blas": "accelerate unknown",
+  "legacy_branch": "master",
+  "legacy_commit": "64817a19db250e4b01bcd51055ad0f7d2a5665b8",
+  "machine": "x86_64",
+  "numpy": "2.5.4",
+  "platform": "macOS-14.8.9-x86_64-i386-64bit-Mach-O",
+  "port_digest": "feb87c4f57e6ddc637b7d9874635645acebb788c000483c5b85bc3d72d0b37db",
+  "python": "3.14.0",
+  "scipy": "1.18.1"
+ },
+ "inputs": {
+  "X": {
+   "dtype": "float64",
+   "shape": [
+    15,
+    10
+   ]
+  },
+  "f": {
+   "dtype": "float64",
+   "shape": [
+    15
+   ]
+  }
+ },
+ "inputs_from": "repro:C-19 (np.random.default_rng(0))",
+ "legacy_call": "local_linear_gradients(X, f[:, None])  # default p = floor(1.7 m) = 17 > M = 15",
+ "legacy_seeds": {
+  "np.random.seed": 0
+ },
+ "not_stored": {},
+ "notes": [],
+ "outputs": {
+  "grads": {
+   "dtype": "float64",
+   "finding": "C-19",
+   "relation": {
+    "exception": "ValueError",
+    "kind": "raises",
+    "message": "all the input array dimensions except for the concatenation axis must match exactly, but along dimension 0, the array at index 0 has size 15 and the array at index 1 has size 14"
+   },
+   "shape": [
+    0
+   ],
+   "status": "known_wrong"
+  }
+ },
+ "seed_sequence": [
+  37,
+  12
+ ]
+}

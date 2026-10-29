@@ -1,0 +1,68 @@
+{
+ "area": "geometry",
+ "case": "interval",
+ "case_index": 13,
+ "environment": {
+  "blas": "accelerate unknown",
+  "legacy_branch": "master",
+  "legacy_commit": "64817a19db250e4b01bcd51055ad0f7d2a5665b8",
+  "machine": "x86_64",
+  "numpy": "2.5.4",
+  "platform": "macOS-14.8.9-x86_64-i386-64bit-Mach-O",
+  "port_digest": "feb87c4f57e6ddc637b7d9874635645acebb788c000483c5b85bc3d72d0b37db",
+  "python": "3.14.0",
+  "scipy": "1.18.1"
+ },
+ "inputs": {
+  "W1": {
+   "dtype": "float64",
+   "shape": [
+    4,
+    1
+   ]
+  },
+  "grads": {
+   "dtype": "float64",
+   "shape": [
+    20,
+    4
+   ]
+  }
+ },
+ "inputs_from": "SeedSequence",
+ "legacy_call": "s = Subspaces(); s.compute(df=grads); s.partition(1); BoundedActiveVariableDomain(s).vertY, .vertX",
+ "legacy_seeds": {},
+ "not_stored": {},
+ "notes": [],
+ "outputs": {
+  "endpoints": {
+   "compare": "set",
+   "dtype": "float64",
+   "shape": [
+    2
+   ],
+   "status": "reference",
+   "tolerance": {
+    "scale": "max",
+    "tier": "F14"
+   }
+  },
+  "preimages": {
+   "compare": "set",
+   "dtype": "float64",
+   "shape": [
+    2,
+    4
+   ],
+   "status": "reference",
+   "tolerance": {
+    "scale": "max",
+    "tier": "X"
+   }
+  }
+ },
+ "seed_sequence": [
+  37,
+  13
+ ]
+}

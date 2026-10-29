@@ -1,0 +1,54 @@
+{
+ "area": "geometry",
+ "case": "zonotope_inert",
+ "case_index": 15,
+ "environment": {
+  "blas": "accelerate unknown",
+  "legacy_branch": "master",
+  "legacy_commit": "64817a19db250e4b01bcd51055ad0f7d2a5665b8",
+  "machine": "x86_64",
+  "numpy": "2.5.4",
+  "platform": "macOS-14.8.9-x86_64-i386-64bit-Mach-O",
+  "port_digest": "feb87c4f57e6ddc637b7d9874635645acebb788c000483c5b85bc3d72d0b37db",
+  "python": "3.14.0",
+  "scipy": "1.18.1"
+ },
+ "inputs": {
+  "W1": {
+   "dtype": "float64",
+   "shape": [
+    5,
+    2
+   ]
+  }
+ },
+ "inputs_from": "repro:C-20 (np.random.default_rng(0))",
+ "legacy_call": "zonotope_vertices(W1, Nsamples=2000, maxcount=20)  # m = 5, n = 2, last row of W1 zero",
+ "legacy_seeds": {
+  "np.random.seed": 0
+ },
+ "not_stored": {},
+ "notes": [
+  "2016 returns 16 rows (searching for nzv(5, 2) = 10); the zonotope has nzv(4, 2) = 8 vertices."
+ ],
+ "outputs": {
+  "rows": {
+   "dtype": "float64",
+   "finding": "C-20",
+   "relation": {
+    "kind": "hull_of",
+    "of": "rows",
+    "tier": "F12"
+   },
+   "shape": [
+    16,
+    2
+   ],
+   "status": "known_wrong"
+  }
+ },
+ "seed_sequence": [
+  37,
+  15
+ ]
+}

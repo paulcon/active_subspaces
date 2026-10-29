@@ -1,0 +1,132 @@
+{
+ "area": "subspaces",
+ "case": "phd",
+ "case_index": 8,
+ "environment": {
+  "blas": "accelerate unknown",
+  "legacy_branch": "dev",
+  "legacy_commit": "361ba2c3052d8346c581f9a11fd0ca755a351d25",
+  "machine": "x86_64",
+  "numpy": "2.5.4",
+  "platform": "macOS-14.8.9-x86_64-i386-64bit-Mach-O",
+  "port_digest": "9a53de7dd230655adcf1152612ed0a58c9853b2b1071cc1ec6a8e7433df84ebd",
+  "python": "3.14.0",
+  "scipy": "1.18.1"
+ },
+ "inputs": {
+  "Q": {
+   "dtype": "float64",
+   "shape": [
+    4,
+    4
+   ]
+  },
+  "X_gaussian": {
+   "dtype": "float64",
+   "shape": [
+    300,
+    4
+   ]
+  },
+  "X_uniform": {
+   "dtype": "float64",
+   "shape": [
+    300,
+    4
+   ]
+  },
+  "d": {
+   "dtype": "float64",
+   "shape": [
+    4
+   ]
+  },
+  "d_uniform": {
+   "dtype": "float64",
+   "shape": [
+    4
+   ]
+  },
+  "f_gaussian": {
+   "dtype": "float64",
+   "shape": [
+    300
+   ]
+  },
+  "f_uniform": {
+   "dtype": "float64",
+   "shape": [
+    300
+   ]
+  }
+ },
+ "inputs_from": "SeedSequence",
+ "legacy_call": "phd_subspace(X, f[:, None], np.full((M, 1), 1/M)) on Gaussian and on uniform X",
+ "legacy_seeds": {},
+ "not_stored": {},
+ "notes": [
+  "Gaussian: f = sum_i d_i (q_i^T x)^2 / 2 + 0.1 x_1 (convex: by Stein's lemma the pHd matrix is PSD, so 2016's |e| keeps the signs).",
+  "Uniform: f = sum_i d_i x_i^2 / 2 + 0.1 x_1 (axis-aligned, so E[(f - Ef) x x^T] = diag(2 d_i / 45) is PSD; checked on the sample).",
+  "Uniform X: run with Python 2 semantics for `np.amin < -1.0` (False, so gamma = 1/3); the Python 3 port raises TypeError there [C-01].",
+  "2016 scales by gamma^{-1/2}; v1 whitens with the declared Sigma = gamma I, a factor gamma^{-1}: C_v1 = gamma^{-1/2} C_2016."
+ ],
+ "outputs": {
+  "gaussian_W": {
+   "compare": "eigvecs",
+   "dtype": "float64",
+   "shape": [
+    4,
+    4
+   ],
+   "status": "reference",
+   "tolerance": {
+    "scale": "max",
+    "tier": "F10"
+   }
+  },
+  "gaussian_e": {
+   "compare": "array",
+   "dtype": "float64",
+   "shape": [
+    4
+   ],
+   "status": "reference",
+   "tolerance": {
+    "scale": "lambda1",
+    "tier": "F10"
+   }
+  },
+  "uniform_W": {
+   "compare": "eigvecs",
+   "dtype": "float64",
+   "shape": [
+    4,
+    4
+   ],
+   "status": "reference",
+   "tolerance": {
+    "scale": "max",
+    "tier": "F10"
+   }
+  },
+  "uniform_e": {
+   "decision": "D-43",
+   "dtype": "float64",
+   "finding": "N-02",
+   "relation": {
+    "factor": "gamma**-0.5",
+    "kind": "scale",
+    "tier": "F10",
+    "value": 1.7320508075688772
+   },
+   "shape": [
+    4
+   ],
+   "status": "known_wrong"
+  }
+ },
+ "seed_sequence": [
+  37,
+  8
+ ]
+}

@@ -1,0 +1,55 @@
+{
+ "area": "gradients",
+ "case": "finite_difference",
+ "case_index": 11,
+ "environment": {
+  "blas": "accelerate unknown",
+  "legacy_branch": "master",
+  "legacy_commit": "64817a19db250e4b01bcd51055ad0f7d2a5665b8",
+  "machine": "x86_64",
+  "numpy": "2.5.4",
+  "platform": "macOS-14.8.9-x86_64-i386-64bit-Mach-O",
+  "port_digest": "feb87c4f57e6ddc637b7d9874635645acebb788c000483c5b85bc3d72d0b37db",
+  "python": "3.14.0",
+  "scipy": "1.18.1"
+ },
+ "inputs": {
+  "X": {
+   "dtype": "float64",
+   "shape": [
+    20,
+    4
+   ]
+  },
+  "h": {
+   "dtype": "float64",
+   "shape": []
+  }
+ },
+ "inputs_from": "SeedSequence",
+ "legacy_call": "finite_difference_gradients(X, lambda x: fd_function(x)[0], h=1e-6)",
+ "legacy_seeds": {},
+ "not_stored": {},
+ "notes": [
+  "fd_function: f = exp(0.7 x1 - 0.3 x2) + x3 sin(x4); interior points only, so v1's backward rule at x_j = 1 is not exercised."
+ ],
+ "outputs": {
+  "grads": {
+   "compare": "array",
+   "dtype": "float64",
+   "shape": [
+    20,
+    4
+   ],
+   "status": "reference",
+   "tolerance": {
+    "scale": "max",
+    "tier": "F8"
+   }
+  }
+ },
+ "seed_sequence": [
+  37,
+  11
+ ]
+}
