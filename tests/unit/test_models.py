@@ -649,10 +649,18 @@ def test_evaluate_multi():
     assert out.flags.writeable
     assert out.tobytes() == ref.tobytes()
     assert calls == [23]
+    calls.clear()
+    assert (
+        evaluate_multi(value, X=X, outputs=P, space=space, batch_size=10).tobytes()
+        == ref.tobytes()
+    )
+    assert calls == [10, 10, 3]
     for b in (1, 5, 23):
+        calls.clear()
         with cf.ThreadPoolExecutor(3) as ex:
             got = evaluate_multi(value, X=X, outputs=P, space=space, executor=ex, batch_size=b)
         assert got.tobytes() == ref.tobytes()
+        assert sorted(calls) == sorted([b] * (23 // b) + ([23 % b] if 23 % b else []))
     both = Model(space=space, value=value, grad=boom)
     assert evaluate_multi(both, X=X, outputs=P).tobytes() == ref.tobytes()
     vg = Model(space=space, value_and_grad=lambda Z: (value(Z), np.full(Z.shape, np.nan)))
@@ -673,10 +681,33 @@ def test_evaluate_multi():
     with pytest.raises(ModelError) as e:
         evaluate_multi(lambda Z: np.array([["a"] * P] * Z.shape[0]), X=X, outputs=P, space=space)
     assert e.value.code == "model.dtype"
-    with pytest.raises(ModelError) as e:  # a (k, 1) value is not flattened
+    with pytest.raises(ModelError) as e:  # a multi-output model is not accepted by evaluate
         evaluate(lambda Z: np.ones((Z.shape[0], P)), X=X, space=space)
+    assert e.value.code == "model.shape"
+    # outputs=1: (k, 1) is accepted, (k,) is not flattened (spec 12 section 4.3)
+    one = evaluate_multi(lambda Z: Z[:, :1], X=X, outputs=1, space=space)
+    assert one.shape == (23, 1)
+    with pytest.raises(ModelError) as e:
+        evaluate_multi(lambda Z: Z[:, 0], X=X, outputs=1, space=space)
     assert e.value.code == "model.shape"
     for bad in (0, -2, 1.5, True, "3", None):
         with pytest.raises(InputError) as e:
             evaluate_multi(value, X=X, outputs=bad, space=space)
         assert e.value.code == "input.parameter"
+
+
+def test_evaluate_multi_failure_first_batch_in_batch_order():
+    """D-199: with two failing batches the first in batch order is reported, as for evaluate."""
+    M, b = 60, 10
+    space = _row_space(M)
+    X = _row_points(M)
+    inner = h.RowModel(fail_rows=[25, 55], slow_rows=[25], delay=0.3)
+
+    def two(Z):
+        return np.stack([inner(Z), inner(Z)], axis=1)
+
+    with cf.ThreadPoolExecutor(7) as tp7, cf.ThreadPoolExecutor(2) as tp2:
+        for ex in (None, tp7, tp2):
+            with pytest.raises(ModelError) as e:
+                evaluate_multi(two, X=X, outputs=2, space=space, executor=ex, batch_size=b)
+            assert e.value.details["batch"] == [20, 30]
