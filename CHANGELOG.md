@@ -20,6 +20,10 @@ D-02, D-02a, D-03).
 
 ### Added
 
+- **Models with several outputs.** `ac.evaluate_multi` evaluates a model whose value has shape
+  `(k, outputs)`, and `ac.finite_difference_gradients_multi` returns one `GradientResult` per
+  output from one set of stencil evaluations, each equal bitwise to the single-output call on that
+  column (D-199).
 - **Python 3 packaging.** `pyproject.toml` built with hatchling, a `src` layout, the version
   single-sourced in `_version.py`, PEP 561 type hints (`py.typed`), and dependency floors
   `numpy>=2.2`, `scipy>=1.15`, `matplotlib>=3.10` (P-10, D-05, D-147, D-151).

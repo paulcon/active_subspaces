@@ -78,6 +78,29 @@ m1 = ac.Model(space=space, value=ac.pointwise(one_point))
 print(np.allclose(ac.evaluate(m1, X=X[:5]), f[:5]))
 ```
 
+### A model with several outputs
+
+One run of a simulation may yield several outputs, for example a trajectory at $P$ times. Give the
+callable values of shape `(k, P)`. `ac.evaluate_multi` runs it, and
+`ac.finite_difference_gradients_multi` returns one `GradientResult` per output from a single set
+of runs. Each stencil point is evaluated once, so the cost is that of one output.
+
+```{code-cell} python
+def trajectory(X):                             # (k, 2) -> (k, 3)
+    t = np.array([0.5, 1.0, 2.0])
+    return np.exp(-t * (0.7 * X[:, :1] + 0.1 * X[:, 1:]))
+
+traj = ac.evaluate_multi(trajectory, X=X, outputs=3, space=space)
+res = ac.finite_difference_gradients_multi(
+    trajectory, X=X[:50], space=space, outputs=3, qoi_names=("t0.5", "t1", "t2")
+)
+print(traj.shape, [r.qoi for r in res], res[0].n_evaluations)
+```
+
+Result $p$ equals, bit for bit, `ac.finite_difference_gradients` on a model that returns column
+$p$. A callable that returns `(k,)` raises `model.shape`. Without `qoi_names` the labels are
+`"f0"`, `"f1"`, and so on.
+
 ## Batches and executors
 
 Rows are split into batches of `batch_size` rows (the argument, else `model.batch_size`, else all

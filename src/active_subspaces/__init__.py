@@ -79,6 +79,7 @@ from active_subspaces.geometry import (
 from active_subspaces.gradients import (
     GradientResult,
     finite_difference_gradients,
+    finite_difference_gradients_multi,
     local_linear_gradients,
 )
 from active_subspaces.integration import (
@@ -100,6 +101,7 @@ from active_subspaces.models import (
     as_model,
     evaluate,
     evaluate_grads,
+    evaluate_multi,
     evaluate_with_grads,
     pointwise,
 )
@@ -218,8 +220,10 @@ __all__ = (
     "estimate_integral",
     "evaluate",
     "evaluate_grads",
+    "evaluate_multi",
     "evaluate_with_grads",
     "finite_difference_gradients",
+    "finite_difference_gradients_multi",
     "fit_surrogate",
     "fit_surrogate_from_model",
     "forward_map",

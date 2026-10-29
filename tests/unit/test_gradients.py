@@ -10,6 +10,7 @@ import pytest
 import active_subspaces as asub
 from active_subspaces import gradients as gr
 from active_subspaces import models
+from active_subspaces.errors import InputError, ModelError
 from active_subspaces.results import _InvariantError
 
 
@@ -101,6 +102,7 @@ def test_exports():
     assert gr.__all__ == (
         "GradientResult",
         "finite_difference_gradients",
+        "finite_difference_gradients_multi",
         "local_linear_gradients",
     )
     assert gr._toplevel == gr.__all__
@@ -611,3 +613,102 @@ def test_neighbor_sets_match_stable_argsort(monkeypatch, blocks):
             for a, b in zip(new, ref, strict=True):
                 assert a.dtype == b.dtype
                 np.testing.assert_array_equal(a, b)
+
+
+_MULTI_FIELDS = ("points", "grads", "values", "steps", "central_mask")
+
+
+def _multi_model(P: int):
+    """A (k, P) toy model and a per-column scalar view of it; the first counts its calls."""
+    w = np.arange(1.0, P + 1.0)
+    calls: list[int] = []
+
+    def multi(Z):
+        calls.append(Z.shape[0])
+        return np.sin(Z @ np.ones(Z.shape[1]))[:, None] * w + Z[:, :1] ** 2 * w[::-1]
+
+    def column(p):
+        return lambda Z: multi(Z)[:, p]
+
+    return multi, column, calls
+
+
+@pytest.mark.parametrize("scheme", ["forward", "central"])
+def test_finite_difference_multi(scheme):
+    """D-199: one evaluation call; each output equals the scalar call bitwise; labels; shape."""
+    s = asub.Uniform([0.0, 1.0, -3.0], [2.0, 4.0, 3.0])
+    X = np.vstack([s.sample(8, rng=3), s.lower, s.upper])  # bounds force one-sided entries
+    M, m = X.shape
+    P = 21
+    multi, column, calls = _multi_model(P)
+    res = gr.finite_difference_gradients_multi(
+        multi, X=X, space=s, outputs=P, h=1e-4, scheme=scheme
+    )
+    assert isinstance(res, tuple)
+    assert len(res) == P
+    if scheme == "forward":
+        assert calls == [M * (m + 1)]
+    else:
+        assert len(calls) == 1
+        assert calls[0] == res[0].n_evaluations > M * (m + 1)
+    assert [r.qoi for r in res] == [f"f{p}" for p in range(P)]
+    for workers in (None, 3):
+        if workers is None:
+            got = res
+        else:
+            with concurrent.futures.ThreadPoolExecutor(workers) as ex:
+                got = gr.finite_difference_gradients_multi(
+                    multi,
+                    X=X,
+                    space=s,
+                    outputs=P,
+                    h=1e-4,
+                    scheme=scheme,
+                    executor=ex,
+                    batch_size=7,
+                )
+        for p in range(P):
+            ref = gr.finite_difference_gradients(column(p), X=X, space=s, h=1e-4, scheme=scheme)
+            r = got[p]
+            for name in _MULTI_FIELDS:
+                a, b = getattr(r, name), getattr(ref, name)
+                assert a.dtype == b.dtype, (p, name)
+                assert a.tobytes() == b.tobytes(), (p, name)
+            assert r.n_evaluations == ref.n_evaluations
+            assert r.method == ref.method
+            assert r.scheme == ref.scheme
+            assert r.space == ref.space
+            assert r.qoi == f"f{p}"
+            assert got[0].steps is not None
+            prm = r.provenance.parameters
+            assert prm["outputs"] == P
+            assert prm["output"] == p
+            assert prm["qoi_names"] == [f"f{q}" for q in range(P)]
+            assert r.provenance.function == "active_subspaces.finite_difference_gradients_multi"
+
+
+def test_finite_difference_multi_names_and_errors():
+    """D-199: qoi_names are used; (k,) models raise model.shape; bad arguments input.parameter."""
+    s = asub.Uniform.reference(2)
+    X = s.sample(4, rng=0)
+
+    def two(Z):
+        return np.stack([Z[:, 0], Z[:, 1] ** 2], axis=1)
+
+    model = models.Model(space=s, value=two, qoi="ignored")
+    res = gr.finite_difference_gradients_multi(model, X=X, outputs=2, qoi_names=("a", "b"))
+    assert [r.qoi for r in res] == ["a", "b"]
+    with pytest.raises(ModelError) as e:
+        gr.finite_difference_gradients_multi(lambda Z: Z[:, 0], X=X, space=s, outputs=2)
+    assert e.value.code == "model.shape"
+    with pytest.raises(ModelError) as e:
+        gr.finite_difference_gradients_multi(two, X=X, space=s, outputs=3)
+    assert e.value.code == "model.shape"
+    for bad in (["a"], ["a", "a"], ["a", ""], ["a", 1], "ab", 5):
+        with pytest.raises(InputError) as e:
+            gr.finite_difference_gradients_multi(two, X=X, space=s, outputs=2, qoi_names=bad)
+        assert e.value.code == "input.parameter"
+    for bad in (0, -1, 1.5, True, "2", None):
+        with pytest.raises(InputError) as e:
+            gr.finite_difference_gradients_multi(two, X=X, space=s, outputs=bad)
+        assert e.value.code == "input.parameter"

@@ -6,7 +6,8 @@ Callables see **physical** coordinates: ``value`` maps ``(k, m) -> (k,)`` (or
 ``(k, 1)``), ``grad`` maps ``(k, m) -> (k, m)`` and the optional
 ``value_and_grad`` returns both from one call.
 
-:func:`evaluate`, :func:`evaluate_grads` and :func:`evaluate_with_grads` run
+:func:`evaluate`, :func:`evaluate_grads`, :func:`evaluate_multi` and
+:func:`evaluate_with_grads` run
 a model at many points, in the calling thread or on any
 ``concurrent.futures.Executor``. Rows are split into batches from ``M`` and
 ``batch_size`` only, and outputs are assembled and errors reported in batch
@@ -39,6 +40,7 @@ __all__ = (
     "as_model",
     "evaluate",
     "evaluate_grads",
+    "evaluate_multi",
     "evaluate_with_grads",
     "pointwise",
 )
@@ -602,16 +604,23 @@ def _qualname(exc: BaseException) -> str:
 class _Task:
     """One callable to run on one batch: which callable, its role and the rows."""
 
-    __slots__ = ("fn", "label", "start", "stop", "want")
+    __slots__ = ("fn", "label", "outputs", "start", "stop", "want")
 
     def __init__(
-        self, label: str, fn: Callable[..., Any], start: int, stop: int, want: tuple[bool, bool]
+        self,
+        label: str,
+        fn: Callable[..., Any],
+        start: int,
+        stop: int,
+        want: tuple[bool, bool],
+        outputs: int | None = None,
     ) -> None:
         self.label = label  # "value" | "grad" | "value_and_grad"
         self.fn = fn
         self.start = start
         self.stop = stop
         self.want = want  # (values wanted, gradients wanted)
+        self.outputs = outputs  # None: values are (k,); P: values are (k, P) [D-199]
 
 
 def _plan(model: Model, request: str) -> list[tuple[str, Any, tuple[bool, bool]]]:
@@ -718,14 +727,23 @@ def _check_output(
     f = g = None
     if want_f:
         f = _as_numeric(fv, task, model, "values")
-        if not (f.shape == (k,) or f.shape == (k, 1)):
+        if task.outputs is not None:
+            if f.shape != (k, task.outputs):
+                raise ModelError(
+                    f"the model's {task.label} callable returned values of shape {f.shape}; "
+                    f"expected ({k}, {task.outputs})",
+                    code="model.shape",
+                    details=_details(task, model, expected=[k, task.outputs], got=list(f.shape)),
+                )
+        elif not (f.shape == (k,) or f.shape == (k, 1)):
             raise ModelError(
                 f"the model's {task.label} callable returned values of shape {f.shape}; expected "
                 f"({k},) or ({k}, 1)",
                 code="model.shape",
                 details=_details(task, model, expected=[k], got=list(f.shape)),
             )
-        f = f.reshape(k)
+        if task.outputs is None:
+            f = f.reshape(k)
         _check_finite(f, task, model, "values")
     if want_g:
         g = _as_numeric(gv, task, model, "gradients")
@@ -749,6 +767,7 @@ def _evaluate(
     space: InputSpace | None,
     executor: concurrent.futures.Executor | None,
     batch_size: int | None,
+    outputs: int | None = None,
 ) -> tuple[np.ndarray | None, np.ndarray | None]:
     # 1. resolve the model and check arguments
     model = as_model(model, space=space)
@@ -779,11 +798,12 @@ def _evaluate(
         else (model.batch_size if model.batch_size is not None else M)
     )
     tasks = [
-        _Task(label, fn, s, min(s + b, M), want)
+        _Task(label, fn, s, min(s + b, M), want, outputs)
         for s in range(0, M, b)
         for (label, fn, want) in plan
     ]
-    f_out = np.empty(M) if request in ("value", "both") else None
+    f_shape = (M,) if outputs is None else (M, outputs)
+    f_out = np.empty(f_shape) if request in ("value", "both") else None
     g_out = np.empty((M, m)) if request in ("grad", "both") else None
 
     def store(task: _Task, out: Any) -> None:
@@ -897,6 +917,80 @@ def evaluate(
     f, _ = _evaluate(model, "value", X, space, executor, batch_size)
     assert f is not None
     return f
+
+
+def evaluate_multi(
+    model: Model | ValueFn,
+    *,
+    X: ArrayLike,
+    outputs: int,
+    space: InputSpace | None = None,
+    executor: concurrent.futures.Executor | None = None,
+    batch_size: int | None = None,
+) -> NDArray[np.float64]:
+    """Evaluate a model whose run yields several outputs at many points.
+
+    Parameters
+    ----------
+    model : Model or callable
+        A ``Model``, or a bare batch value callable together with ``space``. Its
+        value callable returns an array of shape ``(k, outputs)``.
+    X : array_like, shape (M, m), float, keyword-only
+        Physical points, validated against the model's space.
+    outputs : int, keyword-only
+        Number of value columns >= 1.
+    space : Uniform or Gaussian, optional, keyword-only
+        As for :func:`evaluate`.
+    executor : concurrent.futures.Executor, optional, keyword-only
+        As for :func:`evaluate`.
+    batch_size : int, optional, keyword-only
+        As for :func:`evaluate`.
+
+    Returns
+    -------
+    numpy.ndarray, shape (M, outputs), float64
+        The values, a new writeable array.
+
+    Raises
+    ------
+    InputError
+        ``input.parameter`` for an ``outputs`` that is not an integer
+        >= 1; otherwise as for :func:`evaluate`.
+    ModelError
+        As for :func:`evaluate`, with ``model.shape`` for any batch value whose
+        shape is not exactly ``(k, outputs)``.
+
+    See Also
+    --------
+    evaluate : Evaluate a model with one output.
+    active_subspaces.finite_difference_gradients_multi : Gradients of every output.
+
+    Notes
+    -----
+    Uses ``value``, or the value part of ``value_and_grad``; a gradient callable
+    is never called. A model used here returns ``(k, outputs)`` and must not be
+    passed to :func:`evaluate`.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> import active_subspaces as ac
+    >>> space = ac.Uniform([0.0, 0.0], [1.0, 2.0])
+    >>> def trajectory(X):
+    ...     return np.stack([X[:, 0], X[:, 0] * X[:, 1]], axis=1)
+    >>> ac.evaluate_multi(trajectory, X=[[1.0, 2.0], [0.5, 0.5]], outputs=2, space=space)
+    array([[1.  , 2.  ],
+           [0.5 , 0.25]])
+    """
+    P = _outputs(outputs)
+    f, _ = _evaluate(model, "value", X, space, executor, batch_size, P)
+    assert f is not None
+    return f
+
+
+def _outputs(outputs: Any) -> int:
+    """Validate ``outputs``: an integer >= 1 (bool rejected), else ``input.parameter``."""
+    return _v.integer(outputs, "outputs", lo=1)
 
 
 def evaluate_grads(
