@@ -18,6 +18,7 @@ from active_subspaces.errors import (
     SolverError,
 )
 from active_subspaces.solvers import ScipyBackend, SolverOutput
+from helpers.tolerances import TIERS, assert_close
 
 
 def _sub(m, n, seed=0, space=None):
@@ -113,7 +114,8 @@ def test_starts_stream_layout(seed):
         res = O.minimize_active(g, domain=dom, grad=dg, n_starts=3, rng=seed)
         kids = np.random.default_rng(np.random.SeedSequence(seed)).spawn(3)
         x0 = [k.uniform(-1, 1, 5) if draw == "uniform" else k.standard_normal(5) for k in kids]
-        assert np.array_equal(res.starts, np.array([x @ dom.subspace.W1 for x in x0]))
+        # the draws are the claim; the product with W1 rounds differently across BLAS builds
+        assert_close(res.starts, np.array([x @ dom.subspace.W1 for x in x0]), rtol=TIERS["F14"])
 
 
 def test_gaussian_bfgs(seed):

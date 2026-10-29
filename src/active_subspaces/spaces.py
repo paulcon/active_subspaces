@@ -250,15 +250,27 @@ class InputSpace(Protocol):
         """
 
 
+def _sign_pivots(W: _F64) -> NDArray[np.intp]:
+    """Row of each column's sign pivot: the first entry within sqrt(eps) of the largest magnitude.
+
+    The tolerance makes ties that are exact in exact arithmetic platform-independent [D-81].
+    A column with a NaN keeps the plain argmax.
+    """
+    a = np.abs(W)
+    amax = a.max(axis=0)
+    first = np.argmax(a >= amax * (1.0 - np.sqrt(np.finfo(np.float64).eps)), axis=0)
+    return np.where(np.isnan(amax), np.argmax(a, axis=0), first)
+
+
 def _orient_columns(W: ArrayLike) -> NDArray[np.float64]:
-    """Flip column signs so each column's largest-magnitude entry (first on ties) is positive.
+    """Flip column signs so each column's sign pivot (see ``_sign_pivots``) is positive.
 
     Returns a new array.
     """
     W = np.array(W, dtype=np.float64, copy=True)
     if W.size == 0:
         return W
-    idx = np.argmax(np.abs(W), axis=0)
+    idx = _sign_pivots(W)
     signs = np.sign(W[idx, np.arange(W.shape[1])])
     signs[signs == 0] = 1.0
     out: _F64 = W * signs

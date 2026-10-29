@@ -1729,7 +1729,8 @@ class SubspaceResult(QoIResult):
         ``"basis"``.
     eigenvectors : numpy.ndarray, shape (m, m), float64
         Orthonormal eigenvectors as columns, normalized coordinates; each
-        column's largest-magnitude entry (the first on a tie) is positive.
+        column's largest-magnitude entry (the first of those within a relative
+        sqrt(eps) of it) is positive.
     n : int
         Active dimension, :math:`1 \le n \le m`.
     dimension_rule : {"fixed", "evg", "rs", "li"}
