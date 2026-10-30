@@ -940,7 +940,10 @@ class PolynomialSurrogate(QoIResult):
 
         Returns
         -------
-        lower, upper : numpy.ndarray, shape (K,), float64
+        lower : numpy.ndarray, shape (K,), float64
+            Lower limits; ``-inf`` for ``side="upper"``.
+        upper : numpy.ndarray, shape (K,), float64
+            Upper limits; ``+inf`` for ``side="lower"``.
 
         Raises
         ------
@@ -2299,16 +2302,20 @@ class IntervalResult:
     A value type returned by :func:`predict_interval`, like the arrays of
     :func:`predict`: it holds no provenance and is not serialized.
 
-    Attributes
+    Parameters
     ----------
     estimate : numpy.ndarray, shape (K,), float64
         The surrogate at the points.
-    lower, upper : numpy.ndarray, shape (K,), float64
-        The limits; ``-inf`` or ``+inf`` on the open side of a one-sided interval.
+    lower : numpy.ndarray, shape (K,), float64
+        Lower limits; ``-inf`` for ``side="upper"``.
+    upper : numpy.ndarray, shape (K,), float64
+        Upper limits; ``+inf`` for ``side="lower"``.
     level : float
         Confidence level.
     kind : {"prediction", "confidence"}
+        Limits for a new observation or for the mean.
     side : {"two", "lower", "upper"}
+        Two-sided or one-sided.
     dof : int
         Residual degrees of freedom :math:`\nu`.
     residual_scale : float

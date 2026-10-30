@@ -47,7 +47,8 @@ Write $K_\eta=R_\eta+\Delta$.
 $$\ell_j=\eta\,\frac{\sum_{q=1}^m\lvert\lambda_q\rvert}{\max\bigl(\lvert\lambda_j\rvert,\ \epsilon\lvert\lambda_1\rvert\bigr)},\qquad j=1,\dots,n,$$
 
 so active directions with larger eigenvalues get shorter length scales, and one scalar $\eta$ is
-left to fit. This is the heuristic of the 2016 code; no published reference has been identified.
+left to fit. This is the rule of Constantine, Dow and Wang (2014, §4.2–4.3, eq. (4.16)), whose
+parameter $\alpha$ is $\eta=2\alpha$ here [D-194]. It is also the rule of the 2016 code.
 On all inputs, or on a subspace given only by a basis (no eigenvalues), $\ell_j=\eta$.
 
 **Nugget.** The nugget is dimensionless, relative to the amplitude. With
@@ -68,12 +69,30 @@ $$\hat\beta_\eta=(B^\top K_\eta^{-1}B)^{-1}B^\top K_\eta^{-1}f,\qquad r_\eta=f-B
 
 (floored at $5\epsilon s_f^2$), and $\eta$ minimizes the concentrated negative log-likelihood
 
-$$J(\eta)=\tfrac12\log\det K_\eta+\tfrac M2\log\hat\sigma^2_\eta,\qquad\log_{10}\eta\in[-10,1],$$
+$$J(\eta)=\tfrac12\log\det K_\eta+\tfrac M2\log\hat\sigma^2_\eta,$$
 
 which is $-\log$ of the Gaussian likelihood at $(\hat\beta_\eta,\hat\sigma^2_\eta)$ up to a constant
-[Rasmussen and Williams 2006]. The search evaluates $J$ on a grid of $\log_{10}\eta$ with step at
+[Rasmussen and Williams 2006]. By default the search is over $\log_{10}\eta\in[-10,1]$; with
+`f_variance` it is over the published interval below. The search evaluates $J$ on a grid of $\log_{10}\eta$ with step at
 most 0.25, then refines by a bounded scalar minimization around the best grid point. It is
 deterministic.
+
+**Published search interval.** Constantine, Dow and Wang (2014, eq. (4.13)) bound $\alpha$, so
+with $\eta=2\alpha$ the interval for $\eta$ is
+
+$$\frac{2\hat\sigma_f^2}{\sum_q\lvert\lambda_q\rvert}\ \le\ \eta\ \le\ 2C_1,\qquad
+\log_{10}\eta\in\Bigl[\log_{10}\frac{2\hat\sigma_f^2}{\sum_q\lvert\lambda_q\rvert},\ \log_{10}(2C_1)\Bigr].$$
+
+Here $\hat\sigma_f^2$ is the biased variance of $f$ at the **gradient samples** (the samples that
+gave the eigenvalues), not of the training values, and $C_1$ is the Poincaré constant of the input
+density: $C_1=1$ for a Gaussian and $C_1=4/\pi^2$ for the uniform density on a cube, which is sharp
+[D-193, D-204]. The paper's (4.10) prints $2\sqrt m/\pi$ for the uniform case and cites Bebendorf;
+Bebendorf's bound uses the diameter of the domain and gives $4m/\pi^2$ for $[-1,1]^m$.
+Both are valid but loose, and v1 uses the sharp constant. This is an erratum to the paper, not a
+departure from it. The interval is opt-in through `f_variance` [D-192]. If it is empty, v1 uses its
+upper end and issues `accuracy.empty_bounds`. If the likelihood is flat over four or more decades of
+$\log_{10}\eta$, the selected value is arbitrary and v1 issues `accuracy.flat_objective`. Explicit
+`log10_eta_bounds` or `log10_eta` take precedence over `f_variance`.
 
 :::{admonition} Departure from the 2016 code: objective and nugget
 :class: important
@@ -83,11 +102,22 @@ a unit-amplitude kernel and the eigenvalue default $\eta\sum_{q>n}\lambda_q$. v1
 concentrated likelihood $\tfrac12\log\det K+\tfrac M2\log\hat\sigma^2$ and uses the dimensionless
 nugget above. Reason: the 2016 fit was not invariant to the units of $f$ (multiplying $f$ by 100
 changed its predictions by more than a rescaling), and its objective was not the concentrated
-likelihood. The 2016
-heuristic has no published reference, so no published method is departed from, but the numbers
-differ from 2016 whenever $\sum_q\lambda_q\ne1$ or $s_f^2\ne1$. On one test problem
+likelihood. The numbers differ from 2016 whenever $\sum_q\lambda_q\ne1$ or $s_f^2\ne1$. On one test problem
 ($f=a\sin3y$ on $[-1,1]$, 25 training points) v1's relative prediction error is 0.0117 at both $a=1$
 and $a=100$; the 2016 code gives 0.0074 at $a=1$ and 0.554 at $a=100$.
+:::
+
+:::{admonition} Departures from the published method
+:class: important
+
+v1 keeps two departures from Constantine, Dow and Wang (2014) [D-194]. Both are deliberate.
+
+1. **Amplitude.** The paper ties the amplitude to the length scale, $\sigma^2=\alpha\sum_q\lambda_q$
+   (4.10). v1 profiles it out: $\hat\sigma^2_\eta=r_\eta^\top K_\eta^{-1}r_\eta/M$, the maximum
+   likelihood value for each $\eta$.
+2. **Nugget.** The paper's nugget is $\sum_{q>n}\lambda_q/\sum_q\lambda_q$ (4.14), independent of
+   $\alpha$. v1 uses $\delta=\eta\sum_{q>n}\lvert\lambda_q\rvert/\sum_q\lvert\lambda_q\rvert$, which grows
+   with $\eta=2\alpha$, and takes magnitudes of the eigenvalues.
 :::
 
 **Fit.** At the selected $\eta$ the coefficients solve
@@ -101,6 +131,23 @@ $$g(y)=\sum_{i=1}^M\alpha_i\,\kappa(y,y_i)+b(y)^\top\beta,\qquad\kappa(y,y')=\ex
 The nugget enters only the diagonal of $K_\eta$, so $g$ smooths rather than interpolates:
 $g(y_i)=f_i-\delta_i\alpha_i$. The cost is $O(M^3)$ per trial $\eta$ and $O(M^2)$ memory, practical up
 to a few thousand points.
+
+## Prediction and confidence intervals
+
+For a polynomial surrogate, `ac.predict_interval` and `PolynomialSurrogate.interval` return
+Gaussian-error least-squares limits [D-200]. With basis $b(y)$, $p$ coefficients, weights
+$S=\mathrm{diag}(s_i)$ and residuals $r_i$, let
+
+$$s^2=\frac{\sum_i s_i r_i^2}{\nu},\qquad\nu=\#\lbrace s_i>0\rbrace-p.$$
+
+The limits at $y$ are
+
+$$\hat g(y)\pm t_{\nu,(1+\text{level})/2}\;s\,\sqrt{c+b(y)^\top(B^\top SB)^{-1}b(y)},$$
+
+with $c=1$ for a prediction interval (a new observation, whose weight is 1) and $c=0$ for a
+confidence interval (the mean of $f$ given $y$). A one-sided limit uses $t_{\nu,\text{level}}$. The
+interval needs $\nu>0$, and it is not defined for an RBF. It is conditional on $W_1$: it ignores
+the error in estimating the subspace. See Montgomery, Peck and Vining (2012, §3.4–3.5).
 
 ## Fit quality: leave-one-out
 
@@ -172,6 +219,8 @@ $k$-centre problem, relative to the candidate set. It costs $O(50N^2n)$.
   Studies.* SIAM.
 - Constantine, P. G., Dow, E. and Wang, Q. (2014). Active subspace methods in theory and practice:
   applications to kriging surfaces. *SIAM Journal on Scientific Computing* 36(4):A1500–A1524.
+- Montgomery, D. C., Peck, E. A. and Vining, G. G. (2012). *Introduction to Linear Regression
+  Analysis*, 5th ed. Wiley. §3.4–3.5.
 - Rasmussen, C. E. and Williams, C. K. I. (2006). *Gaussian Processes for Machine Learning.* MIT
   Press. §5.4.2. (details to verify)
 - Rippa, S. (1999). *Advances in Computational Mathematics* 11:193–210. (title and details to

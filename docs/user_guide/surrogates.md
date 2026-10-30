@@ -87,9 +87,37 @@ $$R^2_{\text{LOO}} = 1 - \frac{\sum_i s_i e_i^2}{\sum_i s_i (f_i - \bar f_s)^2},
 with sample weights $s_i$ (all 1 for the RBF). Both kinds have closed forms: $e_i = r_i/(1-h_{ii})$
 with the leverages $h_{ii}$ for the polynomial, and the analogous formula for the RBF's linear
 system. It is lower than
-an in-sample $R^2$, which an interpolant drives to 1. `loo_r_squared` is `None` when the
+an in-sample $R^2$, which an interpolant drives to 1. For an unweighted polynomial fit the in-sample
+value is `1 - sum(s.residuals**2) / sum((s.f - s.f.mean())**2)`. `loo_r_squared` is `None` when the
 residuals are undefined, for example when there are as many points as polynomial coefficients
 (warning `accuracy.loo_undefined`).
+
+## Prediction and confidence intervals
+
+For a polynomial surrogate, `ac.predict_interval` returns Gaussian-error least-squares limits
+$\hat g(y) \pm t\, s \sqrt{c + b(y)^\top (B^\top S B)^{-1} b(y)}$, with $c = 1$ for a prediction
+interval (a new observation) and $c = 0$ for a confidence interval (the mean). `side` is `"two"`
+(default), `"lower"` or `"upper"`.
+
+```{code-cell} python
+iv = ac.predict_interval(poly, Xt, level=0.95)
+print(np.round(iv.estimate, 1))
+print(np.round(iv.lower, 1), np.round(iv.upper, 1))
+print(iv.dof, round(iv.residual_scale, 3))
+```
+
+`poly.interval(Y, ...)` takes normalized active coordinates and returns the pair `(lower, upper)`:
+
+```{code-cell} python
+Yt, _ = ac.forward_map(sub2, X=Xt)
+lo, hi = poly.interval(Yt, kind="confidence", level=0.9)
+print(np.round(lo, 1), np.round(hi, 1))
+```
+
+The surrogate must be a polynomial with residual degrees of freedom $\nu > 0$; an RBF, or a fit
+with $\nu \le 0$, raises `input.parameter` (`details["reason"]` is `not_polynomial` or `no_dof`). The
+limits are conditional on $W_1$: they ignore the error in estimating the subspace. The theory page
+gives the weighted case.
 
 ## Options
 
@@ -121,11 +149,59 @@ least $10^{-6}$). $\eta$ minimizes the concentrated negative log-likelihood
 
 $$J(\eta) = \tfrac12 \log\det(R_\eta + \Delta_\eta) + \tfrac M2 \log \hat\sigma^2_\eta$$
 
-over $\log_{10}\eta \in [-10, 1]$. Three points differ from the 2016 code. The 2016 objective
+over $\log_{10}\eta \in [-10, 1]$ by default (see below for the published interval). Three points differ from the 2016 code. The 2016 objective
 weighted the second term by $M$ instead of $M/2$. The 2016 nugget had the units of $f^2$, so the
 fit changed when $f$ was rescaled; v1's fit is unchanged by $f \mapsto af + b$. And the 2016
-"$R^2$" of the RBF was an in-sample quantity. The length-scale rule is the 2016 heuristic and has
-no published reference.
+"$R^2$" of the RBF was an in-sample quantity. The length-scale rule is the published one of Constantine, Dow and Wang
+(2014, §4.2–4.3, eq. (4.16)), with $\eta = 2\alpha$. v1 departs from it in two ways: it profiles the
+amplitude, $\hat\sigma^2_\eta = r_\eta^\top K_\eta^{-1} r_\eta / M$, where the paper ties it to
+$\sigma^2 = \alpha \sum_q \lambda_q$; and its nugget is $\eta \sum_{q>n}\lvert\lambda_q\rvert / \sum_q \lvert\lambda_q\rvert$,
+where the paper's is $\sum_{q>n}\lambda_q / \sum_q \lambda_q$, independent of $\alpha$.
+
+### The published search interval: `f_variance`
+
+Constantine, Dow and Wang (2014, eq. (4.13)) bound $\eta$ by
+
+$$\frac{2\hat\sigma_f^2}{\sum_q \lvert\lambda_q\rvert} \le \eta \le 2 C_1,$$
+
+with $C_1 = 1$ for Gaussian inputs and $C_1 = 4/\pi^2$ for uniform inputs. Here $\hat\sigma_f^2$ is
+the biased variance of $f$ at the **gradient samples**, not at the training values. (The paper prints
+$2\sqrt m/\pi$ for the uniform case; the sharp constant is $4/\pi^2$. The theory page explains.)
+Pass it as `f_variance` to search this interval instead of $[-10, 1]$:
+
+```{code-cell} python
+rbf_pub = ac.fit_surrogate(X=X, f=f, subspace=sub2, kind="rbf", f_variance=np.var(f))
+print(rbf_pub.provenance.parameters["log10_eta_bounds"])
+print(f"rbf with the published interval: LOO R^2 = {rbf_pub.loo_r_squared:.4f}")
+```
+
+Here `f` is the value at the same samples that gave `sub`, so `np.var(f)` is $\hat\sigma_f^2$. If your
+gradient samples differ from your training points, compute it from the gradient samples. The
+provenance records the interval and where it came from. Explicit `log10_eta_bounds` or `log10_eta`
+take precedence over `f_variance`.
+
+Two warnings concern the search.
+
+- `accuracy.empty_bounds`: the interval is empty, because $\hat\sigma_f^2$ is large compared with
+  $C_1 \sum_q \lvert\lambda_q\rvert$. The upper end is used. Check that `f_variance` is the variance at the
+  gradient samples, and that the subspace and `f` belong together.
+- `accuracy.flat_objective`: the likelihood is flat over four or more decades of
+  $\log_{10}\eta$, so the selected value is arbitrary. This happens with a very smooth $f$ and the wide
+  default interval. Pass `f_variance`, or narrow `log10_eta_bounds`, or fix `log10_eta`.
+
+`fit_surrogate_from_model` has no `f_variance`, because it draws its own samples. To use the
+published interval there, compute the bounds yourself and pass `log10_eta_bounds`:
+
+```{code-cell} python
+dom2 = ac.active_domain(sub2)
+C1 = 4 / np.pi**2                                  # 1.0 for Gaussian inputs
+bounds = (np.log10(2 * np.var(f) / np.abs(sub2.eigenvalues).sum()), np.log10(2 * C1))
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore", ac.AccuracyWarning)
+    s_pub = ac.fit_surrogate_from_model(domain=dom2, model=wing, n_design=10, n_mc=20, rng=2,
+                                        log10_eta_bounds=bounds)
+print(np.round(bounds, 3), f"LOO R^2 = {s_pub.loo_r_squared:.4f}")
+```
 
 ## Fitting from a model
 
@@ -141,7 +217,6 @@ domain's vertices on a bounded domain, and `n_mc=50`, so $(5^n + N_v)$ points co
 $50 \cdot 5^n$ model runs (one run at a vertex whose preimage is a single corner).
 
 ```{code-cell} python
-dom2 = ac.active_domain(sub2)
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", ac.AccuracyWarning)   # see the note below
     s_model = ac.fit_surrogate_from_model(domain=dom2, model=wing, n_design=10, n_mc=20, rng=2)
@@ -182,5 +257,7 @@ API reference: {mod}`active_subspaces.surrogates`, {mod}`active_subspaces.design
 
 - P. G. Constantine. *Active Subspaces: Emerging Ideas for Dimension Reduction in Parameter
   Studies.* SIAM, 2015.
+- D. C. Montgomery, E. A. Peck, G. G. Vining. *Introduction to Linear Regression Analysis*, 5th
+  ed. Wiley, 2012, §3.4–3.5.
 - P. G. Constantine, E. Dow, Q. Wang. Active subspace methods in theory and practice: applications
   to kriging surfaces. *SIAM J. Sci. Comput.* 36(4):A1500–A1524, 2014.
