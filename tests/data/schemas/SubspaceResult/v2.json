@@ -1,0 +1,253 @@
+{
+ "fields": {
+  "bootstrap_dets": {
+   "__ndarray__": 1,
+   "data": [
+    0.9997858349803066,
+    0.9998093606726088,
+    0.999260446262793,
+    0.9992095437798066,
+    0.9990486907788609,
+    0.9994664690957592,
+    0.9989868589209895,
+    0.9999878047548826,
+    0.9954898601734679,
+    0.9993343151293466
+   ],
+   "dtype": "float64",
+   "shape": [
+    5,
+    2
+   ]
+  },
+  "bootstrap_distances": {
+   "__ndarray__": 1,
+   "data": [
+    0.020695027729678354,
+    0.019525427304648922,
+    0.038452055012496766,
+    0.03975283158909024,
+    0.04360863966055643,
+    0.03266155466685065,
+    0.04500284105671262,
+    0.004938657865323312,
+    0.0948680045737747,
+    0.03648186679652918
+   ],
+   "dtype": "float64",
+   "shape": [
+    5,
+    2
+   ]
+  },
+  "bootstrap_eigenvalues": {
+   "__ndarray__": 1,
+   "data": [
+    0.9433787185428893,
+    0.0,
+    0.0,
+    0.9162884579704924,
+    0.0,
+    0.0,
+    1.0789178665817563,
+    0.0,
+    0.0,
+    1.0932313940236034,
+    0.0,
+    0.0,
+    0.6719825176378649,
+    0.0,
+    0.0
+   ],
+   "dtype": "float64",
+   "shape": [
+    5,
+    3
+   ]
+  },
+  "bootstrap_eigenvectors": {
+   "__ndarray__": 1,
+   "data": [
+    0.8739432003715097,
+    0.4831545991942915,
+    0.052772301463998444,
+    0.8655402382967532,
+    0.4886415085984124,
+    0.10986160368330264,
+    0.8804710773351385,
+    0.4626861549358343,
+    0.10340311410684576,
+    0.889515381895539,
+    0.4504625036379082,
+    0.07645860440461363,
+    0.823770029261031,
+    0.5657839671625757,
+    0.03593663024070449
+   ],
+   "dtype": "float64",
+   "shape": [
+    5,
+    3,
+    1
+   ]
+  },
+  "criterion": null,
+  "dimension_options": [],
+  "dimension_rule": "fixed",
+  "eigenvalues": {
+   "__ndarray__": 1,
+   "data": [
+    0.9322216314024333,
+    0.0,
+    0.0
+   ],
+   "dtype": "float64",
+   "shape": [
+    3
+   ]
+  },
+  "eigenvectors": {
+   "__ndarray__": 1,
+   "data": [
+    0.8687298187246961,
+    -0.4900891170741735,
+    -0.07156227626350474,
+    0.4900891170741735,
+    0.8714702680570178,
+    -0.018767770727677335,
+    0.07156227626350474,
+    -0.018767770727677335,
+    0.997259550667678
+   ],
+   "dtype": "float64",
+   "shape": [
+    3,
+    3
+   ]
+  },
+  "estimator": "ols",
+  "estimator_options": [],
+  "n": 1,
+  "n_samples": 40,
+  "nboot": 5,
+  "qoi": "f",
+  "space": {
+   "lower": {
+    "__ndarray__": 1,
+    "data": [
+     0.0,
+     -1.0,
+     2.0
+    ],
+    "dtype": "float64",
+    "shape": [
+     3
+    ]
+   },
+   "names": [
+    "a",
+    "b",
+    "c"
+   ],
+   "type": "Uniform",
+   "units": [
+    null,
+    null,
+    null
+   ],
+   "upper": {
+    "__ndarray__": 1,
+    "data": [
+     1.0,
+     1.0,
+     5.0
+    ],
+    "dtype": "float64",
+    "shape": [
+     3
+    ]
+   }
+  }
+ },
+ "library_version": "1.0.0.dev0",
+ "provenance": {
+  "created": "2026-10-29T23:57:28.625437+00:00",
+  "function": "active_subspaces.active_subspace",
+  "input_space": {
+   "lower": {
+    "__ndarray__": 1,
+    "data": [
+     0.0,
+     -1.0,
+     2.0
+    ],
+    "dtype": "float64",
+    "shape": [
+     3
+    ]
+   },
+   "names": [
+    "a",
+    "b",
+    "c"
+   ],
+   "type": "Uniform",
+   "units": [
+    null,
+    null,
+    null
+   ],
+   "upper": {
+    "__ndarray__": 1,
+    "data": [
+     1.0,
+     1.0,
+     5.0
+    ],
+    "dtype": "float64",
+    "shape": [
+     3
+    ]
+   }
+  },
+  "library_version": "1.0.0.dev0",
+  "numpy_version": "2.5.4",
+  "parameters": {
+   "X": {
+    "dtype": "float64",
+    "sha256": "2e365ab30af88dae4608454923ee10746be4fd20352b88afef4e8d59fa394b60",
+    "shape": [
+     40,
+     3
+    ]
+   },
+   "bootstrap_vectors": 1,
+   "dimension_options": {},
+   "dimension_rule": "fixed",
+   "estimator": "ols",
+   "estimator_options": {},
+   "f": {
+    "dtype": "float64",
+    "sha256": "93af9437c76c15d5ba4954308ee95830cba7183f319fe3f15ec4ee87060d1c07",
+    "shape": [
+     40
+    ]
+   },
+   "n": 1,
+   "nboot": 5,
+   "qoi": "f"
+  },
+  "platform": "macOS-14.8.9-x86_64-i386-64bit-Mach-O",
+  "python_version": "3.14.0",
+  "rng": {
+   "bit_generator": "PCG64",
+   "entropy": "3",
+   "kind": "seed_sequence",
+   "n_children_spawned": 0,
+   "spawn_key": []
+  },
+  "scipy_version": "1.18.1"
+ },
+ "schema_version": 2,
+ "type": "SubspaceResult"
+}

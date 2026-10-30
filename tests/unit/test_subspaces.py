@@ -760,3 +760,59 @@ def test_as_inplace_scaling_never_touches_inputs():
     stored = np.array(gr.grads, copy=True)
     asub.active_subspace(grads=gr, n=1)
     np.testing.assert_array_equal(gr.grads, stored)
+
+
+def test_review_followups_bootstrap_and_warnings():
+    """Executor independence with bootstrap_vectors; unaligned_replicates is issued last
+    (07 §6); orient records input digests [D-196], [D-197].
+    """
+    space, X, f, G = _data(5)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", AccuracyWarning)  # w2, w3 rotate in this example
+        serial = asub.active_subspace(
+            grads=G, space=space, n=2, nboot=6, rng=3, bootstrap_vectors=2
+        )
+        with concurrent.futures.ThreadPoolExecutor(3) as ex:
+            threaded = asub.active_subspace(
+                grads=G, space=space, n=2, nboot=6, rng=3, bootstrap_vectors=2, executor=ex
+            )
+    assert threaded == serial
+    # Warning order: rank_deficient before unaligned_replicates.
+    Xd = np.column_stack([X[:, 0], X[:, 0], X[:, 1]])
+    with pytest.warns(AccuracyWarning) as rec:
+        asub.active_subspace(
+            X=Xd, f=f, space=space, estimator="ols", n=2, nboot=10, rng=0, bootstrap_vectors=2
+        )
+    codes = [c for c in _codes(rec) if c.startswith("accuracy.")]
+    assert codes == ["accuracy.rank_deficient", "accuracy.unaligned_replicates"]
+    o = asub.orient(serial, by="mean_gradient", grads=G)
+    assert o.provenance.parameters["grads"] == asub._validation.digest(np.asarray(G))
+    o2 = asub.orient(serial, by="reference", reference=serial.W)
+    assert "reference" in o2.provenance.parameters
+
+
+def test_qphd_solve_routes_agree():
+    """QPHD's C is the same through the QR and gelsd least-squares routes; a rank-deficient
+    QPHD design takes gelsd and warns (V1-11).
+    """
+    space = asub.Gaussian.reference(3)
+    X = space.sample(80, rng=4)
+    f = X[:, 0] ** 2 + X[:, 1] * X[:, 2] + 0.1 * X[:, 0]
+    d = S._Arrays(X, f, None, np.full(80, 1 / 80), np.eye(3))
+    C_qr = S.QPHD()._matrix(d, {})
+
+    def gelsd_only(A, b, what):
+        coef, _, rank, _ = S.scipy.linalg.lstsq(A, b, lapack_driver="gelsd")
+        return coef, int(rank) < A.shape[1]
+
+    orig = S._lstsq
+    try:
+        S._lstsq = gelsd_only
+        C_gelsd = S.QPHD()._matrix(d, {})
+    finally:
+        S._lstsq = orig
+    np.testing.assert_allclose(C_qr, C_gelsd, rtol=1e-10, atol=1e-12 * np.abs(C_qr).max())
+    Xr = X.copy()
+    Xr[:, 2] = Xr[:, 1]
+    with pytest.warns(AccuracyWarning, match="rank-deficient"):
+        asub.active_subspace(X=Xr, f=f, space=space, estimator="qphd", n=1)

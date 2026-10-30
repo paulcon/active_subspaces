@@ -459,3 +459,36 @@ def test_product_estimators():
     dg = S._Arrays(x, f, None, np.full(3000, 1 / 3000), np.eye(3))
     _, Hg = S._from_matrix(S.SIR()._matrix(dg, {}), "sir", {})
     np.testing.assert_array_equal(sir.W, Hg)
+
+
+def test_as_qr_route_blocks_and_small_M():
+    """TSQR across several row blocks agrees with the direct SVD to 1e-13; M <= m is the
+    direct SVD, bitwise [D-202] (V07.36).
+    """
+    m = 8
+    gen = np.random.default_rng(3)
+    M = 3 * S._ROW_BLOCK + 5
+    G = gen.standard_normal((M, m)) * np.logspace(0, -4, m)
+    space = asub.Uniform.reference(m)
+    sub = asub.active_subspace(grads=G, space=space, n=2)
+    s = np.linalg.svd(G / np.sqrt(M), compute_uv=False)
+    np.testing.assert_allclose(sub.eigenvalues, s**2, rtol=1e-13)
+    Gs = gen.standard_normal((5, m))
+    small = asub.active_subspace(grads=Gs, space=space, n=1)
+    _, s5, _ = np.linalg.svd(np.sqrt(np.full(5, 0.2))[:, None] * Gs, full_matrices=True)
+    lam = np.zeros(m)
+    lam[:5] = s5 * s5
+    np.testing.assert_array_equal(small.eigenvalues, lam)
+
+
+def test_ols_complement_is_the_default_rule():
+    """Only w1 of OLS changes sign; the complement equals the D-81 complement [D-195]."""
+    space = asub.Gaussian.reference(4)
+    X = space.sample(200, rng=1)
+    f = X @ np.array([0.1, -1.0, 0.3, 0.2])
+    sub = asub.active_subspace(X=X, f=f, space=space, estimator="ols", n=1)
+    A1 = np.column_stack([np.ones(200), X])
+    u = np.linalg.lstsq(A1, f, rcond=None)[0][1:]
+    _, W81 = S._from_rows(u[None, :].copy(), 4, "ols", {})
+    np.testing.assert_allclose(sub.W[:, 1:], W81[:, 1:], atol=1e-12)
+    np.testing.assert_allclose(np.abs(sub.W[:, 0]), np.abs(W81[:, 0]), atol=1e-12)
