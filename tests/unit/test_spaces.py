@@ -141,7 +141,25 @@ def test_equality_and_hash():
     assert a != asub.Gaussian.reference(2)
     with pytest.raises(TypeError):
         hash(a)
-    assert asub.Gaussian([0, 0], [1, 2]) != asub.Gaussian([0, 0], np.diag([1.0, 2.0]))
+    assert asub.Gaussian([0, 0], [1, 2]) == asub.Gaussian([0, 0], np.diag([1.0, 2.0]))
+
+
+def test_gaussian_diagonal_canonical():
+    """An exactly diagonal (m, m) covariance is stored as its variances: the two forms are equal
+    spaces with bitwise-identical maps, and an old file with the matrix loads equal [D-214].
+    """
+    a = asub.Gaussian([0.0, 1.0, 2.0], [1.0, 4.0, 0.3])
+    b = asub.Gaussian([0.0, 1.0, 2.0], np.diag([1.0, 4.0, 0.3]))
+    assert a == b
+    assert b.cov.shape == (3,)
+    X = a.sample(50, rng=0)
+    np.testing.assert_array_equal(a.to_normalized(X), b.to_normalized(X))
+    np.testing.assert_array_equal(a.grads_to_physical(X), b.grads_to_physical(X))
+    full = asub.Gaussian([0.0, 0.0], [[1.0, 0.5], [0.5, 2.0]])
+    assert full.cov.shape == (2, 2)
+    d = a.to_dict()
+    d["cov"] = v.encode_array(np.diag([1.0, 4.0, 0.3]))  # as saved before D-214
+    assert asub.Gaussian.from_dict(d) == a
 
 
 def test_repr_is_short():

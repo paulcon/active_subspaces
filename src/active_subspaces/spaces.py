@@ -1025,7 +1025,8 @@ class Gaussian(_SpaceBase):
     cov : array_like, shape (m, m) or (m,), float
         Covariance :math:`\Gamma`: a symmetric positive definite ``(m, m)``
         matrix, or a vector of ``m`` positive variances for independent
-        inputs.
+        inputs. A matrix whose off-diagonal entries are all exactly zero is
+        stored as its variances, so both forms give equal spaces [D-214].
     names : sequence of str, optional
         ``m`` unique non-empty input names. Default ``("x1", ..., "xm")``.
     units : sequence of str or None, optional
@@ -1037,7 +1038,8 @@ class Gaussian(_SpaceBase):
     mean : numpy.ndarray, shape (m,), float64
         Read-only copy of the mean.
     cov : numpy.ndarray, shape (m, m) or (m,), float64
-        Read-only copy of the covariance as given.
+        Read-only copy of the covariance as given, or its diagonal when the
+        given matrix is exactly diagonal [D-214].
     names : tuple of str
         The input names.
     units : tuple of str or None
@@ -1134,6 +1136,12 @@ class Gaussian(_SpaceBase):
                     "cov: must be positive definite (Cholesky failed)", param="cov"
                 ) from exc
             diag = False
+            if not np.any(cov[~np.eye(m, dtype=bool)]):
+                # An exactly diagonal matrix is stored as its variances, so both forms of one
+                # distribution are equal spaces with bitwise-identical maps [D-214].
+                cov = np.diagonal(cov).copy()
+                L = np.diag(np.sqrt(cov))
+                diag = True
         else:
             raise _param_error(
                 f"cov: expected shape ({m}, {m}) or ({m},), got {cov.shape}", param="cov"

@@ -32,6 +32,9 @@ D-02, D-02a, D-03).
 - **A clearer `input.out_of_space` message.** It counts the rows outside the support and names the
   first: row, input name and column, value, and the physical bound and side crossed. `details`
   gain `n_outside`, `column`, `name`, `bound` and `side`; the code is unchanged (V1-10, D-203).
+- **Diagonal Gaussian covariances.** A `Gaussian` whose `(m, m)` covariance is exactly diagonal
+  stores it as its `(m,)` variances, so `Gaussian(mu, d)` and `Gaussian(mu, np.diag(d))` are equal
+  spaces with identical maps (D-214).
 - **Names and units on reference spaces.** `Uniform.reference(m, names=, units=)` and
   `Gaussian.reference(m, names=, units=)` label normalized data (V1-12, D-203).
 - **Models with several outputs.** `ac.evaluate_multi` evaluates a model whose value has shape
