@@ -302,6 +302,27 @@ def test_backward_steps_at_the_boundary():
     np.testing.assert_allclose(G, np.tile(a[:, None], (1, 3)), rtol=0, atol=1e-9)
 
 
+def test_sketched_product():
+    """On a Product the box rule applies to the uniform coordinates only: base points on a
+    uniform block's bounds take backward points, a Gaussian coordinate far out never does, and
+    linear f gives the exact normalized gradient [D-209] (V14.25).
+    """
+    space = asub.Product([asub.Uniform([0.0], [1.0]), asub.Gaussian([0.5], [0.25])])
+    a = np.array([1.0, -2.0])
+    X = np.array([[1.0, 0.5], [0.0, 2.0], [1.0, -1.0]])  # Gaussian coordinate up to 3 sd
+    res = sketched_active_subspace(
+        lambda X: X @ a, space=space, k=2, X=X, design="orthogonal", rng=0, h=1e-3
+    )
+    g = space.grads_to_normalized(a[None, :])[0]
+    G = res.W @ np.diag(res.s) @ res.V.T
+    np.testing.assert_allclose(
+        G / np.linalg.norm(G[:, 0]),
+        np.tile(g[:, None], (1, 3)) / np.linalg.norm(g),
+        rtol=0,
+        atol=1e-9,
+    )
+
+
 @pytest.mark.parametrize(
     ("kw", "code"),
     [

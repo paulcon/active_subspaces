@@ -39,7 +39,7 @@ from numpy.typing import ArrayLike, NDArray
 from active_subspaces import _random
 from active_subspaces import _validation as _v
 from active_subspaces import subspaces as _subspaces
-from active_subspaces.errors import AccuracyWarning, InputError, _warn
+from active_subspaces.errors import AccuracyWarning, InputError, UnsupportedError, _warn
 from active_subspaces.geometry import ActiveDomain, active_domain
 from active_subspaces.gradients import (
     GradientResult,
@@ -925,7 +925,8 @@ def build_reduced_model(
     Parameters
     ----------
     space : Uniform or Gaussian, optional
-        The input space. Required with data unless ``subspace`` is given;
+        The input space (a ``Product`` raises ``unsupported.space``). Required with
+        data unless ``subspace`` is given;
         otherwise taken from ``model`` or ``subspace``. Every space given or
         bound must be equal.
     X : array_like, shape (M, m), optional
@@ -1004,6 +1005,8 @@ def build_reduced_model(
     NumericalError
         ``numerical.singular`` or ``numerical.nonfinite`` if the subspace or
         surrogate fit fails numerically.
+    UnsupportedError
+        ``unsupported.space`` for a ``Product`` space (spec 03 §5.3).
     ModelError
         Model path: ``model.raised``, ``model.shape``, ``model.dtype``,
         ``model.nonfinite`` or ``model.executor`` if a model evaluation
@@ -1160,6 +1163,14 @@ def build_reduced_model(
     if bound is None:
         raise _param("space: required with data unless subspace is given", "space")
     sp = bound
+    if sp.kind not in _ENVELOPE:
+        # the reduced model inherits the geometry/optimization guard (spec 03 §5.3)
+        raise UnsupportedError(
+            "build_reduced_model is defined only for uniform or Gaussian input spaces, got kind "
+            f"{sp.kind!r}",
+            code="unsupported.space",
+            details={"function": "build_reduced_model", "kind": sp.kind},
+        )
     m = sp.dim
     if m < 2:
         raise _param(

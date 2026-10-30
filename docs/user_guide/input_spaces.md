@@ -134,7 +134,14 @@ print(np.round(sub_m.W1[:, 0], 3))
 ```
 
 Here $\Sigma$ is not a multiple of $I$. SIR, pHd and SAVE whiten with it and map their directions
-back by $\Sigma^{-1/2}$, so they are correct on a product space.
+back by $\Sigma^{-1/2}$. Their directions are therefore expressed in the right coordinates, but Li's
+linearity and Gaussian assumptions still fail on the uniform coordinates, so on a mixed product they
+issue a `ValidityWarning` (`validity.assumption`).
+
+Default block names are renumbered to the product position: a block placed third has default names
+`x3`, ... A name given explicitly that equals a block default (for example `names=["x1"]` on a block
+placed third) is treated as the default and renamed (here to `x3`). Pass distinct names to keep
+them.
 
 A `Product` is accepted by subspaces, gradients, surrogates (on all inputs or on a subspace) and
 plots. Everything these need is block-wise: the maps, `contains`, `reference_covariance` and

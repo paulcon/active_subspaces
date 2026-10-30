@@ -107,6 +107,17 @@ def test_out_of_space_details(space):
     assert "lower 0" in str(e.value)
 
 
+def test_out_of_space_message_near_bound():
+    """03 §5.2, §8: a point u + 1e-9 (u - l) is reported with repr digits, not as the bound."""
+    sp = asub.Uniform([0.0, 0.0], [1.0, 2e6])
+    X = np.array([[1.0 + 1e-9, 5.0]])
+    with pytest.raises(asub.InputError) as e:
+        v.points(X, sp, "X")
+    assert e.value.code == "input.out_of_space"
+    assert "= 1.000000001 > upper 1.0" in str(e.value)
+    assert e.value.details["value"] == X[0, 0]
+
+
 def test_out_of_space_details_product():
     sp = asub.Product(
         [asub.Gaussian([0.0], [1.0], names=["g"]), asub.Uniform([0.0], [1.0], names=["u"])]

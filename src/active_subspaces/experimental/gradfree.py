@@ -601,13 +601,16 @@ def sketched_active_subspace(
     E = _draw_design(child[1], design, M, m, k)
 
     # Forward points x_i + h e_ij in row order i k + j; backward where a box would be left.
+    # Only uniform coordinates (a Uniform space, or the uniform blocks of a Product) have a
+    # box [D-209]; for a Uniform space the mask is all True, so the rule is unchanged, bitwise.
     step = np.ones((M, k))
     P = Xn[:, None, :] + h * E.transpose(0, 2, 1)
-    if space.kind == "uniform":
-        out = np.any(np.abs(P) > 1.0, axis=2)
+    u = np.asarray(cast(Any, space)._uniform_mask, dtype=np.bool_)
+    if u.any():
+        out = np.any(np.abs(P[:, :, u]) > 1.0, axis=2)
         if out.any():
             back = Xn[:, None, :] - h * E.transpose(0, 2, 1)
-            both = out & np.any(np.abs(back) > 1.0, axis=2)
+            both = out & np.any(np.abs(back[:, :, u]) > 1.0, axis=2)
             if both.any():
                 i, j = (int(v) for v in np.argwhere(both)[0])
                 raise InputError(

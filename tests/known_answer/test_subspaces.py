@@ -7,6 +7,7 @@ from __future__ import annotations
 import contextlib
 import itertools
 import math
+import warnings
 
 import numpy as np
 import pytest
@@ -459,6 +460,82 @@ def test_product_estimators():
     dg = S._Arrays(x, f, None, np.full(3000, 1 / 3000), np.eye(3))
     _, Hg = S._from_matrix(S.SIR()._matrix(dg, {}), "sir", {})
     np.testing.assert_array_equal(sir.W, Hg)
+
+
+def test_product_bootstrap_back_transform():
+    """Bootstrap replicates of SIR, pHd and SAVE on a Product take the same back-transform:
+    replicate 0, rebuilt by hand from its child stream, spans Sigma^{-1/2} span(eta_{1:k}) and
+    gives the stored distances [D-205] (V07.38).
+    """
+    from active_subspaces import _random
+
+    sp = asub.Product([asub.Uniform([0.0, 1.0], [2.0, 5.0]), asub.Gaussian([0.5], [0.25])])
+    M = 2000
+    X = sp.sample(M, rng=6)
+    x = sp.to_normalized(X)
+    f = np.sin(x @ np.array([1.0, 0.4, -0.7])) + 0.3 * x[:, 2] ** 2
+    Sigma = np.diag([1 / 3, 1 / 3, 1.0])
+    isq = np.diag(1 / np.sqrt(np.diag(Sigma)))
+    d = S._Arrays(x, f, None, np.full(M, 1 / M), Sigma)
+    for name in ("sir", "phd", "save"):
+        with warnings.catch_warnings(record=True) as rec:
+            warnings.simplefilter("always")  # w2 may rotate (unaligned_replicates); spans match
+            res = asub.active_subspace(
+                X=X, f=f, space=sp, estimator=name, n=2, nboot=4, rng=7, bootstrap_vectors=2
+            )
+        assert any(issubclass(w.category, ValidityWarning) for w in rec)
+        child = _random.spawn(_random.generator(7)[0], 4)[0]
+        db = S._resample(d, np.asarray(child.integers(0, M, size=M)))
+        _, H = S._from_matrix(S.ESTIMATORS[name]()._matrix(db, {}), name, {})
+        Q = np.linalg.qr(isq @ H)[0]
+        V = res.bootstrap_eigenvectors[0]
+        for k in (1, 2):
+            P = V[:, :k] @ V[:, :k].T - Q[:, :k] @ Q[:, :k].T
+            assert np.linalg.norm(P, 2) < 1e-10, (name, k)
+            dist = np.linalg.norm(res.W[:, :k].T @ Q[:, k:], 2)
+            assert res.bootstrap_distances[0, k - 1] == pytest.approx(dist, abs=1e-10)
+
+
+def test_activity_scores_product():
+    """SIR, pHd and SAVE on a mixed Product: the scores pair |lambda_j| with Li's normalized
+    directions b_j = Sigma^{-1/2} eta_j / ||.||, for every n, and do not depend on orient; a
+    homogeneous space keeps the D-201 formula bitwise [D-208] (V07.41).
+    """
+    sp = asub.Product(
+        [asub.Uniform([0.0, 1.0], [2.0, 5.0]), asub.Gaussian([0.5, -1.0], [0.25, 4.0])]
+    )
+    X = sp.sample(4000, rng=4)
+    x = sp.to_normalized(X)
+    f = np.sin(x @ np.array([1.0, 0.4, -0.7, 0.2])) + 0.3 * x[:, 2] * x[:, 3] + 0.5 * x[:, 0] ** 2
+    Sigma = np.diag([1 / 3, 1 / 3, 1.0, 1.0])
+    d = S._Arrays(x, f, None, np.full(4000, 1 / 4000), Sigma)
+    isq = np.diag(1 / np.sqrt(np.diag(Sigma)))
+    for name in ("sir", "phd", "save"):
+        with pytest.warns(ValidityWarning):
+            res = asub.active_subspace(X=X, f=f, space=sp, estimator=name, n=1)
+        lam, H = S._from_matrix(S.ESTIMATORS[name]()._matrix(d, {}), name, {})
+        B = isq @ H
+        B /= np.linalg.norm(B, axis=0)
+        flipped = asub.orient(res, by="reference", reference=-res.W)
+        for n in range(1, 5):
+            want = (np.abs(lam[:n]) * B[:, :n] ** 2).sum(axis=1)
+            got = asub.activity_scores(res, n=n)
+            np.testing.assert_allclose(got, want, rtol=1e-12, atol=1e-14 * want.max())
+            np.testing.assert_allclose(
+                asub.activity_scores(flipped, n=n), got, rtol=1e-13, atol=1e-16 * want.max()
+            )
+        # The pairing differs from the Gram-Schmidt columns of W once n >= 2.
+        W = res.W
+        naive = (np.abs(res.eigenvalues[:2]) * W[:, :2] ** 2).sum(axis=1)
+        assert not np.allclose(asub.activity_scores(res, n=2), naive, rtol=1e-6), name
+    gs = asub.Uniform.reference(4)
+    xu = gs.sample(4000, rng=5)
+    with pytest.warns(ValidityWarning):
+        res = asub.active_subspace(X=xu, f=np.sin(xu @ np.ones(4)), space=gs, estimator="sir")
+    W = res.W[:, :3]
+    np.testing.assert_array_equal(
+        asub.activity_scores(res, n=3), (np.abs(res.eigenvalues[:3]) * W * W).sum(axis=1)
+    )
 
 
 def test_as_qr_route_blocks_and_small_M():

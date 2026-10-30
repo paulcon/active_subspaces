@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import dataclasses
 import json
 import pickle
@@ -489,6 +490,106 @@ def test_product_maps_support_and_sampling():
         ]
     )
     np.testing.assert_array_equal(s.sample(7, rng=9, normalized=True), expected)
+
+
+def test_uniform_mask_read_only():
+    """03 §4: the boundary mask is a read-only array, on every kind."""
+    u, g = asub.Uniform([0.0, 0.0], [1.0, 2.0]), asub.Gaussian([0.0], [1.0])
+    for s in (u, g, asub.Product([u, g])):
+        mask = s._uniform_mask
+        assert not mask.flags.writeable
+        with pytest.raises(ValueError, match="read-only"):
+            mask[0] = not mask[0]
+    np.testing.assert_array_equal(asub.Product([u, g, u])._uniform_mask, [1, 1, 0, 1, 1])
+
+
+def _full_cov_product():
+    cov = np.array([[2.0, 0.6], [0.6, 1.0]])
+    u = asub.Uniform([1.0, -2.0], [3.0, 6.0])
+    g = asub.Gaussian([0.5, -1.0], cov)
+    return asub.Product([u, g]), cov
+
+
+def test_product_full_covariance_block_maps():
+    """03 §3.1: A is block-diagonal, diag((u - l) / 2) on a uniform block and the Cholesky
+    factor on a Gaussian block; the maps and gradient maps follow, written out by hand.
+    """
+    s, cov = _full_cov_product()
+    L = np.linalg.cholesky(cov)
+    A = scipy.linalg.block_diag(np.diag([1.0, 4.0]), L)
+    b = np.array([2.0, 2.0, 0.5, -1.0])
+    np.testing.assert_allclose(s.scale, A, rtol=1e-14)
+    np.testing.assert_allclose(s.shift, b, rtol=1e-14)
+    X = s.sample(30, rng=3)
+    x = np.hstack([(X[:, :2] - b[:2]) / [1.0, 4.0], np.linalg.solve(L, (X[:, 2:] - b[2:]).T).T])
+    np.testing.assert_allclose(s.to_normalized(X), x, rtol=1e-13, atol=1e-13)
+    np.testing.assert_allclose(s.from_normalized(x), X, rtol=1e-13, atol=1e-13)
+    G = np.random.default_rng(2).standard_normal((30, 4))
+    Gn = np.hstack([G[:, :2] * [1.0, 4.0], G[:, 2:] @ L])
+    np.testing.assert_allclose(s.grads_to_normalized(G), Gn, rtol=1e-13)
+    Gp = np.hstack([G[:, :2] / [1.0, 4.0], np.linalg.solve(L.T, G[:, 2:].T).T])
+    np.testing.assert_allclose(s.grads_to_physical(G), Gp, rtol=1e-13)
+    np.testing.assert_allclose(s.grads_to_physical(s.grads_to_normalized(G)), G, rtol=1e-13)
+
+
+def test_product_full_covariance_directions_to_physical():
+    """03 §3.1, D-197: an orthonormal basis of span(A^{-T} W) whose columns keep the signs of
+    A^{-T} W, with A block-diagonal and the Gaussian block's factor a Cholesky factor.
+    """
+    s, cov = _full_cov_product()
+    L = np.linalg.cholesky(cov)
+    A = scipy.linalg.block_diag(np.diag([1.0, 4.0]), L)
+    W = np.linalg.qr(np.random.default_rng(5).standard_normal((4, 2)))[0]
+    T = np.linalg.solve(A.T, W)
+    Q, R = np.linalg.qr(T)
+    Q = Q * np.sign(np.diag(R))
+    P = s.directions_to_physical(W)
+    np.testing.assert_allclose(P, Q, atol=1e-13)
+    np.testing.assert_allclose(P.T @ P, np.eye(2), atol=1e-13)
+    assert np.all(np.einsum("ij,ij->j", P, T) > 0)
+
+
+def test_product_guards():
+    """03 §5.3, V03.8: geometry, inverse map, integration, optimization, designs and the
+    reduced model raise ``unsupported.space`` for a mixed product [D-13].
+    """
+    s = asub.Product([asub.Uniform([0.0, 1.0], [2.0, 5.0]), asub.Gaussian([0.5], [0.25])])
+    a = np.array([1.0, 0.1, 1.0])
+    X = s.sample(40, rng=0)
+    f = np.sin(X @ a)
+    G = np.cos(X @ a)[:, None] * a
+    sub = asub.active_subspace(space=s, X=X, f=f, grads=G, n=1)
+
+    def code(call):
+        with pytest.raises(asub.UnsupportedError) as e:
+            call()
+        return e.value.code
+
+    assert code(lambda: asub.active_domain(sub)) == "unsupported.space"
+    assert code(lambda: asub.inverse_map(sub, Y=np.zeros((2, 1)), rng=0)) == "unsupported.space"
+    assert (
+        code(lambda: asub.build_reduced_model(space=s, X=X, f=f, grads=G, rng=0))
+        == "unsupported.space"
+    )
+    # an ActiveDomain cannot have kind "product", so the domain guards of integration,
+    # optimization and designs are reached with a domain whose kind is forced
+    uni = asub.Uniform([0.0, 1.0, 0.0], [2.0, 5.0, 1.0])
+    Xu = uni.sample(40, rng=0)
+    dom = asub.active_domain(
+        asub.active_subspace(
+            space=uni, X=Xu, f=np.sin(Xu @ a), grads=np.cos(Xu @ a)[:, None] * a, n=1
+        )
+    )
+    bad = copy.copy(dom)
+    object.__setattr__(bad, "kind", "product")
+    assert code(lambda: asub.integrate(lambda Z: Z[:, 0], domain=bad, n_nodes=3)) == (
+        "unsupported.space"
+    )
+    assert code(lambda: asub.active_design(domain=bad, n_points=3)) == "unsupported.space"
+    assert (
+        code(lambda: asub.minimize(lambda Y: Y[:, 0], domain=bad, X=Xu, f=np.sin(Xu @ a)))
+        == "unsupported.space"
+    )
 
 
 def test_product_construction_and_serialization():

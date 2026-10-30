@@ -55,7 +55,7 @@ class GradientResult(QoIResult):
 
     Parameters
     ----------
-    space : Uniform or Gaussian
+    space : Uniform, Gaussian or Product
         The input space; ``points`` and ``grads`` are normalized with it.
     method : {"local_linear", "finite_difference"}
         How the gradients were estimated.
@@ -316,7 +316,7 @@ def local_linear_gradients(
         Sample points in physical coordinates.
     f : array_like, shape (M,) or (M, 1), float, keyword-only
         Values of the quantity of interest at ``X``.
-    space : Uniform or Gaussian, keyword-only
+    space : Uniform, Gaussian or Product, keyword-only
         The input space of ``X``.
     p : int, optional, keyword-only
         Number of distinct locations per fit, :math:`m + 1 \le p \le M_d`,
@@ -609,7 +609,7 @@ def finite_difference_gradients(
         physical points ``(k, m)`` to ``(k,)`` (then ``space`` is required).
     X : array_like, shape (M, m), float, keyword-only
         Points in physical coordinates, validated against the model's space.
-    space : Uniform or Gaussian, optional, keyword-only
+    space : Uniform, Gaussian or Product, optional, keyword-only
         Required for a bare callable; for a ``Model`` it must equal
         ``model.space``.
     h : float or array_like, shape (m,), default 1e-6, keyword-only
@@ -656,10 +656,12 @@ def finite_difference_gradients(
         \frac{f(x_i + h_{ij} e_j) - f(x_i - h_{ij} e_j)}{2 h_{ij}}
 
     for the forward and central schemes, with :math:`s_{ij} = h_{ij}`. On a
-    ``Uniform`` space a forward step that would leave :math:`[-1, 1]` is taken
-    backward (:math:`s_{ij} = -h_{ij}`), and a central entry whose points would
-    leave it falls back to that one-sided rule, so the model is never evaluated
-    outside the support. The model is called on all :math:`M (m + 1)` points
+    ``Uniform`` space, and on the uniform coordinates of a ``Product`` [D-198],
+    a forward step that would leave :math:`[-1, 1]` is taken backward
+    (:math:`s_{ij} = -h_{ij}`), and a central entry whose points would leave it
+    falls back to that one-sided rule, so the model is never evaluated outside
+    the support. Gaussian coordinates have no boundary and always take the
+    forward or central step. The model is called on all :math:`M (m + 1)` points
     (plus the central ones) in one evaluation.
 
     Examples
@@ -715,7 +717,7 @@ def finite_difference_gradients_multi(
         required). The model's own ``qoi`` is not used.
     X : array_like, shape (M, m), float, keyword-only
         Points in physical coordinates, validated against the model's space.
-    space : Uniform or Gaussian, optional, keyword-only
+    space : Uniform, Gaussian or Product, optional, keyword-only
         As for :func:`finite_difference_gradients`.
     outputs : int, keyword-only
         Number of value columns :math:`P \ge 1`.

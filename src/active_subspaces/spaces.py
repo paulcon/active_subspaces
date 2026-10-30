@@ -1009,7 +1009,9 @@ class Uniform(_SpaceBase):
     @property
     def _uniform_mask(self) -> NDArray[np.bool_]:
         """All coordinates are uniform (bounded)."""
-        return np.ones(self.dim, dtype=bool)
+        mask = np.ones(self.dim, dtype=bool)
+        mask.flags.writeable = False
+        return mask
 
 
 @dataclass(frozen=True, slots=True, eq=False, repr=False)
@@ -1266,7 +1268,9 @@ class Gaussian(_SpaceBase):
     @property
     def _uniform_mask(self) -> NDArray[np.bool_]:
         """No coordinate is uniform (bounded)."""
-        return np.zeros(self.dim, dtype=bool)
+        mask = np.zeros(self.dim, dtype=bool)
+        mask.flags.writeable = False
+        return mask
 
 
 @dataclass(frozen=True, slots=True, eq=False, repr=False)
@@ -1416,7 +1420,9 @@ class Product(_SpaceBase):
     @property
     def _uniform_mask(self) -> NDArray[np.bool_]:
         """True on the coordinates of uniform blocks."""
-        return np.concatenate([b._uniform_mask for b in self.blocks])
+        mask = np.concatenate([b._uniform_mask for b in self.blocks])
+        mask.flags.writeable = False
+        return mask
 
     def _blockwise(self, fn: str, X: _F64) -> _F64:
         out = np.empty_like(X)

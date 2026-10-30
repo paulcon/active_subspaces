@@ -221,15 +221,21 @@ def _scale_rows(G: _F64, w: _F64, out: _F64) -> _F64:
     return out
 
 
+def _is_scalar(Sigma: _F64) -> bool:
+    """Whether ``Sigma`` is a multiple of the identity, exactly."""
+    return bool(np.array_equal(Sigma, Sigma[0, 0] * np.eye(Sigma.shape[0])))
+
+
 def _back_transform(H: _F64, Sigma: _F64) -> _F64:
     """Li's directions for a non-scalar ``Sigma`` [D-205].
 
     ``Sigma^{-1/2} H = Q R`` with ``R_jj > 0``, so ``span(Q[:, :k]) = Sigma^{-1/2} span(H[:, :k])``
     for every ``k``; then the sign rule. A multiple of the identity returns ``H`` unchanged.
     """
-    if np.array_equal(Sigma, Sigma[0, 0] * np.eye(Sigma.shape[0])):
+    if _is_scalar(Sigma):
         return H
     Q, R = np.linalg.qr(_inv_sqrt(Sigma) @ H)
+    # R_jj > 0 as D-205 states it; the sign rule then fixes each column's sign anyway.
     signs = np.sign(np.diagonal(R))
     signs[signs == 0] = 1.0
     return _orient_columns(Q * signs)
@@ -928,8 +934,14 @@ class SIR(_EstimatorBase):
     weighted mean :math:`\bar x_\omega = \sum_i \omega_i x_i`, not the sample
     covariance; the slice probabilities and means are weighted by the
     quadrature weights; and the slices are equal-count with ties kept
-    together. For both input spaces :math:`\Sigma = \gamma I`, so the
-    eigenvectors are used as directions in :math:`x` directly. On a uniform
+    together. On ``Uniform`` and ``Gaussian``, :math:`\Sigma = \gamma I`, so
+    the eigenvectors are used as directions in :math:`x` directly. On a
+    ``Product`` with uniform and Gaussian coordinates, Li's directions
+    :math:`\Sigma^{-1/2}\eta_j` are back-transformed: :math:`\Sigma^{-1/2} H
+    = Q R` and :math:`W = Q`, so :math:`\operatorname{span}(w_1, \dots, w_k)
+    = \Sigma^{-1/2} \operatorname{span}(\eta_1, \dots, \eta_k)` for every
+    :math:`k`. The eigenvalues are those of the whitened :math:`C`, and the
+    columns of :math:`W` are then not its eigenvectors [D-205]. On a uniform
     space the linearity condition fails in general [2]_.
 
     References
@@ -1032,7 +1044,9 @@ class PHD(_EstimatorBase):
     declared covariance :math:`\Sigma` of the reference density, not the
     sample covariance, and the centering uses the weighted means
     :math:`\bar f_\omega`, :math:`\bar x_\omega` (identical to the sample
-    means for the default weights :math:`1/M`).
+    means for the default weights :math:`1/M`). On a ``Product`` with uniform
+    and Gaussian coordinates the directions are back-transformed as for
+    :class:`SIR` [D-205].
 
     References
     ----------
@@ -1730,7 +1744,8 @@ DIMENSION_RULES: Mapping[str, type[DimensionRule]] = MappingProxyType(
 # Validity table [D-41] (private data; the docs render it)
 # ---------------------------------------------------------------------------
 
-# The "product" column takes the stricter entry of the other two [D-198].
+# The "product" column takes the stricter entry of the other two [D-198]; a product of one
+# kind uses that kind's column (_validity_column, [D-210]).
 _VALIDITY_SPACE: Mapping[str, Mapping[str, str]] = MappingProxyType(
     {
         "as": MappingProxyType({"uniform": "ok", "gaussian": "ok", "product": "ok"}),
@@ -1748,6 +1763,19 @@ _VALIDITY_SPACE: Mapping[str, Mapping[str, str]] = MappingProxyType(
 )
 # Estimator tags of results that no registered estimator produced (§4.5).
 _NON_ESTIMATORS = frozenset({"basis", "matrix"})
+
+
+def _validity_column(space: InputSpace) -> str:
+    """Return the column of ``_VALIDITY_SPACE`` for ``space``.
+
+    A product with no uniform coordinate takes the Gaussian column, and one with only uniform
+    coordinates the uniform column [D-210].
+    """
+    if space.kind != "product":
+        return space.kind
+    u = np.asarray(cast(Any, space)._uniform_mask, dtype=np.bool_)
+    return "uniform" if u.all() else "gaussian" if not u.any() else "product"
+
 
 _VALIDITY_SPACE_BASIS: Mapping[str, str] = MappingProxyType(
     {
@@ -2577,7 +2605,7 @@ def active_subspace(
     gen, rng_desc = _random.generator(rng)
 
     cells = []
-    if _VALIDITY_SPACE[est.name][space.kind] == "warn":
+    if _VALIDITY_SPACE[est.name][_validity_column(space)] == "warn":
         cells.append(
             {"estimator": est.name, "space": space.kind, "basis": _VALIDITY_SPACE_BASIS[est.name]}
         )
@@ -3204,7 +3232,9 @@ def activity_scores(subspace: SubspaceResult, n: int | None = None) -> NDArray[n
     Returns
     -------
     numpy.ndarray, shape (m,), float64
-        :math:`\alpha_i(n) = \sum_{j=1}^n |\lambda_j| \, w_{ij}^2`, a new array.
+        :math:`\alpha_i(n) = \sum_{j=1}^n |\lambda_j| \, w_{ij}^2`, a new array;
+        for SIR, pHd and SAVE on a ``Product`` with uniform and Gaussian
+        coordinates, :math:`w_j` is replaced by :math:`b_j` (Notes).
 
     Raises
     ------
@@ -3223,6 +3253,15 @@ def activity_scores(subspace: SubspaceResult, n: int | None = None) -> NDArray[n
     ones the magnitude matches their ranking [D-201]. The scores depend on
     the normalization: inputs scaled to :math:`[0, 1]` instead of
     :math:`[-1, 1]` multiply every eigenvalue by 4.
+
+    For SIR, pHd and SAVE on a space whose reference covariance
+    :math:`\Sigma` is not a multiple of the identity (a ``Product`` with
+    uniform and Gaussian coordinates), the columns of :math:`W` are an
+    orthonormal basis of Li's nested spans, not Li's directions [D-205]. The
+    scores then pair :math:`\lambda_j` with the normalized directions
+    :math:`b_j = \Sigma^{-1/2}\eta_j / \|\Sigma^{-1/2}\eta_j\|`, with
+    :math:`\eta_j` the eigenvectors of the whitened matrix [D-208], recovered
+    from :math:`W` and :math:`\Sigma`.
 
     References
     ----------
@@ -3246,6 +3285,14 @@ def activity_scores(subspace: SubspaceResult, n: int | None = None) -> NDArray[n
         )
     k = sub.n if n is None else _v.integer(n, "n", lo=1, hi=sub.m)
     W = sub.eigenvectors[:, :k]
+    est = ESTIMATORS.get(sub.estimator)
+    Sigma = np.asarray(sub.space.reference_covariance, dtype=np.float64)
+    if est is not None and getattr(est, "_whitened", False) and not _is_scalar(Sigma):
+        # Li's normalized directions b_j [D-208]: W_k^T Sigma W_k = L L^T, so
+        # Sigma^{-1/2} H_k = W_k L^{-T} up to column signs, which the squares ignore.
+        L = np.linalg.cholesky(W.T @ Sigma @ W)
+        B = scipy.linalg.solve_triangular(L, W.T, lower=True, check_finite=False).T
+        W = B / np.linalg.norm(B, axis=0)
     scores: _F64 = (np.abs(sub.eigenvalues[:k]) * W * W).sum(axis=1)
     return scores
 

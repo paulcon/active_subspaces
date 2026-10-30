@@ -227,7 +227,7 @@ def _check_support(Xphys: F64, space: Any, name: str) -> None:
     op = "<" if side == "lower" else ">"
     raise InputError(
         f"{name}: {n_outside} of {Xphys.shape[0]} rows lie outside the support; first: row {row}, "
-        f"input {label!r} (column {col}) = {value:g} {op} {side} {bound:g}",
+        f"input {label!r} (column {col}) = {value!r} {op} {side} {bound!r}",
         code="input.out_of_space",
         details={
             "param": name,

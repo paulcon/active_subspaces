@@ -407,6 +407,26 @@ def test_eigenvectors(res):
         assert _code(e) == "input.parameter", bad
 
 
+def test_product_labels_from_concatenated_names():
+    """Spec 13: axis labels come from ``space.names``, which a Product concatenates."""
+    sp = asub.Product(
+        [
+            asub.Uniform([0.0, 1.0], [2.0, 5.0], names=["a", "b"]),
+            asub.Gaussian([0.5], [0.25], names=["c"]),
+        ]
+    )
+    X = sp.sample(60, rng=0)
+    w = np.array([1.0, 0.1, 1.0])
+    f = np.sin(X @ w)
+    G = np.cos(X @ w)[:, None] * w
+    r = asub.active_subspace(space=sp, X=X, f=f, grads=G, n=1)
+    _, (ax,) = P.plot_eigenvectors(r)
+    assert [t.get_text() for t in ax.get_xticklabels()] == ["a", "b", "c"]
+    np.testing.assert_array_equal(_data_lines(ax)[0].get_ydata(), r.eigenvectors[:, 0])
+    _, ax = P.plot_sufficient_summary(r, X=X, f=f)
+    assert ax.get_xlabel() == "$y_1 = w_1^\\top x$"
+
+
 def test_eigenvectors_many_inputs():
     m = 41
     sp = asub.Uniform(np.zeros(m), np.ones(m))
