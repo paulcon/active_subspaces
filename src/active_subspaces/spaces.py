@@ -1486,7 +1486,17 @@ class Product(_SpaceBase):
         return (type(self), (self.blocks,))
 
     def to_dict(self, *, binary: bool = False) -> dict[str, Any]:
-        """Return ``{"type": "Product", "blocks": [<block dict>, ...]}``.
+        """Return a JSON-compatible dict with the blocks' own encodings.
+
+        Parameters
+        ----------
+        binary : bool, default False, keyword-only
+            Encode the blocks' arrays as base64 of their little-endian bytes.
+
+        Returns
+        -------
+        dict
+            ``{"type": "Product", "blocks": [<block dict>, ...]}``.
 
         Examples
         --------
@@ -1500,6 +1510,22 @@ class Product(_SpaceBase):
     @classmethod
     def from_dict(cls, d: Mapping[str, Any]) -> Self:
         """Rebuild a product space from the output of :meth:`to_dict`.
+
+        Parameters
+        ----------
+        d : mapping
+            A dict with exactly the keys ``"type"`` (``"Product"``) and ``"blocks"``, a
+            non-empty list of ``Uniform`` or ``Gaussian`` dicts.
+
+        Returns
+        -------
+        Product
+            A space equal to the one that was encoded.
+
+        Raises
+        ------
+        SchemaError
+            ``schema.invalid`` for a malformed dict or an invalid product.
 
         Examples
         --------
