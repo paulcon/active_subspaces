@@ -2156,8 +2156,10 @@ def _replicate(
     """
     M = d.w.shape[0]
     idx = np.asarray(gen.integers(0, M, size=M))  # asarray: an ndarray for the type checker
-    notes: dict[str, Any] = {}
+    # _resample makes fresh arrays, so AS may scale the replicate's gradients in place [D-202].
+    notes: dict[str, Any] = {"_overwrite_G": True}
     lam, Wb = est._decompose(_resample(d, idx), notes)
+    notes.pop("_overwrite_G", None)
     m = W.shape[0]
     P = W.T @ Wb
     dist = np.empty(m - 1)
@@ -2201,19 +2203,16 @@ def _bootstrap(
     return lam, dist, dets, [o[3] for o in outs], vecs
 
 
-def _align_replicates(W: _F64, reps: list[Any]) -> _F64:
-    """Stack replicate eigenvectors ``(B, m, k)``, aligned with the full-sample vectors.
+def _warn_unaligned(W: _F64, V: _F64 | None) -> None:
+    """Warn ``accuracy.unaligned_replicates`` for poorly aligned stored replicates [D-196].
 
-    Column ``j`` of each replicate is multiplied by ``sign(w_j^T w_j^(b))`` (a zero product keeps
-    the replicate's sign) [D-196]; warn when a column's smallest ``|w_j^T w_j^(b)|`` is below 0.5.
+    A column warns when its smallest ``|w_j^T w_j^(b)|`` is below 0.5. The warning is issued
+    last, after the other warnings of the call (07 §6).
     """
-    V = np.stack(reps)  # (B, m, k)
-    k = V.shape[2]
-    inner = np.einsum("ij,bij->bj", W[:, :k], V)
-    signs = np.where(inner < 0.0, -1.0, 1.0)
-    V *= signs[:, None, :]
-    minima = np.abs(inner).min(axis=0)
-    bad = [j for j in range(k) if minima[j] < _ALIGN_MIN]
+    if V is None:
+        return
+    minima = np.abs(np.einsum("ij,bij->bj", W[:, : V.shape[2]], V)).min(axis=0)
+    bad = [j for j in range(V.shape[2]) if minima[j] < _ALIGN_MIN]
     if bad:
         _warn(
             AccuracyWarning,
@@ -2222,6 +2221,18 @@ def _align_replicates(W: _F64, reps: list[Any]) -> _F64:
             code="accuracy.unaligned_replicates",
             details={"columns": bad, "minima": [float(minima[j]) for j in bad]},
         )
+
+
+def _align_replicates(W: _F64, reps: list[Any]) -> _F64:
+    """Stack replicate eigenvectors ``(B, m, k)``, aligned with the full-sample vectors.
+
+    Column ``j`` of each replicate is multiplied by ``sign(w_j^T w_j^(b))`` (a zero product keeps
+    the replicate's sign) [D-196].
+    """
+    V = np.stack(reps)  # (B, m, k)
+    k = V.shape[2]
+    inner = np.einsum("ij,bij->bj", W[:, :k], V)
+    V *= np.where(inner < 0.0, -1.0, 1.0)[:, None, :]
     return V
 
 
@@ -2573,6 +2584,7 @@ def active_subspace(
     _warn_accuracy(est.name, notes, rep_notes)
     if rule is not None:
         _warn_zero_dimension(rule.name, k_hat)
+    _warn_unaligned(W, boot_vecs)
 
     params: dict[str, Any] = {
         "estimator": est.name,

@@ -166,8 +166,8 @@ Computed values differ from the 2016 code for the same inputs. Each item is eith
 (D-03b). The migration guide gives the size of each change.
 
 - **AS, NAS and OPG factorization.** With $M>m$ the estimators take the SVD of the triangular factor
-  of a blocked QR factorization of the weighted gradient rows, scaled in place when there is no
-  bootstrap, so peak memory is about $1+2/m$ times the gradient array (1.25 on the Ebola $7^8$ rule)
+  of a blocked QR factorization of the weighted gradient rows, with the AS rows scaled in place
+  when there is no bootstrap, so peak memory is about $1+2/m$ times the gradient array (1.25 on the Ebola $7^8$ rule)
   instead of about three times. Eigenvalues agree with the direct SVD to $10^{-13}$ relative
   (D-202).
 - **OLS and QPHD least squares** use a QR solve when the design has full column rank and `gelsd`
