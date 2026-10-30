@@ -494,7 +494,9 @@ class AS(_EstimatorBase):
     accurate for small eigenvalues than forming :math:`C`. When
     :math:`M > m` the SVD is taken of the triangular factor of a QR of
     :math:`G_\omega`, computed block by block, so no other :math:`(M, m)` array is formed:
-    without a bootstrap the peak memory is about :math:`1 + 2/m` times the gradient array.
+    without a bootstrap the peak memory is about :math:`1 + 2/m` times the gradient array;
+    with one, two :math:`(M, m)` arrays and :math:`(M,)` index and weight vectors coexist
+    (about 2.57 times at :math:`m = 8`) [D-213].
 
     References
     ----------

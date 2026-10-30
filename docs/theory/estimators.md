@@ -67,7 +67,9 @@ the Monte Carlo (or quadrature) estimate of $\mathbb E_\rho[\nabla f\nabla f^\to
 the singular value decomposition of the rows $\sqrt{\omega_i}\,g_i^\top$. When $M>m$ the SVD is taken of
 the triangular factor of a blocked QR factorization of those rows, so no other array of the size of
 the gradients is formed: without a bootstrap the peak memory is about $1+2/m$ times the gradient
-array instead of about three times; the eigenvalues change only by rounding [D-202] (see
+array instead of about three times. With a bootstrap, the full-sample rows and one resampled copy
+exist at once, plus index and weight vectors: about $2.57$ times at $m=8$ [D-213]. The eigenvalues
+change only by rounding [D-202] (see
 [Active subspaces](active_subspaces.md)). It is the matrix that defines the active subspace
 [Constantine 2015], and the only one for which the error bound of the ridge approximation holds. It
 is ridge-exact for every input distribution.
