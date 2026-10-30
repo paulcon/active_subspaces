@@ -240,9 +240,10 @@ def _lstsq(A: _F64, b: _F64, what: str) -> tuple[_F64, bool]:
 
     With at least as many rows as columns, a Householder QR and a triangular solve, used when
     every ``|R_jj| > sqrt(eps) max_l |R_ll|``; otherwise, and when ``M < p``, the minimum-norm
-    solution by ``gelsd``, whose rank decides the warning (V1-11, D-203). The threshold is
-    loose on purpose: an unpivoted QR need not shrink a dependent column's ``R_jj`` to rounding
-    on every LAPACK. Every design with ``cond(A) < eps**-0.5`` still takes the QR route.
+    solution by ``gelsd`` with singular values below ``max(M, p) eps sigma_1`` dropped, whose
+    rank decides the warning (V1-11, D-203). Every design with ``cond(A) < eps**-0.5`` takes
+    the QR route. scipy's default cutoff ``eps sigma_1`` left an exactly duplicated column at
+    full rank on Windows; ``max(M, p) eps`` is NumPy's default and that of the OPG solves.
     """
     M, p = A.shape
     if M >= p and p > 0:
@@ -256,7 +257,9 @@ def _lstsq(A: _F64, b: _F64, what: str) -> tuple[_F64, bool]:
                 coef = scipy.linalg.solve_triangular(R, Q.T @ b, check_finite=False)
                 return coef, False
     try:
-        coef, _, rank, _ = scipy.linalg.lstsq(A, b, lapack_driver="gelsd", check_finite=False)
+        coef, _, rank, _ = scipy.linalg.lstsq(
+            A, b, cond=_EPS * max(M, p), lapack_driver="gelsd", check_finite=False
+        )
     except (np.linalg.LinAlgError, ValueError) as exc:
         raise NumericalError(
             f"{what}: least-squares solve failed ({exc})",

@@ -736,11 +736,13 @@ def test_lstsq_qr():
     np.testing.assert_allclose(coef, ref, rtol=1e-10, atol=1e-12)
     A[:, 3] = A[:, 2] + 1e-12 * gen.standard_normal(200)  # cond ~ 1e12: gelsd route
     coef, _ = S._lstsq(A, b, "test")
-    ref = scipy.linalg.lstsq(A, b, lapack_driver="gelsd", check_finite=False)[0]
+    ref = scipy.linalg.lstsq(A, b, cond=200 * S._EPS, lapack_driver="gelsd", check_finite=False)[0]
     np.testing.assert_array_equal(coef, ref)
     A[:, 3] = A[:, 2]  # duplicated column: rank 9, gelsd route
     coef, bad = S._lstsq(A, b, "test")
-    assert bad
+    sv = np.linalg.svd(A, compute_uv=False)
+    rd = np.abs(np.diagonal(np.linalg.qr(A, mode="r")))
+    assert bad, f"sigma_10/sigma_1={sv[-1] / sv[0]:.3e}, min/max |R_jj|={rd.min() / rd.max():.3e}"
     space = asub.Gaussian.reference(3)
     X = space.sample(30, rng=0)
     X[:, 2] = X[:, 1]
@@ -783,11 +785,13 @@ def test_review_followups_bootstrap_and_warnings():
                 grads=G, space=space, n=2, nboot=6, rng=3, bootstrap_vectors=2, executor=ex
             )
     assert threaded == serial
-    # Warning order: rank_deficient before unaligned_replicates.
+    # Warning order: rank_deficient before unaligned_replicates. With pure-noise f the OLS
+    # direction itself is unstable across replicates; every solve has rank 3 (V1-11).
     Xd = np.column_stack([X[:, 0], X[:, 0], X[:, 1]])
+    fn = np.random.default_rng(0).standard_normal(f.shape[0])
     with pytest.warns(AccuracyWarning) as rec:
         asub.active_subspace(
-            X=Xd, f=f, space=space, estimator="ols", n=2, nboot=10, rng=0, bootstrap_vectors=2
+            X=Xd, f=fn, space=space, estimator="ols", n=2, nboot=10, rng=0, bootstrap_vectors=2
         )
     codes = [c for c in _codes(rec) if c.startswith("accuracy.")]
     assert codes == ["accuracy.rank_deficient", "accuracy.unaligned_replicates"]

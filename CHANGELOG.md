@@ -172,7 +172,8 @@ Computed values differ from the 2016 code for the same inputs. Each item is eith
   (D-202).
 - **OLS and QPHD least squares** use a QR solve when the design is well conditioned and `gelsd`
   otherwise; QPHD is about three times faster at large sizes, and results change only by rounding
-  (V1-11, D-203).
+  (V1-11, D-203). The `gelsd` rank cutoff is now $\max(M,p)\,\epsilon\,\sigma_1$ (was
+  $\epsilon\,\sigma_1$), so a duplicated column warns `accuracy.rank_deficient` on every platform.
 - **Random streams.** Every stochastic output (bootstrap replicates, designs, inactive samples,
   optimization starts, weight samples) differs from 2016 at any seed (R-03, D-14).
 - **Default inactive sample count** $N_{MC}=50$ (2016: 10) in `integration_design`, `integrate`,
