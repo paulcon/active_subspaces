@@ -17,12 +17,13 @@ in which every computation is done and every result is stored. Every function th
 needs a space, either directly (`space=`) or through the result or model you pass it. The library
 never infers ranges from the data.
 
-v1 has two spaces.
+v1 has three spaces.
 
 | Space | Physical density | $A$, $b$ | Normalized density | $\Sigma = \operatorname{Cov}(x)$ |
 |---|---|---|---|---|
 | `ac.Uniform(lower, upper)` | uniform on the box $\prod_j [\ell_j, u_j]$ | $A = \operatorname{diag}\bigl(\tfrac{u-\ell}{2}\bigr)$, $b = \tfrac{u+\ell}{2}$ | uniform on $[-1,1]^m$ | $\tfrac13 I$ |
 | `ac.Gaussian(mean, cov)` | $N(\mu, \Gamma)$ | $A = L$ with $\Gamma = LL^\top$ (Cholesky), $b = \mu$ | $N(0, I_m)$ | $I$ |
+| `ac.Product(blocks)` | independent `Uniform` and `Gaussian` blocks | $A = \operatorname{blockdiag}(A_1, \dots, A_r)$, $b = (b_1, \dots, b_r)$ | $U[-1,1]$ or $N(0,1)$ per coordinate | $\operatorname{blockdiag}(\Sigma_1, \dots, \Sigma_r)$ |
 
 ```{code-cell} python
 import numpy as np
@@ -67,7 +68,20 @@ print(space.contains([[0.2, 1000.0, 1500.0]]))    # rw outside [0.05, 0.15]
 ```
 
 A point outside the support is an error wherever data enter the library (code
-`input.out_of_space`).
+`input.out_of_space`). The message counts the rows outside and names the first one: its row, the
+input's name and column, its value, and the bound it crosses, in physical units.
+
+```{code-cell} python
+Xbad = space.sample(10, rng=0)
+Xbad[3, 0] = 0.2
+try:
+    ac.active_subspace(grads=np.ones((10, 3)), X=Xbad, space=space)
+except ac.InputError as err:
+    print(err)
+    print({k: err.details[k] for k in ("n_outside", "row", "column", "name", "side", "bound")})
+```
+
+`details` also holds `value`. Gaussian coordinates never fail the check.
 
 ## Gaussian inputs
 
@@ -97,6 +111,47 @@ Any other square root $LQ$ of $\Gamma$, with $Q$ orthogonal, would rotate the no
 eigenvectors by $Q^\top$ and leave the eigenvalues and the physical subspace unchanged. Because the
 Cholesky factor is used, the normalized coordinates of a non-diagonal $\Gamma$ depend on the
 order of the inputs; the eigenvalues and the physical active directions do not.
+
+## Mixed inputs: `Product`
+
+`ac.Product` joins independent `Uniform` and `Gaussian` blocks. Coordinates are concatenated in the
+order given, each block keeps its own map, and $A$ is block diagonal. Names and units are the
+blocks' own. A block with default names gets `x{j}`, with $j$ the position in the product.
+
+```{code-cell} python
+mixed = ac.Product([
+    ac.Uniform([0.0, 10.0], [2.0, 20.0], names=["a", "b"]),
+    ac.Gaussian([1.0], [4.0], names=["c"]),
+])
+print(mixed.dim, mixed.kind, mixed.names)
+print(np.round(np.diag(mixed.reference_covariance), 3))     # 1/3 on uniform, 1 on Gaussian
+Xm = mixed.sample(2000, rng=0)
+print(mixed.contains(Xm).all(), mixed.contains([[1.0, 15.0, 100.0]]).all())   # c is never checked
+a = np.array([1.0, 0.1, 1.0])                               # f(X) = sin(X @ a)
+Gm = np.cos(Xm @ a)[:, None] * a                            # physical gradients
+sub_m = ac.active_subspace(grads=Gm, space=mixed, n=1)
+print(np.round(sub_m.W1[:, 0], 3))
+```
+
+Here $\Sigma$ is not a multiple of $I$. SIR, pHd and SAVE whiten with it and map their directions
+back by $\Sigma^{-1/2}$, so they are correct on a product space.
+
+A `Product` is accepted by subspaces, gradients, surrogates (on all inputs or on a subspace) and
+plots. Everything these need is block-wise: the maps, `contains`, `reference_covariance` and
+`sample`. Geometry, integration, optimization, designs and the reduced model need a single density
+and a domain. They raise `unsupported.space`.
+
+```{code-cell} python
+try:
+    ac.active_domain(sub_m)
+except ac.UnsupportedError as err:
+    print(err.code)
+```
+
+A log-normal input is passed as its logarithm: use a Gaussian block for $s = \log r$, let the model
+take $s$ (or exponentiate before calling it), and apply the chain rule
+$\partial f/\partial s = r\,\partial f/\partial r$. The {doc}`migration guide <../migration>`
+(example E4) does this for the 2016 borehole.
 
 ## Gradients and the chain rule
 
@@ -140,22 +195,39 @@ only when the units agree. The eigenvalues have no physical counterpart.
 $A = I$ and $b = 0$, so their maps are the identity. Use them when your data are already
 normalized.
 
+Both take keyword-only `names` and `units`, checked as for any space, so plots of normalized data
+are labelled. The result equals the explicit constructor call.
+
+```{code-cell} python
+ref = ac.Uniform.reference(2, names=["a", "b"], units=["m", None])
+print(ref == ac.Uniform([-1, -1], [1, 1], names=("a", "b"), units=("m", None)))
+```
+
 ## Spaces v1 does not have
 
-Both spaces are homogeneous: all inputs uniform, or all jointly Gaussian. There is no mixed space
-(some inputs uniform, others Gaussian), no log-normal or other marginal, and no correlated uniform
-space. Two ways around this:
+`Uniform`, `Gaussian` and `Product` are the only spaces. There is no correlation between blocks
+(correlated inputs must be jointly Gaussian), no other marginal, and no correlated uniform space.
+Two ways around this:
 
 - **Reparametrize the model.** A log-normal input $r = e^{s}$ with $s \sim N(\mu_s, \sigma_s^2)$
-  becomes a Gaussian input if the model takes $s$ and computes $r$ itself. The chain rule gives
+  becomes a Gaussian block if the model takes $s$ and computes $r$ itself. The chain rule gives
   $\partial f/\partial s = r\,\partial f/\partial r$.
 - **Normalize by hand.** Map each input to its own standard coordinate, compute the normalized
-  gradients yourself, and pass them with a reference space. The gradient-based estimator
-  `estimator="as"` then gives the right eigenpairs, since it uses only the gradients and the
-  weights. But the reference space misdescribes the density, so do not use that result for
-  anything that depends on it: the value-based estimators, the active domain, designs,
-  integration or optimization. The {doc}`migration guide <../migration>` (example E4) does this for
-  the 2016 borehole.
+  gradients yourself, and pass them with a reference space. Prefer `Product` when the inputs are
+  independent uniform and Gaussian. Under hand normalization the reference space misdescribes
+  the density. What stays exact:
+  - `estimator="as"` and local linear gradients, which use only the gradients and the weights.
+  - OLS (`estimator="ols"`), which uses only the normalized $X$.
+
+  What does not: QPHD, SIR, pHd and SAVE, which use $\Sigma$ of the declared space, and
+  `sample`, `contains` and everything in geometry, integration, optimization and designs.
+
+### Discrete inputs
+
+An input with levels such as $\{1, 4, 4.5\}$ passes the support check of a uniform box over the
+levels. That is fine for OLS, AS and local linear gradients, which do not use the density. It is
+wrong for the Σ-based estimators (QPHD, SIR, pHd, SAVE), for `sample` and for geometry, because
+the declared density is continuous.
 
 ## Saving a space
 

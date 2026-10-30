@@ -48,6 +48,10 @@ v1 normalized coordinates are the 2016 ones, so normalized results compare direc
   already scaled by hand must be passed with `ac.Uniform.reference(m)` (or
   `ac.Gaussian.reference(m)`), or they are scaled twice. The same goes for any array already in
   normalized coordinates.
+- **Data sets with stored normalized gradients.** In the 2016 data sets HIV, SingleDiodePV and
+  Atacamac, the stored gradients are already normalized. Pass them with a reference space, or
+  divide them by the half-range and pass the space, never both. Doing both scales twice: for
+  SingleDiodePV it turns $w_1$ into $[0.013, -0.330, 0.039, -0.004, 0.943]$.
 - **Physical directions.** `result.physical_directions()` is new: the directions of a ridge in the
   physical inputs.
 
@@ -224,7 +228,7 @@ v1 normalized coordinates are the 2016 ones, so normalized results compare direc
 
 | 2016 (normalized inputs) | v1 (physical inputs) | Notes |
 |---|---|---|
-| `borehole`, `borehole_grad` | `ac.test_functions.borehole`, `ac.test_functions.BOREHOLE` | uniform $r_w$, $r$: see E4 |
+| `borehole`, `borehole_grad` | `ac.test_functions.borehole`, `ac.test_functions.BOREHOLE` | the registered model is uniform in $r_w$, $r$; the 2016 density is an `ac.Product`: see E4 |
 | `circuit`, `circuit_grad` | `ac.test_functions.otl_circuit`, `ac.test_functions.OTL_CIRCUIT` | |
 | `piston`, `piston_grad` | `ac.test_functions.piston`, `ac.test_functions.PISTON` | |
 | `robot`, `robot_grad` | `ac.test_functions.robot_arm`, `ac.test_functions.ROBOT_ARM` | |
@@ -294,7 +298,9 @@ Tuple returns become results with named fields. Only `ac.forward_map` (`Y, Z`) a
   the units dependence of the RBF nugget [C-18].
 - **Method choices ruled by the author.** SAVE slice weights (eigenvalues about $1/S$ of 2016), the
   pHd scaling ($\sqrt3$ times 2016 for uniform inputs), whitening from the declared space for SIR,
-  pHd and SAVE, the RBF likelihood, the lift curvature floor, and the uniform borehole variant.
+  pHd and SAVE, the RBF likelihood, and the lift curvature floor. The registered borehole model is
+  the uniform variant, so its eigenpairs differ from the 2016 tutorial's; the 2016 density is an
+  `ac.Product` (E4).
   Three of these also correct a 2016 form that contradicted the published method, so the 2016
   value is not reproducible: SAVE now weights slice $h$ by its probability,
   $C=\sum_h\hat p_h(I-\widehat{\mathrm{Cov}}(z\mid h))^2$ (Cook and Weisberg, 1991; 2016 used
@@ -492,7 +498,9 @@ Without `model=`, `rm.average` integrates the surrogate. `rm.r_squared` is a hol
 
 ### E4. The 2016 borehole, a mixed density (`tutorials/test_functions/borehole`)
 
-The 2016 borehole had a Gaussian $r_w$ and a log-normal $r$; v1 has no input space for that mix.
+The 2016 borehole has Gaussian $r_w$, log-normal $r$ and six uniform inputs. The registered v1
+model is the uniform variant. The 2016 density is an `ac.Product` once $r$ is replaced by
+$\log r$. Three ways forward follow.
 
 Before:
 
@@ -505,7 +513,7 @@ ss.partition(2)
 ac.utils.plotters.eigenvectors(ss.W1, in_labels=in_labels)
 ```
 
-After, (a) reproducing the 2016 analysis by mapping the inputs by hand:
+(a) Reproducing the 2016 analysis by mapping the inputs by hand:
 
 ```{code-cell} python3
 tf = ac.test_functions
@@ -533,7 +541,32 @@ The identity space passes the 2016 normalized gradients through unchanged, so th
 those of 2016 up to sampling. It misdescribes the density of the six uniform inputs, so do not use
 this subspace for geometry, integration or surrogates.
 
-(b) The supported v1 problem, with a different input density:
+(b) The 2016 density as a `Product`: Gaussian $r_w$, Gaussian $\log r$ and six uniform inputs.
+Sample the physical inputs, exponentiate the second column for the model, and apply the chain
+rule $\partial f/\partial \log r = r\,\partial f/\partial r$:
+
+```{code-cell} python3
+nm = tf.BOREHOLE.space.names
+space = ac.Product([
+    ac.Gaussian([0.1], [0.0161812**2], names=nm[:1]),
+    ac.Gaussian([7.71], [1.0056**2], names=("log " + nm[1],)),
+    ac.Uniform(lo[2:], hi[2:], names=nm[2:]),
+])
+xi = space.sample(1000, rng=rng)                  # physical: r_w, log r, six uniform inputs
+phys = xi.copy(); phys[:, 1] = np.exp(xi[:, 1])   # the model takes r
+g = tf.borehole_grad(phys)
+g[:, 1] *= phys[:, 1]                             # d f / d log r = r d f / d r
+sub_p = ac.with_dimension(ac.active_subspace(grads=g, space=space, nboot=500, rng=rng), 2)
+
+assert sub_p.n == 2 and sub_p.W1.shape == (8, 2)
+assert np.allclose(np.diag(space.reference_covariance), [1, 1] + [1 / 3] * 6)
+```
+
+The space declares the 2016 density, so the subspace may be used for gradients, surrogates and
+plots, and its eigenpairs equal the 2016 tutorial's up to sampling. Geometry, integration and
+optimization raise `unsupported.space` for a product space.
+
+(c) The supported v1 problem with every geometry function, a different input density:
 
 ```{code-cell} python3
 G = ac.evaluate_grads(tf.BOREHOLE, X=tf.BOREHOLE.space.sample(1000, rng=rng))

@@ -508,3 +508,19 @@ def test_product_construction_and_serialization():
         asub.Product.from_dict({"type": "Product", "blocks": [s.to_dict()]})
     assert asub.spaces._poincare_constant(s) == 1.0
     assert asub.spaces._poincare_constant(asub.Product([u])) == 4.0 / np.pi**2
+
+
+def test_reference_names():
+    assert asub.Uniform.reference(2, names=["a", "b"]) == asub.Uniform(
+        [-1, -1], [1, 1], names=("a", "b")
+    )
+    assert asub.Gaussian.reference(2, names=["a", "b"], units=["m", None]) == asub.Gaussian(
+        [0, 0], [1, 1], names=("a", "b"), units=("m", None)
+    )
+    assert asub.Uniform.reference(2, units=["m", "s"]).units == ("m", "s")
+    assert asub.Uniform.reference(2) == asub.Uniform([-1, -1], [1, 1])
+    for cls in (asub.Uniform, asub.Gaussian):
+        for bad in (["a"], ["a", "a"], "ab"):
+            with pytest.raises(asub.InputError) as e:
+                cls.reference(2, names=bad)
+            assert e.value.code == "input.parameter"

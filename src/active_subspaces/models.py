@@ -479,7 +479,8 @@ def as_model(model: Model | ValueFn, *, space: InputSpace | None = None) -> Mode
             raise _param_error("space: required when model is a bare callable", "space")
         if not isinstance(space, (Uniform, Gaussian, Product)):
             raise _param_error(
-                f"space: expected a Uniform, Gaussian or Product input space, got {type(space).__name__}",
+                "space: expected a Uniform, Gaussian or Product input space, "
+                f"got {type(space).__name__}",
                 "space",
             )
         return Model(space=space, value=model)

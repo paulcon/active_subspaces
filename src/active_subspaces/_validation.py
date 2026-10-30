@@ -215,14 +215,31 @@ def _check_support(Xphys: F64, space: Any, name: str) -> None:
     inside = space.contains(Xphys)
     if inside.all():
         return
+    n_outside = int((~inside).sum())
     row = int(np.argmin(inside))
     violations = space._support_violations(Xphys[row : row + 1])[0]
     col = int(np.argmax(violations))
+    value = float(Xphys[row, col])
+    bounds = space._bounds() if hasattr(space, "_bounds") else (space.lower, space.upper)
+    lower, upper = float(bounds[0][col]), float(bounds[1][col])
+    side, bound = ("lower", lower) if value < lower else ("upper", upper)
+    label = space.names[col]
+    op = "<" if side == "lower" else ">"
     raise InputError(
-        f"{name}: row {row} lies outside the support of the input space (coordinate {col} = "
-        f"{Xphys[row, col]!r})",
+        f"{name}: {n_outside} of {Xphys.shape[0]} rows lie outside the support; first: row {row}, "
+        f"input {label!r} (column {col}) = {value:g} {op} {side} {bound:g}",
         code="input.out_of_space",
-        details={"param": name, "row": row, "coordinate": col, "value": float(Xphys[row, col])},
+        details={
+            "param": name,
+            "row": row,
+            "coordinate": col,
+            "value": value,
+            "n_outside": n_outside,
+            "column": col,
+            "name": label,
+            "bound": bound,
+            "side": side,
+        },
     )
 
 

@@ -20,6 +20,16 @@ D-02, D-02a, D-03).
 
 ### Added
 
+- **Mixed input spaces.** `ac.Product` joins independent `Uniform` and `Gaussian` blocks. Subspaces,
+  gradients, surrogates and plots accept it; geometry, integration, optimization, designs and the
+  reduced model raise `unsupported.space`. A log-normal input is passed as its logarithm (D-198).
+- **SIR, pHd and SAVE on a product space.** Their whitened directions are mapped back by
+  $\Sigma^{-1/2}$ of the declared space, which is not a multiple of $I$ for a product (D-205).
+- **A clearer `input.out_of_space` message.** It counts the rows outside the support and names the
+  first: row, input name and column, value, and the physical bound and side crossed. `details`
+  gain `n_outside`, `column`, `name`, `bound` and `side`; the code is unchanged (V1-10, D-203).
+- **Names and units on reference spaces.** `Uniform.reference(m, names=, units=)` and
+  `Gaussian.reference(m, names=, units=)` label normalized data (V1-12, D-203).
 - **Models with several outputs.** `ac.evaluate_multi` evaluates a model whose value has shape
   `(k, outputs)`, and `ac.finite_difference_gradients_multi` returns one `GradientResult` per
   output from one set of stencil evaluations, each equal bitwise to the single-output call on that

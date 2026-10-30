@@ -55,6 +55,20 @@ Data are checked on entry. NaN or infinite values (`input.nonfinite`), points ou
 (`input.out_of_space`) and shape mismatches are errors; the library never propagates NaN silently
 and never modifies your arrays.
 
+The `input.out_of_space` message counts the rows outside the support and names the first one. Its
+`details` hold `param`, `n_outside`, `row`, `column` (also `coordinate`), `name` (from the space),
+`value`, `bound` (in physical units) and `side` (`"lower"` or `"upper"`), all plain Python values.
+
+```{code-cell} python
+Xo = X.copy()
+Xo[7, 0] = space.upper[0] * 1.1
+try:
+    ac.active_subspace(grads=np.ones_like(Xo), X=Xo, space=space)
+except ac.InputError as err:
+    print(err)
+    print(err.details["n_outside"], err.details["name"], err.details["side"], err.details["bound"])
+```
+
 ## Warnings
 
 ```text

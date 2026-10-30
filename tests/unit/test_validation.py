@@ -82,6 +82,44 @@ def test_points_out_of_space_reports_row_and_coordinate(space, X):
     assert e.value.details["coordinate"] == 2
 
 
+def test_out_of_space_details(space):
+    names = ("a", "b", "c")
+    sp = asub.Uniform(space.lower, space.upper, names=names)
+    X = sp.sample(10, rng=1)
+    X[2, 1] = 3.5
+    X[5, 1] = -2.0
+    X[7, 2] = 21.0
+    with pytest.raises(asub.InputError) as e:
+        v.points(X, sp, "X")
+    d = e.value.details
+    assert d["n_outside"] == 3
+    assert (d["row"], d["column"], d["name"]) == (2, 1, "b")
+    assert (d["side"], d["bound"], d["value"]) == ("upper", 3.0, 3.5)
+    assert d["coordinate"] == 1
+    assert all(type(d[k]) is t for k, t in [("row", int), ("value", float), ("bound", float)])
+    assert "3 of 10 rows" in str(e.value)
+    assert "np.float64" not in str(e.value)
+    X = sp.sample(4, rng=1)
+    X[1, 0] = -0.5
+    with pytest.raises(asub.InputError) as e:
+        v.points(X, sp, "X")
+    assert (e.value.details["side"], e.value.details["bound"]) == ("lower", 0.0)
+    assert "lower 0" in str(e.value)
+
+
+def test_out_of_space_details_product():
+    sp = asub.Product(
+        [asub.Gaussian([0.0], [1.0], names=["g"]), asub.Uniform([0.0], [1.0], names=["u"])]
+    )
+    X = np.array([[50.0, 0.5], [0.0, 1.5], [0.0, -0.5]])
+    with pytest.raises(asub.InputError) as e:
+        v.points(X, sp, "X")
+    d = e.value.details
+    assert d["n_outside"] == 2
+    assert (d["row"], d["column"], d["name"], d["side"], d["bound"]) == (1, 1, "u", "upper", 1.0)
+    assert "np.float64" not in str(e.value)
+
+
 def test_points_normalizes_without_mutation(space, X):
     before = X.copy()
     Xn = v.points(X, space)

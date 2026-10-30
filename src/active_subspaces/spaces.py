@@ -903,24 +903,35 @@ class Uniform(_SpaceBase):
         object.__setattr__(self, "_mid", _v.freeze_array((up + lo) / 2.0))
 
     @classmethod
-    def reference(cls, m: int) -> Uniform:
+    def reference(
+        cls,
+        m: int,
+        *,
+        names: Sequence[str] | None = None,
+        units: Sequence[str | None] | None = None,
+    ) -> Uniform:
         """Return the reference space :math:`[-1, 1]^m`, whose maps are the identity.
 
         Parameters
         ----------
         m : int
             Number of inputs, at least 1.
+        names : sequence of str, optional
+            ``m`` unique non-empty input names. Default ``("x1", ..., "xm")``.
+        units : sequence of str or None, optional
+            ``m`` unit labels. Default all ``None``.
 
         Returns
         -------
         Uniform
             The space with ``lower = -1`` and ``upper = 1``, so ``A = I`` and
-            ``b = 0``. Pass it when the data are already normalized.
+            ``b = 0``, equal to the explicit constructor call with the same
+            ``names`` and ``units``. Pass it when the data are already normalized.
 
         Raises
         ------
         InputError
-            ``input.parameter`` if ``m < 1``.
+            ``input.parameter`` if ``m < 1``, or if ``names`` or ``units`` are bad.
 
         Examples
         --------
@@ -928,9 +939,11 @@ class Uniform(_SpaceBase):
         >>> ref = ac.Uniform.reference(2)
         >>> ref.lower, ref.upper
         (array([-1., -1.]), array([1., 1.]))
+        >>> ac.Uniform.reference(2, names=["a", "b"]).names
+        ('a', 'b')
         """
         m = _v.integer(m, "m", lo=1)
-        return cls(-np.ones(m), np.ones(m))
+        return cls(-np.ones(m), np.ones(m), names=names, units=units)
 
     @property
     def scale(self) -> NDArray[np.float64]:
@@ -1132,24 +1145,35 @@ class Gaussian(_SpaceBase):
         object.__setattr__(self, "_diag", diag)
 
     @classmethod
-    def reference(cls, m: int) -> Gaussian:
+    def reference(
+        cls,
+        m: int,
+        *,
+        names: Sequence[str] | None = None,
+        units: Sequence[str | None] | None = None,
+    ) -> Gaussian:
         """Return the reference space :math:`N(0, I_m)`, whose maps are the identity.
 
         Parameters
         ----------
         m : int
             Number of inputs, at least 1.
+        names : sequence of str, optional
+            ``m`` unique non-empty input names. Default ``("x1", ..., "xm")``.
+        units : sequence of str or None, optional
+            ``m`` unit labels. Default all ``None``.
 
         Returns
         -------
         Gaussian
             The space with zero mean and unit variances, so ``A = I`` and
-            ``b = 0``. Pass it when the data are already normalized.
+            ``b = 0``, equal to the explicit constructor call with the same
+            ``names`` and ``units``. Pass it when the data are already normalized.
 
         Raises
         ------
         InputError
-            ``input.parameter`` if ``m < 1``.
+            ``input.parameter`` if ``m < 1``, or if ``names`` or ``units`` are bad.
 
         Examples
         --------
@@ -1157,9 +1181,11 @@ class Gaussian(_SpaceBase):
         >>> ref = ac.Gaussian.reference(2)
         >>> ref.mean, ref.cov
         (array([0., 0.]), array([1., 1.]))
+        >>> ac.Gaussian.reference(2, names=["a", "b"], units=["m", "s"]).units
+        ('m', 's')
         """
         m = _v.integer(m, "m", lo=1)
-        return cls(np.zeros(m), np.ones(m))
+        return cls(np.zeros(m), np.ones(m), names=names, units=units)
 
     @property
     def scale(self) -> NDArray[np.float64]:
