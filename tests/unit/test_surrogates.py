@@ -59,7 +59,6 @@ def test_space_rules(problem):
     assert ei.value.details["param"] == "subspace"
 
 
-@pytest.mark.filterwarnings(r"ignore:.*\[accuracy\.flat_objective\]")  # plateau of J [D-192]
 def test_parameter_errors(problem):
     _sp, sub, X, f = problem
     cases = [
@@ -158,7 +157,6 @@ def test_evaluate_coordinates(problem):
     assert s1.gradient([0.1]).shape == (1, 1)
 
 
-@pytest.mark.filterwarnings(r"ignore:.*\[accuracy\.flat_objective\]")  # plateau of J [D-192]
 def test_quadratic_terms_errors(problem):
     _sp, sub, X, f = problem
     s0 = asub.fit_surrogate(X=X, f=f, subspace=sub, kind="poly", degree=0)
@@ -212,7 +210,6 @@ def test_subspace_none_and_full_dimension(problem):
     assert s4.length_scales.shape == (4,)
 
 
-@pytest.mark.filterwarnings(r"ignore:.*\[accuracy\.flat_objective\]")  # plateau of J [D-192]
 def test_deterministic_and_provenance(problem):
     _sp, sub, X, f = problem
     a = asub.fit_surrogate(X=X, f=f, subspace=sub, noise_variance=np.full(30, 1e-4))
@@ -260,7 +257,6 @@ class _Linear:
         return np.tile(self.c, (np.asarray(Y).shape[0], 1))
 
 
-@pytest.mark.filterwarnings(r"ignore:.*\[accuracy\.flat_objective\]")  # plateau of J [D-192]
 def test_protocol(problem):
     sp, sub, X, f = problem
     for s in (
@@ -286,7 +282,6 @@ def test_protocol(problem):
     assert ei.value.code == "input.out_of_space"
 
 
-@pytest.mark.filterwarnings(r"ignore:.*\[accuracy\.flat_objective\]")  # plateau of J [D-192]
 def test_protocol_reduced_model(problem):
     rmod = pytest.importorskip("active_subspaces.reduced_model")
     sp, sub, X, f = problem
@@ -307,7 +302,6 @@ def interval_domain():
     return asub.active_domain(sub)
 
 
-@pytest.mark.filterwarnings(r"ignore:.*\[accuracy\.flat_objective\]")  # plateau of J [D-192]
 def test_model_path_noise_variance(interval_domain, seed):
     dom = interval_domain
     sp = dom.subspace.space
@@ -353,7 +347,6 @@ def test_model_path_function_of_y(interval_domain, seed, kind):
     )
 
 
-@pytest.mark.filterwarnings(r"ignore:.*\[accuracy\.flat_objective\]")  # plateau of J [D-192]
 def test_model_path_determinism(interval_domain, seed):
     dom = interval_domain
     model = asub.Model(space=dom.subspace.space, value=lambda X: np.cos(X).sum(axis=1))
@@ -401,7 +394,6 @@ def test_model_path_errors(interval_domain):
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.filterwarnings(r"ignore:.*\[accuracy\.flat_objective\]")  # plateau of J [D-192]
 def test_round_trip(problem, interval_domain, assert_roundtrip, assert_readonly):
     sp, sub, X, f = problem
     results = [

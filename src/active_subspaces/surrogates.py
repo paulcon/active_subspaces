@@ -572,7 +572,9 @@ def _warn_flat(grid: np.ndarray, Js: np.ndarray, g: int) -> None:
     """Warn ``accuracy.flat_objective`` when the objective is flat around the selected point.
 
     Flat: J stays within ``1e-8 |J*|`` of its minimum over at least four decades of consecutive
-    grid points containing the selected one [D-192].
+    grid points containing the selected one [D-192]. A run that reaches the lower end of the
+    grid does not warn: there the kernel part vanishes and the RBF reduces to its polynomial
+    tail, so the choice does not change the fit [D-212].
     """
     thr = Js[g] + _FLAT_RTOL * abs(Js[g])
     a = g
@@ -582,7 +584,7 @@ def _warn_flat(grid: np.ndarray, Js: np.ndarray, g: int) -> None:
     while b < Js.size - 1 and Js[b + 1] <= thr:
         b += 1
     span = float(grid[b] - grid[a])
-    if span >= _FLAT_DECADES:
+    if span >= _FLAT_DECADES and a > 0:
         _warn(
             AccuracyWarning,
             f"the RBF likelihood is flat over {span:g} decades of log10(eta) around the selected "
@@ -2458,10 +2460,18 @@ def predict_interval(
     weight 1. The limits treat :math:`W_1` as fixed; on the model path the
     errors are the scatter of the conditional means about the polynomial.
 
+    The quantile is Student's :math:`t`, exact under Gaussian errors. The
+    HyShotII safe box of [2]_ (§5.3) uses the normal quantile
+    :math:`z_{0.99} = 2.33` instead; multiplying the one-sided half-width by
+    :math:`z_{0.99}/t_{\nu,0.99}` reproduces its limit [D-211].
+
     References
     ----------
     .. [1] D. C. Montgomery, E. A. Peck, G. G. Vining. *Introduction to Linear
        Regression Analysis*, 5th ed. Wiley, 2012, §3.4-3.5.
+    .. [2] P. G. Constantine, M. Emory, J. Larsson, G. Iaccarino. Exploiting
+       active subspaces to quantify uncertainty in the numerical simulation of
+       the HyShot II scramjet. *J. Comput. Phys.* 302:1-20, 2015.
 
     Examples
     --------
