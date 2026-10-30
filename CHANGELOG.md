@@ -90,6 +90,14 @@ D-02, D-02a, D-03).
   `ac.fit_surrogate_from_model`, `ac.predict`, `ac.predict_gradient`, `ac.quadratic_terms`;
   polynomial and RBF surrogates with a leave-one-out $R^2$ (`loo_r_squared`) and an
   `ac.Surrogate` protocol (D-97, D-98, D-99, D-102, D-104).
+- **RBF search interval and intervals for polynomials.** `fit_surrogate(..., f_variance=)` searches
+  the published Constantine–Dow–Wang (2014, eq. (4.13)) interval
+  $[\log_{10}(2\hat\sigma^2/\sum\lvert\lambda\rvert),\ \log_{10}(2C_1)]$ with $C_1=1$ (Gaussian) or
+  $4/\pi^2$ (uniform; the paper's $2\sqrt m/\pi$ is loose) (D-192, D-193, D-204). New warnings
+  `accuracy.empty_bounds` and `accuracy.flat_objective`. `ac.predict_interval`,
+  `PolynomialSurrogate.interval` and `ac.IntervalResult` give prediction and confidence limits
+  from the Gaussian-error least-squares theory (D-200). `fit_surrogate_from_model` has no
+  `f_variance`; pass `log10_eta_bounds` (D-207).
 - **Integration and optimization**: `ac.integrate`, `ac.integrate_surrogate`,
   `ac.integration_design`, `ac.estimate_integral`, `ac.active_quadrature_rule`, `ac.minimize`,
   `ac.minimize_active` and `ac.lift`, with a `lift_dim` option for the lift (D-33, D-47, D-53,
@@ -127,6 +135,13 @@ D-02, D-02a, D-03).
 
 ### Changed
 
+- **`RBFSurrogate.f_variance` is renamed `training_variance`** and the schema is now 2; version-1
+  files migrate on load (D-206). `log10_eta_bounds` now defaults to `None`, meaning $[-10,1]$ unless
+  `f_variance` is given (D-192).
+- **Attribution correction.** The RBF length-scale rule is published (Constantine, Dow and Wang,
+  2014, §4.2–4.3, eq. (4.16), with $\eta=2\alpha$); earlier text called it an unreferenced
+  heuristic. Two departures are kept: a profiled amplitude and the nugget
+  $\eta\sum_{q>n}\lvert\lambda_q\rvert/\sum_q\lvert\lambda_q\rvert$ (D-194).
 - **The whole public API.** Classes called in a fixed order (`Subspaces`, `ActiveVariableDomain`,
   `ActiveVariableMap`, `ActiveSubspaceResponseSurface`, `ActiveSubspaceReducedModel`) are replaced
   by functions and results; tuple returns become named fields; modules are renamed (`domains` →

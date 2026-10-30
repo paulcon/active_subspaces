@@ -155,7 +155,7 @@ CODES: Mapping[str, tuple[str, str]] = MappingProxyType(
         "accuracy.flat_objective": (
             "AccuracyWarning",
             "the RBF likelihood is flat over at least four decades of the hyperparameter; the "
-            "selected value is arbitrary",
+            "selected value is arbitrary (pass f_variance or bounds)",
         ),
         "accuracy.extrapolation": (
             "AccuracyWarning",
