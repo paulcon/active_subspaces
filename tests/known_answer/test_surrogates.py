@@ -379,7 +379,6 @@ def _central(fun, X, h):
     return G
 
 
-@pytest.mark.filterwarnings(r"ignore:.*\[accuracy\.flat_objective\]")  # plateau of J [D-192]
 @pytest.mark.parametrize("kind", ["poly", "rbf"])
 @pytest.mark.parametrize("space_kind", ["uniform", "gaussian", "none"])
 def test_gradients(kind, space_kind):
@@ -490,14 +489,19 @@ def test_rbf_published_bounds(kind):
 
 
 def test_flat_objective_warning():
-    """J flat over >= 4 decades around the selection warns; a unimodal J does not [D-192]."""
+    """J flat over >= 4 decades around the selection warns; a unimodal J, a shorter run, and a
+    run reaching the lower end of the grid do not [D-192], [D-212].
+    """
     grid = np.linspace(-10.0, 1.0, 45)
-    with pytest.warns(asub.AccuracyWarning, match="flat_objective"):
-        su._warn_flat(grid, np.full(45, -13.41), 0)
+    flat5 = np.where(np.abs(grid + 4.0) <= 2.5, -13.41, 0.0)  # interior, 5 decades
+    with pytest.warns(asub.AccuracyWarning, match="flat_objective") as rec:
+        su._warn_flat(grid, flat5, int(np.argmin(flat5)))
+    assert rec[0].message.details["interval"] == [-6.5, -1.5]
     import warnings
 
     with warnings.catch_warnings():
         warnings.simplefilter("error")
+        su._warn_flat(grid, np.full(45, -13.41), 0)  # reaches the lower end: the tail limit
         su._warn_flat(grid, (grid + 3.0) ** 2, int(np.argmin((grid + 3.0) ** 2)))
         flat3 = np.where(np.abs(grid + 5.0) <= 1.5, 0.0, 1.0)  # flat over 3 decades only
         su._warn_flat(grid, flat3, int(np.argmin(flat3)))

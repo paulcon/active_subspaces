@@ -151,6 +151,18 @@ confidence interval (the mean of $f$ given $y$). A one-sided limit uses $t_{\nu,
 interval needs $\nu>0$, and it is not defined for an RBF. It is conditional on $W_1$: it ignores
 the error in estimating the subspace. See Montgomery, Peck and Vining (2012, §3.4–3.5).
 
+The quantile is Student's $t$, which is exact under Gaussian errors. The HyShot II safe box of
+Constantine, Emory, Larsson and Iaccarino (2015, §5.3) bounds the quadratic with the normal
+quantile instead, $\hat g(y)+2.33\,s\sqrt{1+h(y)}$. To reproduce it, scale the one-sided
+half-width by $z_{0.99}/t_{\nu,0.99}$: with $\nu\approx49$, $t_{\nu,0.99}\approx2.40$ gives the
+angle-of-attack limit 3.179 and $z_{0.99}=2.33$ gives the paper's 3.193 [D-211].
+
+```python
+import scipy.stats as st
+iv = ac.predict_interval(poly, X, level=0.99, side="upper")
+z_limit = iv.estimate + (iv.upper - iv.estimate) * st.norm.ppf(0.99) / st.t.ppf(0.99, iv.dof)
+```
+
 ## Fit quality: leave-one-out
 
 Both kinds report the leave-one-out residuals $e_i=f_i-g^{(-i)}(y_i)$, where $g^{(-i)}$ is refitted
@@ -221,6 +233,9 @@ $k$-centre problem, relative to the candidate set. It costs $O(50N^2n)$.
   Studies.* SIAM.
 - Constantine, P. G., Dow, E. and Wang, Q. (2014). Active subspace methods in theory and practice:
   applications to kriging surfaces. *SIAM Journal on Scientific Computing* 36(4):A1500–A1524.
+- Constantine, P. G., Emory, M., Larsson, J. and Iaccarino, G. (2015). Exploiting active subspaces
+  to quantify uncertainty in the numerical simulation of the HyShot II scramjet. *Journal of
+  Computational Physics* 302:1–20.
 - Montgomery, D. C., Peck, E. A. and Vining, G. G. (2012). *Introduction to Linear Regression
   Analysis*, 5th ed. Wiley. §3.4–3.5.
 - Rasmussen, C. E. and Williams, C. K. I. (2006). *Gaussian Processes for Machine Learning.* MIT

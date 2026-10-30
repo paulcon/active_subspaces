@@ -66,9 +66,11 @@ D-02, D-02a, D-03).
   the published Constantine–Dow–Wang (2014, eq. (4.13)) interval
   $[\log_{10}(2\hat\sigma^2/\sum\lvert\lambda\rvert),\ \log_{10}(2C_1)]$ with $C_1=1$ (Gaussian) or
   $4/\pi^2$ (uniform; the paper's $2\sqrt m/\pi$ is loose) (D-192, D-193, D-204). New warnings
-  `accuracy.empty_bounds` and `accuracy.flat_objective`. `ac.predict_interval`,
-  `PolynomialSurrogate.interval` and `ac.IntervalResult` give prediction and confidence limits
-  from the Gaussian-error least-squares theory (D-200). `fit_surrogate_from_model` has no
+  `accuracy.empty_bounds` and `accuracy.flat_objective`; a plateau that reaches the lower end of
+  the search interval, where the RBF reduces to its polynomial tail, does not warn (D-212).
+  `ac.predict_interval`, `PolynomialSurrogate.interval` and `ac.IntervalResult` give prediction
+  and confidence limits from the Gaussian-error least-squares theory, with Student's $t$; the docs
+  show how the HyShot II paper's normal quantile relates to it (D-200, D-211). `fit_surrogate_from_model` has no
   `f_variance`; pass `log10_eta_bounds` (D-207).
 - **Integration and optimization**: `ac.integrate`, `ac.integrate_surrogate`,
   `ac.integration_design`, `ac.estimate_integral`, `ac.active_quadrature_rule`, `ac.minimize`,
