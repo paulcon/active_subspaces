@@ -92,7 +92,9 @@ Both are valid but loose, and v1 uses the sharp constant. This is an erratum to 
 departure from it. The interval is opt-in through `f_variance` [D-192]. If it is empty, v1 uses its
 upper end and issues `accuracy.empty_bounds`. If the likelihood is flat over four or more decades of
 $\log_{10}\eta$, the selected value is arbitrary and v1 issues `accuracy.flat_objective`. Explicit
-`log10_eta_bounds` or `log10_eta` take precedence over `f_variance`.
+`log10_eta_bounds` or `log10_eta` take precedence over `f_variance`. The bounds are derived for the eigenvalues of
+$E[\nabla f\nabla f^\top]$ (the `as` and `opg` estimators); with another estimator the
+eigenvalues have other units and the interval is only a heuristic.
 
 :::{admonition} Departure from the 2016 code: objective and nugget
 :class: important

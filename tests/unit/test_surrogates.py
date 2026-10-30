@@ -429,3 +429,36 @@ def test_round_trip(problem, interval_domain, assert_roundtrip, assert_readonly)
         back = asub.from_dict(r.to_dict())
         Yt = r.Y[:3]
         np.testing.assert_array_equal(back.evaluate(Yt), r.evaluate(Yt))
+
+
+def test_f_variance_validation_and_edges():
+    """f_variance must be finite and > 0 and is "rbf"-only; a constant f keeps log10_eta = 0;
+    a zero-width published interval fixes log10_eta [D-192].
+    """
+    space = asub.Gaussian.reference(2)
+    X = space.sample(30, rng=0)
+    G = np.column_stack([np.ones(30), 0.1 * X[:, 1]])
+    sub = asub.active_subspace(grads=G, space=space, n=1)
+    f = X[:, 0] + 0.1 * X[:, 1] ** 2
+    for bad in (0.0, -1.0, np.inf, np.nan, True):
+        with pytest.raises(asub.InputError) as e:
+            asub.fit_surrogate(X=X, f=f, subspace=sub, f_variance=bad)
+        assert e.value.code == "input.parameter"
+    with pytest.raises(asub.InputError) as e:
+        asub.fit_surrogate(X=X, f=f, subspace=sub, kind="poly", f_variance=1.0)
+    assert e.value.details["reason"] == "not_for_kind"
+    total = float(np.abs(sub.eigenvalues).sum())
+    const = asub.fit_surrogate(X=X, f=np.full(30, 2.0), subspace=sub, f_variance=10 * total)
+    assert const.log10_eta == 0.0
+    point = asub.fit_surrogate(X=X, f=f, subspace=sub, f_variance=total)  # lo == hi
+    assert point.log10_eta == pytest.approx(np.log10(2.0), rel=1e-15)
+
+
+def test_predict_interval_validation_order():
+    """not_polynomial, then the options and the degrees of freedom, then X (09 §5.5)."""
+    space = asub.Uniform.reference(1)
+    X = np.linspace(-1, 1, 9)[:, None]
+    s = asub.fit_surrogate(X=X, f=X[:, 0] ** 2, space=space, subspace=None, kind="poly", degree=1)
+    with pytest.raises(asub.InputError) as e:
+        asub.predict_interval(s, np.zeros((2, 5)), level=2.0)
+    assert e.value.code == "input.parameter"

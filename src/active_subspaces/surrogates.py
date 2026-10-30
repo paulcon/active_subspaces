@@ -586,7 +586,8 @@ def _warn_flat(grid: np.ndarray, Js: np.ndarray, g: int) -> None:
         _warn(
             AccuracyWarning,
             f"the RBF likelihood is flat over {span:g} decades of log10(eta) around the selected "
-            "value, so the value is arbitrary; pass f_variance or log10_eta_bounds",
+            "value, so the value is arbitrary; the published bounds (f_variance=) or narrower "
+            "log10_eta_bounds constrain it",
             code="accuracy.flat_objective",
             details={"span": span, "interval": [float(grid[a]), float(grid[b])]},
         )
@@ -616,22 +617,25 @@ def _search_interval(
     c1 = _poincare_constant(space)
     lo = math.log10(2.0 * f_variance / total)
     hi = math.log10(2.0 * c1)
-    if lo <= hi:
+    if lo < hi:
         return (lo, hi), "f_variance", None
-    if np.ptp(f) != 0:  # a constant f runs no search and issues no search warning (§5.2)
-        _warn(
-            AccuracyWarning,
-            f"the published bounds on log10(eta) are empty ({lo:.4g} > {hi:.4g}): f_variance "
-            "exceeds C1 times the eigenvalue sum; the upper end is used",
-            code="accuracy.empty_bounds",
-            details={
-                "lower": lo,
-                "upper": hi,
-                "f_variance": f_variance,
-                "eigenvalue_sum": total,
-                "C1": c1,
-            },
-        )
+    if np.ptp(f) == 0:  # a constant f runs no search and keeps log10_eta = 0 (§5.2 step 2)
+        return (min(lo, hi), hi), "f_variance", None
+    if lo == hi:  # a single point: nothing to search, nothing empty
+        return (hi, hi), "f_variance", hi
+    _warn(
+        AccuracyWarning,
+        f"the published bounds on log10(eta) are empty ({lo:.4g} > {hi:.4g}): f_variance "
+        "exceeds C1 times the eigenvalue sum; the upper end is used",
+        code="accuracy.empty_bounds",
+        details={
+            "lower": lo,
+            "upper": hi,
+            "f_variance": f_variance,
+            "eigenvalue_sum": total,
+            "C1": c1,
+        },
+    )
     return (hi, hi), "f_variance", hi
 
 
@@ -2295,7 +2299,7 @@ def quadratic_terms(
 # ---------------------------------------------------------------------------
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, slots=True, eq=False)
 class IntervalResult:
     r"""Prediction or confidence limits of a polynomial surrogate at new points [D-200].
 
@@ -2338,19 +2342,10 @@ def _readonly(a: np.ndarray) -> NDArray[np.float64]:
     return out
 
 
-def _poly_interval(
-    s: PolynomialSurrogate, Y: Any, level: Any, kind: Any, side: Any
-) -> tuple[
-    np.ndarray,
-    np.ndarray,
-    np.ndarray,
-    float,
-    Literal["prediction", "confidence"],
-    Literal["two", "lower", "upper"],
-    int,
-    float,
-]:
-    """``(estimate, lower, upper, level, kind, side, dof, s)`` of §3.2 at input coordinates."""
+def _interval_options(
+    s: PolynomialSurrogate, level: Any, kind: Any, side: Any
+) -> tuple[float, Literal["prediction", "confidence"], Literal["two", "lower", "upper"], int]:
+    """Validate the interval options and the residual degrees of freedom (§5.5 steps 2-3)."""
     level = _v.real(level, "level", lo=0.0, hi=1.0, lo_open=True, hi_open=True)
     kind = cast(
         Literal["prediction", "confidence"], _v.choice(kind, "kind", ("prediction", "confidence"))
@@ -2369,7 +2364,25 @@ def _poly_interval(
             reason="no_dof",
             dof=nu,
         )
+    return level, kind, side, nu
+
+
+def _poly_interval(
+    s: PolynomialSurrogate, Y: Any, level: Any, kind: Any, side: Any
+) -> tuple[
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    float,
+    Literal["prediction", "confidence"],
+    Literal["two", "lower", "upper"],
+    int,
+    float,
+]:
+    """``(estimate, lower, upper, level, kind, side, dof, s)`` of §3.2 at input coordinates."""
+    level, kind, side, nu = _interval_options(s, level, kind, side)
     Yn = _coords(Y, s.active_dim)
+    w = np.asarray(s.sample_weights, dtype=np.float64)
     est = _poly_evaluate(s, Yn)
     r = np.asarray(s.residuals, dtype=np.float64)
     scale = math.sqrt(math.fsum((w * r * r).tolist()) / nu)
@@ -2469,6 +2482,7 @@ def predict_interval(
             reason="not_polynomial",
         )
     s = surrogate
+    _interval_options(s, level, kind, side)  # spec 09 §5.5 order: options and dof before X
     x = _v.points(X, s.space)
     Y = _project(s, x)
     est, lower, upper, level_, kind_, side_, nu, scale = _poly_interval(s, Y, level, kind, side)

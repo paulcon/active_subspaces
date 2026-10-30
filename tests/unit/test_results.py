@@ -15,7 +15,7 @@ import pytest
 from numpy.typing import NDArray
 
 import active_subspaces as asub
-from active_subspaces import _random, results
+from active_subspaces import _random, _validation, results
 from active_subspaces.results import QoIResult, Result
 from active_subspaces.results import _invariant as invariant
 from active_subspaces.results import _make_provenance as make_provenance
@@ -732,6 +732,11 @@ def test_migration_rbf_v1():
     r = asub.from_dict(d)
     assert r.training_variance == old
     assert not hasattr(r, "f_variance")
+    for name in ("radial_coefficients", "tail_coefficients", "length_scales", "nugget", "Y", "f"):
+        np.testing.assert_array_equal(
+            getattr(r, name), _validation.decode_array(d["fields"][name])
+        )
+    assert r.log10_eta == d["fields"]["log10_eta"]
     again = r.to_dict()
     assert again["schema_version"] == 2
     assert "f_variance" not in again["fields"]

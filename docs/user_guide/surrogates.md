@@ -203,6 +203,10 @@ with warnings.catch_warnings():
 print(np.round(bounds, 3), f"LOO R^2 = {s_pub.loo_r_squared:.4f}")
 ```
 
+`log10_eta_bounds` needs lower < upper. If your interval is empty (the variance exceeds
+$C_1\sum_q\lvert\lambda_q\rvert$, a sampling effect), pass `log10_eta=np.log10(2 * C1)` instead,
+which is what `fit_surrogate` does when it collapses an empty interval.
+
 ## Fitting from a model
 
 `ac.fit_surrogate_from_model(domain=…, model=…)` chooses design points $y_k$ on the active domain,
