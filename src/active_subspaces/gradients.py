@@ -784,9 +784,13 @@ def finite_difference_gradients_multi(
     )
     out = []
     for p in range(P):
-        grads, f0 = st.quotients(
-            np.ascontiguousarray(vals[:, p]), "finite_difference_gradients_multi"
-        )
+        try:
+            grads, f0 = st.quotients(
+                np.ascontiguousarray(vals[:, p]), "finite_difference_gradients_multi"
+            )
+        except NumericalError as exc:
+            exc.details["output"] = p
+            raise
         params = {
             "model": st.mdl.name,
             "batch_size": batch_size,
