@@ -784,3 +784,31 @@ def test_n_mc_checked_before_evaluation(n_mc):
         rm = R.build_reduced_model(**kw, surrogate_kind="poly", rng=0)
         assert calls[0] > 0
         assert rm.provenance.parameters["n_mc"] == 2
+
+
+def test_product_space_guard_before_any_work():
+    """Spec 03 §5.3: a Product raises ``unsupported.space`` at entry, on the data path and the
+    model path, before any sampling or model evaluation.
+    """
+    sp = asub.Product([asub.Uniform([0.0, 1.0], [2.0, 5.0]), asub.Gaussian([0.5], [0.25])])
+    a = np.array([1.0, 0.1, 1.0])
+    X = sp.sample(30, rng=0)
+    f = np.sin(X @ a)
+    G = np.cos(X @ a)[:, None] * a
+    with pytest.raises(asub.UnsupportedError) as e:
+        R.build_reduced_model(space=sp, X=X, f=f, grads=G, rng=0)
+    assert e.value.code == "unsupported.space"
+    assert e.value.details["kind"] == "product"
+
+    calls = []
+
+    def counting(Z):
+        calls.append(len(Z))
+        return Z @ a
+
+    with pytest.raises(asub.UnsupportedError) as e:
+        R.build_reduced_model(model=asub.as_model(counting, space=sp), n_samples=50, rng=0)
+    assert e.value.code == "unsupported.space"
+    with pytest.raises(asub.UnsupportedError):
+        R.build_reduced_model(model=counting, space=sp, n_samples=50, rng=0)
+    assert calls == []

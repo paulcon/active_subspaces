@@ -203,9 +203,20 @@ sees even ridges, through the slice variances.
 covariance, $\tilde x_i=\hat\Sigma^{-1/2}(x_i-\bar x)$ [Li 1991; Li 1992; Cook and Weisberg 1991].
 v1 uses the declared covariance, $\tilde x_i=\Sigma^{-1/2}(x_i-\bar x_\omega)$, with
 $\Sigma=\tfrac13I$ (uniform) or $I$ (Gaussian), and the weighted mean. Reason: the input
-distribution is declared, so its covariance is known exactly and need not be estimated. Because
-$\Sigma$ is a multiple of $I$, the eigenvectors of $C$ span the same subspace as Li's back-transformed
-directions $\Sigma^{-1/2}\eta$, and are used directly.
+distribution is declared, so its covariance is known exactly and need not be estimated. On
+`Uniform` and `Gaussian`, $\Sigma$ is a multiple of $I$, so the eigenvectors of $C$ span the same
+subspace as Li's back-transformed directions $\Sigma^{-1/2}\eta$, and are used directly.
+
+On a `Product` with uniform and Gaussian coordinates, $\Sigma$ is diagonal with $\tfrac13$ and 1,
+and the directions are back-transformed [D-205]. With $H=[\eta_1\cdots\eta_m]$ the eigenvectors of
+the whitened $C$, v1 takes the QR factorization $\Sigma^{-1/2}H=QR$ and sets $W=Q$, so
+$\operatorname{span}(w_1,\dots,w_k)=\Sigma^{-1/2}\operatorname{span}(\eta_1,\dots,\eta_k)$ for
+every $k$: every partition, bootstrap distance and ladle determinant refers to Li's directions.
+The eigenvalues are those of the whitened $C$, and **the columns of $W$ are not its eigenvectors**.
+Each $w_j$ is the part of $\Sigma^{-1/2}\eta_j$ orthogonal to $w_1,\dots,w_{j-1}$, not Li's
+direction itself, and the trailing columns span the Euclidean complement
+$\Sigma^{1/2}\operatorname{span}(\eta_{k+1},\dots,\eta_m)$. Activity scores therefore use the
+normalized directions $b_j=\Sigma^{-1/2}\eta_j/\lVert\Sigma^{-1/2}\eta_j\rVert$ [D-208].
 
 **Slices and weights (SIR, SAVE).** The published methods use unweighted slice proportions
 $n_h/M$ and slices of about equal count. v1 uses the weighted proportions

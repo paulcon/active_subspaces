@@ -34,7 +34,7 @@ import scipy
 from active_subspaces import _validation as _v
 from active_subspaces._version import __version__
 from active_subspaces.errors import SchemaError
-from active_subspaces.spaces import Gaussian, InputSpace, Uniform, _space_from_dict
+from active_subspaces.spaces import Gaussian, InputSpace, Product, Uniform, _space_from_dict
 
 # Developer notes (spec 04)
 # ------------------------
@@ -65,7 +65,7 @@ from active_subspaces.spaces import Gaussian, InputSpace, Uniform, _space_from_d
 # Field annotations drive conversion and decoding. Allowed: ``NDArray[np.float64 |
 # np.int64 | np.bool_]`` (a bare ``NDArray`` means float64), ``int``, ``float``,
 # ``bool``, ``str``, ``Literal[...]``, ``tuple[T, ...]``, ``tuple[T1, T2]``,
-# ``X | None``, an input space (``InputSpace``, ``Uniform``, ``Gaussian``) and any
+# ``X | None``, an input space (``InputSpace``, ``Uniform``, ``Gaussian``, ``Product``) and any
 # ``Result`` subclass. Do not define ``__post_init__`` (use ``_check``) and avoid
 # zero-argument ``super()`` in slotted dataclasses.
 #
@@ -219,7 +219,7 @@ def _jsonable(obj: Any) -> Any:
         if obj.dtype.kind in "fiub":
             return _v.digest(obj)
         return repr(obj)
-    if isinstance(obj, (Uniform, Gaussian)):
+    if isinstance(obj, (Uniform, Gaussian, Product)):
         return obj.to_dict(binary=True)
     if isinstance(obj, Result):
         return {"result": type(obj).TYPE}
@@ -566,8 +566,7 @@ def _coerce(kind: tuple[Any, ...], value: Any, name: str) -> Any:
             raise TypeError(f"{name}: expected {len(kind[1])} items, got {len(vals)}")
         return tuple(_coerce(k, v, name) for k, v in zip(kind[1], vals, strict=False))
     if tag == "space":
-        Uniform, Gaussian, _ = _space_types()
-        if not isinstance(value, (Uniform, Gaussian)):
+        if not isinstance(value, (Uniform, Gaussian, Product)):
             raise TypeError(f"{name}: expected an input space, got {type(value).__name__}")
         return value
     if tag == "result":

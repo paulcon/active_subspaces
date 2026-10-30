@@ -715,6 +715,25 @@ def test_finite_difference_multi_names_and_errors():
         assert e.value.code == "input.parameter"
 
 
+def test_finite_difference_product_boundary_rule():
+    """On a Product the one-sided rule applies to uniform coordinates only [D-198]."""
+    sp = asub.Product([asub.Uniform([0.0], [1.0]), asub.Gaussian([0.0], [1.0])])
+    X = np.array([[1.0, 0.0], [0.5, 30.0]])  # at the uniform upper bound; far in the Gaussian
+    seen = []
+
+    def model(Z):
+        seen.append(Z.copy())
+        return Z[:, 0] ** 2 + 3.0 * Z[:, 1]
+
+    res = gr.finite_difference_gradients(model, X=X, space=sp, h=1e-4, scheme="central")
+    assert not res.central_mask[0, 0]  # uniform coordinate at its bound: one-sided
+    assert res.steps[0, 0] < 0
+    assert res.central_mask[1, 1]  # Gaussian coordinate: central, whatever its value
+    allz = np.vstack(seen)
+    assert allz[:, 0].max() <= 1.0
+    np.testing.assert_allclose(res.grads_physical[:, 1], 3.0, rtol=1e-6)
+
+
 def test_finite_difference_multi_single_output_shapes():
     """D-199: with outputs=1, (k, 1) is accepted and (k,) raises model.shape (no flattening)."""
     s = asub.Uniform.reference(2)

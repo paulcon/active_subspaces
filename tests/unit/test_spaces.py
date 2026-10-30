@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import copy
 import dataclasses
 import json
 import pickle
 
 import numpy as np
 import pytest
+import scipy.linalg
 
 import active_subspaces as asub
 from active_subspaces import _validation as v
@@ -139,7 +141,25 @@ def test_equality_and_hash():
     assert a != asub.Gaussian.reference(2)
     with pytest.raises(TypeError):
         hash(a)
-    assert asub.Gaussian([0, 0], [1, 2]) != asub.Gaussian([0, 0], np.diag([1.0, 2.0]))
+    assert asub.Gaussian([0, 0], [1, 2]) == asub.Gaussian([0, 0], np.diag([1.0, 2.0]))
+
+
+def test_gaussian_diagonal_canonical():
+    """An exactly diagonal (m, m) covariance is stored as its variances: the two forms are equal
+    spaces with bitwise-identical maps, and an old file with the matrix loads equal [D-214].
+    """
+    a = asub.Gaussian([0.0, 1.0, 2.0], [1.0, 4.0, 0.3])
+    b = asub.Gaussian([0.0, 1.0, 2.0], np.diag([1.0, 4.0, 0.3]))
+    assert a == b
+    assert b.cov.shape == (3,)
+    X = a.sample(50, rng=0)
+    np.testing.assert_array_equal(a.to_normalized(X), b.to_normalized(X))
+    np.testing.assert_array_equal(a.grads_to_physical(X), b.grads_to_physical(X))
+    full = asub.Gaussian([0.0, 0.0], [[1.0, 0.5], [0.5, 2.0]])
+    assert full.cov.shape == (2, 2)
+    d = a.to_dict()
+    d["cov"] = v.encode_array(np.diag([1.0, 4.0, 0.3]))  # as saved before D-214
+    assert asub.Gaussian.from_dict(d) == a
 
 
 def test_repr_is_short():
@@ -436,3 +456,190 @@ def test_space_from_dict_errors():
         asub.Gaussian.from_dict(d)
     with pytest.raises(asub.SchemaError):
         space_from_dict({"type": "Mixed"})
+
+
+# ---------------------------------------------------------------------------
+# Product space [D-198] (03 §8, V03.8)
+# ---------------------------------------------------------------------------
+
+
+def _hydrology_like():
+    lo = np.arange(1.0, 19.0)
+    hi = lo + np.linspace(0.5, 50.0, 18)
+    return asub.Product(
+        [
+            asub.Uniform(lo[:16], hi[:16]),
+            asub.Gaussian([-5.11], [0.52**2]),
+            asub.Uniform(lo[16:], hi[16:]),
+        ]
+    )
+
+
+def test_product_maps_support_and_sampling():
+    s = _hydrology_like()
+    assert (s.dim, s.kind) == (19, "product")
+    assert s.names == tuple(f"x{j}" for j in range(1, 20))
+    d = s.reference_covariance.diagonal()
+    np.testing.assert_allclose(d[16], 1.0)
+    np.testing.assert_allclose(np.delete(d, 16), 1.0 / 3.0)
+    assert np.count_nonzero(s.reference_covariance - np.diag(d)) == 0
+    A = scipy.linalg.block_diag(*(b.scale for b in s.blocks))
+    np.testing.assert_array_equal(s.scale, A)
+    X = s.sample(50, rng=4)
+    x = s.to_normalized(X)
+    np.testing.assert_allclose(x, np.linalg.solve(A, (X - s.shift).T).T, rtol=1e-13, atol=1e-13)
+    np.testing.assert_allclose(s.from_normalized(x), X, rtol=1e-14)
+    G = np.random.default_rng(1).standard_normal((50, 19))
+    np.testing.assert_allclose(s.grads_to_normalized(G), G @ A, rtol=1e-14)
+    np.testing.assert_allclose(s.grads_to_physical(G @ A), G, rtol=1e-13)
+    # contains: any value in the Gaussian column; bounds on the others
+    Y = X.copy()
+    Y[:, 16] = 1e6
+    assert s.contains(Y).all()
+    Y[0, 3] = s.blocks[0].upper[3] + 1e-9 * (s.blocks[0].upper[3] - s.blocks[0].lower[3])
+    assert not s.contains(Y)[0]
+    # sampling: block b from child stream b, in block order
+    ch = np.random.default_rng(9).spawn(3)
+    expected = np.hstack(
+        [
+            ch[0].uniform(-1, 1, (7, 16)),
+            ch[1].standard_normal((7, 1)),
+            ch[2].uniform(-1, 1, (7, 2)),
+        ]
+    )
+    np.testing.assert_array_equal(s.sample(7, rng=9, normalized=True), expected)
+
+
+def test_uniform_mask_read_only():
+    """03 §4: the boundary mask is a read-only array, on every kind."""
+    u, g = asub.Uniform([0.0, 0.0], [1.0, 2.0]), asub.Gaussian([0.0], [1.0])
+    for s in (u, g, asub.Product([u, g])):
+        mask = s._uniform_mask
+        assert not mask.flags.writeable
+        with pytest.raises(ValueError, match="read-only"):
+            mask[0] = not mask[0]
+    np.testing.assert_array_equal(asub.Product([u, g, u])._uniform_mask, [1, 1, 0, 1, 1])
+
+
+def _full_cov_product():
+    cov = np.array([[2.0, 0.6], [0.6, 1.0]])
+    u = asub.Uniform([1.0, -2.0], [3.0, 6.0])
+    g = asub.Gaussian([0.5, -1.0], cov)
+    return asub.Product([u, g]), cov
+
+
+def test_product_full_covariance_block_maps():
+    """03 §3.1: A is block-diagonal, diag((u - l) / 2) on a uniform block and the Cholesky
+    factor on a Gaussian block; the maps and gradient maps follow, written out by hand.
+    """
+    s, cov = _full_cov_product()
+    L = np.linalg.cholesky(cov)
+    A = scipy.linalg.block_diag(np.diag([1.0, 4.0]), L)
+    b = np.array([2.0, 2.0, 0.5, -1.0])
+    np.testing.assert_allclose(s.scale, A, rtol=1e-14)
+    np.testing.assert_allclose(s.shift, b, rtol=1e-14)
+    X = s.sample(30, rng=3)
+    x = np.hstack([(X[:, :2] - b[:2]) / [1.0, 4.0], np.linalg.solve(L, (X[:, 2:] - b[2:]).T).T])
+    np.testing.assert_allclose(s.to_normalized(X), x, rtol=1e-13, atol=1e-13)
+    np.testing.assert_allclose(s.from_normalized(x), X, rtol=1e-13, atol=1e-13)
+    G = np.random.default_rng(2).standard_normal((30, 4))
+    Gn = np.hstack([G[:, :2] * [1.0, 4.0], G[:, 2:] @ L])
+    np.testing.assert_allclose(s.grads_to_normalized(G), Gn, rtol=1e-13)
+    Gp = np.hstack([G[:, :2] / [1.0, 4.0], np.linalg.solve(L.T, G[:, 2:].T).T])
+    np.testing.assert_allclose(s.grads_to_physical(G), Gp, rtol=1e-13)
+    np.testing.assert_allclose(s.grads_to_physical(s.grads_to_normalized(G)), G, rtol=1e-13)
+
+
+def test_product_full_covariance_directions_to_physical():
+    """03 §3.1, D-197: an orthonormal basis of span(A^{-T} W) whose columns keep the signs of
+    A^{-T} W, with A block-diagonal and the Gaussian block's factor a Cholesky factor.
+    """
+    s, cov = _full_cov_product()
+    L = np.linalg.cholesky(cov)
+    A = scipy.linalg.block_diag(np.diag([1.0, 4.0]), L)
+    W = np.linalg.qr(np.random.default_rng(5).standard_normal((4, 2)))[0]
+    T = np.linalg.solve(A.T, W)
+    Q, R = np.linalg.qr(T)
+    Q = Q * np.sign(np.diag(R))
+    P = s.directions_to_physical(W)
+    np.testing.assert_allclose(P, Q, atol=1e-13)
+    np.testing.assert_allclose(P.T @ P, np.eye(2), atol=1e-13)
+    assert np.all(np.einsum("ij,ij->j", P, T) > 0)
+
+
+def test_product_guards():
+    """03 §5.3, V03.8: geometry, inverse map, integration, optimization, designs and the
+    reduced model raise ``unsupported.space`` for a mixed product [D-13].
+    """
+    s = asub.Product([asub.Uniform([0.0, 1.0], [2.0, 5.0]), asub.Gaussian([0.5], [0.25])])
+    a = np.array([1.0, 0.1, 1.0])
+    X = s.sample(40, rng=0)
+    f = np.sin(X @ a)
+    G = np.cos(X @ a)[:, None] * a
+    sub = asub.active_subspace(space=s, X=X, f=f, grads=G, n=1)
+
+    def code(call):
+        with pytest.raises(asub.UnsupportedError) as e:
+            call()
+        return e.value.code
+
+    assert code(lambda: asub.active_domain(sub)) == "unsupported.space"
+    assert code(lambda: asub.inverse_map(sub, Y=np.zeros((2, 1)), rng=0)) == "unsupported.space"
+    assert (
+        code(lambda: asub.build_reduced_model(space=s, X=X, f=f, grads=G, rng=0))
+        == "unsupported.space"
+    )
+    # an ActiveDomain cannot have kind "product", so the domain guards of integration,
+    # optimization and designs are reached with a domain whose kind is forced
+    uni = asub.Uniform([0.0, 1.0, 0.0], [2.0, 5.0, 1.0])
+    Xu = uni.sample(40, rng=0)
+    dom = asub.active_domain(
+        asub.active_subspace(
+            space=uni, X=Xu, f=np.sin(Xu @ a), grads=np.cos(Xu @ a)[:, None] * a, n=1
+        )
+    )
+    bad = copy.copy(dom)
+    object.__setattr__(bad, "kind", "product")
+    assert code(lambda: asub.integrate(lambda Z: Z[:, 0], domain=bad, n_nodes=3)) == (
+        "unsupported.space"
+    )
+    assert code(lambda: asub.active_design(domain=bad, n_points=3)) == "unsupported.space"
+    assert (
+        code(lambda: asub.minimize(lambda Y: Y[:, 0], domain=bad, X=Xu, f=np.sin(Xu @ a)))
+        == "unsupported.space"
+    )
+
+
+def test_product_construction_and_serialization():
+    u = asub.Uniform([0.0, 0.0], [1.0, 2.0], names=["a", "b"])
+    g = asub.Gaussian([0.0], [1.0])
+    s = asub.Product([u, g])
+    assert s.names == ("a", "b", "x3")
+    assert asub.spaces._space_from_dict(s.to_dict()) == s
+    assert asub.spaces._space_from_dict(json.loads(json.dumps(s.to_dict(binary=True)))) == s
+    assert pickle.loads(pickle.dumps(s)) == s
+    assert s != asub.Product([g, u])
+    assert asub.Product([u]) != u
+    for bad in ([], [s], ["x"], [u, asub.Uniform([0.0], [1.0], names=["a"])]):
+        with pytest.raises(asub.InputError):
+            asub.Product(bad)
+    with pytest.raises(asub.SchemaError):
+        asub.Product.from_dict({"type": "Product", "blocks": [s.to_dict()]})
+    assert asub.spaces._poincare_constant(s) == 1.0
+    assert asub.spaces._poincare_constant(asub.Product([u])) == 4.0 / np.pi**2
+
+
+def test_reference_names():
+    assert asub.Uniform.reference(2, names=["a", "b"]) == asub.Uniform(
+        [-1, -1], [1, 1], names=("a", "b")
+    )
+    assert asub.Gaussian.reference(2, names=["a", "b"], units=["m", None]) == asub.Gaussian(
+        [0, 0], [1, 1], names=("a", "b"), units=("m", None)
+    )
+    assert asub.Uniform.reference(2, units=["m", "s"]).units == ("m", "s")
+    assert asub.Uniform.reference(2) == asub.Uniform([-1, -1], [1, 1])
+    for cls in (asub.Uniform, asub.Gaussian):
+        for bad in (["a"], ["a", "a"], "ab"):
+            with pytest.raises(asub.InputError) as e:
+                cls.reference(2, names=bad)
+            assert e.value.code == "input.parameter"

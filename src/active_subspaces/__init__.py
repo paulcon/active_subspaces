@@ -128,7 +128,7 @@ from active_subspaces.solvers import (
     solve_lp,
     solve_qp,
 )
-from active_subspaces.spaces import Gaussian, InputSpace, Uniform
+from active_subspaces.spaces import Gaussian, InputSpace, Product, Uniform
 from active_subspaces.subspaces import (
     SubspaceResult,
     active_subspace,
@@ -189,6 +189,7 @@ __all__ = (
     "NumericalError",
     "PolynomialSurrogate",
     "ProbabilityResult",
+    "Product",
     "Provenance",
     "QoIResult",
     "RBFSurrogate",

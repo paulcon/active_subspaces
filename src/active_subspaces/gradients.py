@@ -55,7 +55,7 @@ class GradientResult(QoIResult):
 
     Parameters
     ----------
-    space : Uniform or Gaussian
+    space : Uniform, Gaussian or Product
         The input space; ``points`` and ``grads`` are normalized with it.
     method : {"local_linear", "finite_difference"}
         How the gradients were estimated.
@@ -316,7 +316,7 @@ def local_linear_gradients(
         Sample points in physical coordinates.
     f : array_like, shape (M,) or (M, 1), float, keyword-only
         Values of the quantity of interest at ``X``.
-    space : Uniform or Gaussian, keyword-only
+    space : Uniform, Gaussian or Product, keyword-only
         The input space of ``X``.
     p : int, optional, keyword-only
         Number of distinct locations per fit, :math:`m + 1 \le p \le M_d`,
@@ -511,15 +511,15 @@ class _Stencil:
         Xphys = _v.points(X, sp, normalize=False)
 
         H = hv[None, :] * np.maximum(1.0, np.abs(Xn))
-        bounded = sp.kind == "uniform"
-        if bounded:
-            S = np.where(Xn + H > 1.0, -H, H)
-            central = (
-                (np.abs(Xn) + H <= 1.0) if scheme == "central" else np.zeros((M, m), dtype=bool)
-            )
+        # Uniform coordinates (a Uniform space, or the uniform blocks of a Product) have a
+        # boundary; Gaussian ones do not [D-198]. For a Uniform or Gaussian space the masks are
+        # all True or all False, so the steps are those of the homogeneous rule, bitwise.
+        u: NDArray[np.bool_] = np.array(cast(Any, sp)._uniform_mask, dtype=np.bool_)
+        S = np.where((Xn + H > 1.0) & u, -H, H)
+        if scheme == "central":
+            central = (np.abs(Xn) + H <= 1.0) | np.logical_not(u)
         else:
-            S = H.copy()
-            central = np.full((M, m), scheme == "central")
+            central = np.zeros((M, m), dtype=bool)
         S = np.where(central, H, S)
 
         # Stacked batch: base points; x_i + s_ij e_j for j = 1..m; x_i - h_ij e_j where central,
@@ -536,9 +536,9 @@ class _Stencil:
                 minus_parts.append(pts)
         pert = np.concatenate([plus.reshape(m * M, m), *minus_parts], axis=0)
         pert_phys = sp.from_normalized(pert)
-        if bounded:
-            box = cast(Uniform, sp)  # kind == "uniform"
-            np.clip(pert_phys, box.lower, box.upper, out=pert_phys)
+        if u.any():  # remove rounding outside the bounds of the uniform coordinates
+            lo, hi = (sp.lower, sp.upper) if isinstance(sp, Uniform) else cast(Any, sp)._bounds()
+            np.clip(pert_phys, lo, hi, out=pert_phys)
         batch = np.concatenate([Xphys, pert_phys], axis=0)
         h_param = float(hv[0]) if np.ndim(h) == 0 else hv.tolist()
         return cls(mdl, scheme, h_param, d.digests, Xn, S, H, central, batch)
@@ -609,7 +609,7 @@ def finite_difference_gradients(
         physical points ``(k, m)`` to ``(k,)`` (then ``space`` is required).
     X : array_like, shape (M, m), float, keyword-only
         Points in physical coordinates, validated against the model's space.
-    space : Uniform or Gaussian, optional, keyword-only
+    space : Uniform, Gaussian or Product, optional, keyword-only
         Required for a bare callable; for a ``Model`` it must equal
         ``model.space``.
     h : float or array_like, shape (m,), default 1e-6, keyword-only
@@ -656,10 +656,12 @@ def finite_difference_gradients(
         \frac{f(x_i + h_{ij} e_j) - f(x_i - h_{ij} e_j)}{2 h_{ij}}
 
     for the forward and central schemes, with :math:`s_{ij} = h_{ij}`. On a
-    ``Uniform`` space a forward step that would leave :math:`[-1, 1]` is taken
-    backward (:math:`s_{ij} = -h_{ij}`), and a central entry whose points would
-    leave it falls back to that one-sided rule, so the model is never evaluated
-    outside the support. The model is called on all :math:`M (m + 1)` points
+    ``Uniform`` space, and on the uniform coordinates of a ``Product`` [D-198],
+    a forward step that would leave :math:`[-1, 1]` is taken backward
+    (:math:`s_{ij} = -h_{ij}`), and a central entry whose points would leave it
+    falls back to that one-sided rule, so the model is never evaluated outside
+    the support. Gaussian coordinates have no boundary and always take the
+    forward or central step. The model is called on all :math:`M (m + 1)` points
     (plus the central ones) in one evaluation.
 
     Examples
@@ -715,7 +717,7 @@ def finite_difference_gradients_multi(
         required). The model's own ``qoi`` is not used.
     X : array_like, shape (M, m), float, keyword-only
         Points in physical coordinates, validated against the model's space.
-    space : Uniform or Gaussian, optional, keyword-only
+    space : Uniform, Gaussian or Product, optional, keyword-only
         As for :func:`finite_difference_gradients`.
     outputs : int, keyword-only
         Number of value columns :math:`P \ge 1`.

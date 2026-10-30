@@ -21,6 +21,17 @@ def test_physical_signs(seed):
         asub.Uniform(-gen.uniform(0.1, 10.0, m), gen.uniform(0.1, 1e3, m)),
         asub.Gaussian(gen.standard_normal(m), L @ L.T),
     ]
+    if m >= 3:  # V03.9: the product, with a full-covariance Gaussian block
+        mg = int(gen.integers(2, m))
+        Lg = np.tril(gen.standard_normal((mg, mg))) + mg * np.eye(mg)
+        spaces.append(
+            asub.Product(
+                [
+                    asub.Uniform(-gen.uniform(0.1, 10.0, m - mg), gen.uniform(0.1, 1e3, m - mg)),
+                    asub.Gaussian(gen.standard_normal(mg), Lg @ Lg.T),
+                ]
+            )
+        )
     W = np.linalg.qr(gen.standard_normal((m, k)))[0]
     for space in spaces:
         P = space.directions_to_physical(W)

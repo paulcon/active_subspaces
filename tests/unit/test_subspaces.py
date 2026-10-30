@@ -826,3 +826,31 @@ def test_qphd_solve_routes_agree():
     Xr[:, 2] = Xr[:, 1]
     with pytest.warns(AccuracyWarning, match="rank-deficient"):
         asub.active_subspace(X=Xr, f=f, space=space, estimator="qphd", n=1)
+
+
+@pytest.mark.parametrize("est", ["asx", "nasx", "ols", "qphd", "sir", "phd", "save", "ss"])
+def test_validity_one_kind_product(est):
+    """A Product of one kind takes that kind's validity column; a mixed one the "product"
+    column [D-210] (V07.42).
+    """
+    gauss = asub.Product([asub.Gaussian([0.0], [1.0]), asub.Gaussian([1.0, 2.0], [4.0, 0.5])])
+    unif = asub.Product([asub.Uniform([0.0], [1.0]), asub.Uniform([1.0, 2.0], [4.0, 5.0])])
+    mixed = asub.Product([asub.Uniform([0.0, 1.0], [1.0, 4.0]), asub.Gaussian([2.0], [0.5])])
+    for sp, column in ((gauss, "gaussian"), (unif, "uniform"), (mixed, "product")):
+        cell = S._VALIDITY_SPACE[est][column]
+        X = sp.sample(400, rng=0)
+        x = sp.to_normalized(X)
+        f = np.sin(x @ np.array([1.0, 0.5, -0.3])) + 0.2 * x[:, 0] ** 2
+        G = np.column_stack([np.cos(x[:, 0]), 0.5 * np.ones(400), x[:, 2]])
+        with warnings.catch_warnings(record=True) as rec:
+            warnings.simplefilter("always")
+            asub.active_subspace(X=X, f=f, grads=G, space=sp, estimator=est, n=1)
+        cells = [
+            c
+            for w in rec
+            if getattr(w.message, "code", None) == "validity.assumption"
+            for c in w.message.details["cells"]
+            if "space" in c
+        ]
+        assert bool(cells) == (cell == "warn"), (sp.names, est)
+        assert all(c["space"] == "product" for c in cells)

@@ -724,25 +724,6 @@ def test_results_exports():
         assert not hasattr(results, name), name
 
 
-def test_migration_rbf_v1():
-    """A version-1 RBFSurrogate loads with training_variance = the stored f_variance [D-206]."""
-    d = json.loads((SCHEMA_DIR / "RBFSurrogate" / "v1.json").read_text())
-    assert d["schema_version"] == 1
-    old = d["fields"]["f_variance"]
-    r = asub.from_dict(d)
-    assert r.training_variance == old
-    assert not hasattr(r, "f_variance")
-    for name in ("radial_coefficients", "tail_coefficients", "length_scales", "nugget", "Y", "f"):
-        np.testing.assert_array_equal(
-            getattr(r, name), _validation.decode_array(d["fields"][name])
-        )
-    assert r.log10_eta == d["fields"]["log10_eta"]
-    again = r.to_dict()
-    assert again["schema_version"] == 2
-    assert "f_variance" not in again["fields"]
-    assert asub.from_dict(again) == r
-
-
 def test_migration_subspace_v1():
     """A version-1 SubspaceResult, written by the development build, loads as version 2 with
     bootstrap_eigenvectors None and every other field unchanged [D-196] (04 §8, V04.8).
@@ -764,3 +745,36 @@ def test_migration_subspace_v1():
     again = r.to_dict()
     assert again["schema_version"] == 2
     assert asub.from_dict(again) == r
+
+
+def test_migration_rbf_v1():
+    """A version-1 RBFSurrogate loads with training_variance = the stored f_variance [D-206]."""
+    d = json.loads((SCHEMA_DIR / "RBFSurrogate" / "v1.json").read_text())
+    assert d["schema_version"] == 1
+    old = d["fields"]["f_variance"]
+    r = asub.from_dict(d)
+    assert r.training_variance == old
+    assert not hasattr(r, "f_variance")
+    for name in ("radial_coefficients", "tail_coefficients", "length_scales", "nugget", "Y", "f"):
+        np.testing.assert_array_equal(
+            getattr(r, name), _validation.decode_array(d["fields"][name])
+        )
+    assert r.log10_eta == d["fields"]["log10_eta"]
+    again = r.to_dict()
+    assert again["schema_version"] == 2
+    assert "f_variance" not in again["fields"]
+    assert asub.from_dict(again) == r
+
+
+def test_product_space_roundtrip():
+    """A SubspaceResult on a Product round-trips through to_dict, JSON and .npz [D-198]."""
+    sp = asub.Product([asub.Uniform([0.0, 1.0], [2.0, 5.0]), asub.Gaussian([0.5], [0.25])])
+    G = np.random.default_rng(0).standard_normal((30, 3))
+    r = asub.active_subspace(grads=G, space=sp, n=1, nboot=3, rng=0, bootstrap_vectors=1)
+    assert asub.from_dict(json.loads(json.dumps(r.to_dict(), allow_nan=False))) == r
+    buf = io.BytesIO()
+    r.save(buf)
+    buf.seek(0)
+    back = asub.load(buf)
+    assert back == r
+    assert back.space.blocks == r.space.blocks
