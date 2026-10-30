@@ -221,6 +221,20 @@ def _scale_rows(G: _F64, w: _F64, out: _F64) -> _F64:
     return out
 
 
+def _back_transform(H: _F64, Sigma: _F64) -> _F64:
+    """Li's directions for a non-scalar ``Sigma`` [D-205].
+
+    ``Sigma^{-1/2} H = Q R`` with ``R_jj > 0``, so ``span(Q[:, :k]) = Sigma^{-1/2} span(H[:, :k])``
+    for every ``k``; then the sign rule. A multiple of the identity returns ``H`` unchanged.
+    """
+    if np.array_equal(Sigma, Sigma[0, 0] * np.eye(Sigma.shape[0])):
+        return H
+    Q, R = np.linalg.qr(_inv_sqrt(Sigma) @ H)
+    signs = np.sign(np.diagonal(R))
+    signs[signs == 0] = 1.0
+    return _orient_columns(Q * signs)
+
+
 def _unit_rows(A: _F64) -> tuple[_F64, int]:
     """Rows scaled to unit norm; rows with norm <= sqrt(eps) * max norm become 0 [D-87].
 
@@ -432,6 +446,7 @@ class _EstimatorBase:
     needs_gradients: ClassVar[bool]
     psd: ClassVar[bool]
     _svd: ClassVar[bool] = False
+    _whitened: ClassVar[bool] = False  # eigenvectors are Li's eta, directions Sigma^{-1/2} eta
 
     def options(self) -> dict[str, int | float | str | None]:
         """Return the estimator's options, e.g. ``{"n_slices": 10}``; ``{}`` if none."""
@@ -459,7 +474,10 @@ class _EstimatorBase:
         ):  # non-finite C raises below
             if self._svd:
                 return _from_rows(self._rows(d, notes), m, self.name, notes)
-            return _from_matrix(self._matrix(d, notes), self.name, notes)
+            lam, W = _from_matrix(self._matrix(d, notes), self.name, notes)
+        if self._whitened and not notes.get("degenerate"):
+            W = _back_transform(W, d.Sigma)
+        return lam, W
 
 
 @dataclass(frozen=True, slots=True)
@@ -937,6 +955,7 @@ class SIR(_EstimatorBase):
     requires: ClassVar[frozenset[str]] = frozenset({"X", "f"})
     needs_gradients: ClassVar[bool] = False
     psd: ClassVar[bool] = True
+    _whitened: ClassVar[bool] = True
 
     def __post_init__(self) -> None:
         """Validate the options."""
@@ -1036,6 +1055,7 @@ class PHD(_EstimatorBase):
     requires: ClassVar[frozenset[str]] = frozenset({"X", "f"})
     needs_gradients: ClassVar[bool] = False
     psd: ClassVar[bool] = False
+    _whitened: ClassVar[bool] = True
 
     def _min_samples(self, m: int) -> int:
         return 2
@@ -1112,6 +1132,7 @@ class SAVE(_EstimatorBase):
     requires: ClassVar[frozenset[str]] = frozenset({"X", "f"})
     needs_gradients: ClassVar[bool] = False
     psd: ClassVar[bool] = True
+    _whitened: ClassVar[bool] = True
 
     def __post_init__(self) -> None:
         """Validate the options."""
@@ -1704,19 +1725,20 @@ DIMENSION_RULES: Mapping[str, type[DimensionRule]] = MappingProxyType(
 # Validity table [D-41] (private data; the docs render it)
 # ---------------------------------------------------------------------------
 
+# The "product" column takes the stricter entry of the other two [D-198].
 _VALIDITY_SPACE: Mapping[str, Mapping[str, str]] = MappingProxyType(
     {
-        "as": MappingProxyType({"uniform": "ok", "gaussian": "ok"}),
-        "nas": MappingProxyType({"uniform": "ok", "gaussian": "ok"}),
-        "asx": MappingProxyType({"uniform": "warn", "gaussian": "ok"}),
-        "nasx": MappingProxyType({"uniform": "warn", "gaussian": "ok"}),
-        "ols": MappingProxyType({"uniform": "warn", "gaussian": "ok"}),
-        "qphd": MappingProxyType({"uniform": "warn", "gaussian": "ok"}),
-        "sir": MappingProxyType({"uniform": "warn", "gaussian": "ok"}),
-        "phd": MappingProxyType({"uniform": "warn", "gaussian": "ok"}),
-        "save": MappingProxyType({"uniform": "warn", "gaussian": "ok"}),
-        "ss": MappingProxyType({"uniform": "warn", "gaussian": "warn"}),
-        "opg": MappingProxyType({"uniform": "ok", "gaussian": "ok"}),
+        "as": MappingProxyType({"uniform": "ok", "gaussian": "ok", "product": "ok"}),
+        "nas": MappingProxyType({"uniform": "ok", "gaussian": "ok", "product": "ok"}),
+        "asx": MappingProxyType({"uniform": "warn", "gaussian": "ok", "product": "warn"}),
+        "nasx": MappingProxyType({"uniform": "warn", "gaussian": "ok", "product": "warn"}),
+        "ols": MappingProxyType({"uniform": "warn", "gaussian": "ok", "product": "warn"}),
+        "qphd": MappingProxyType({"uniform": "warn", "gaussian": "ok", "product": "warn"}),
+        "sir": MappingProxyType({"uniform": "warn", "gaussian": "ok", "product": "warn"}),
+        "phd": MappingProxyType({"uniform": "warn", "gaussian": "ok", "product": "warn"}),
+        "save": MappingProxyType({"uniform": "warn", "gaussian": "ok", "product": "warn"}),
+        "ss": MappingProxyType({"uniform": "warn", "gaussian": "warn", "product": "warn"}),
+        "opg": MappingProxyType({"uniform": "ok", "gaussian": "ok", "product": "ok"}),
     }
 )
 # Estimator tags of results that no registered estimator produced (§4.5).

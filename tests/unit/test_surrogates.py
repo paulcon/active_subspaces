@@ -429,3 +429,22 @@ def test_round_trip(problem, interval_domain, assert_roundtrip, assert_readonly)
         back = asub.from_dict(r.to_dict())
         Yt = r.Y[:3]
         np.testing.assert_array_equal(back.evaluate(Yt), r.evaluate(Yt))
+
+
+def test_product_surrogates_and_guards():
+    """Surrogates fit on a Product; the model path needs a domain, which raises [D-198]."""
+    sp = asub.Product([asub.Uniform([0.0, 1.0], [2.0, 5.0]), asub.Gaussian([0.5], [0.25])])
+    X = sp.sample(60, rng=1)
+    x = sp.to_normalized(X)
+    f = x @ np.array([1.0, 0.5, -0.3]) + 0.1 * x[:, 0] ** 2
+    G = sp.grads_to_physical(
+        np.column_stack([1.0 + 0.2 * x[:, 0], np.full(60, 0.5), -0.3 * np.ones(60)])
+    )
+    sub = asub.active_subspace(grads=G, space=sp, n=1)
+    for kw in ({"subspace": sub}, {"subspace": None, "space": sp}):
+        s = asub.fit_surrogate(X=X, f=f, kind="poly", degree=2, **kw)
+        assert s.loo_r_squared > 0.9
+        assert asub.predict(s, X[:3]).shape == (3,)
+    with pytest.raises(asub.UnsupportedError) as e:
+        asub.active_domain(sub)
+    assert e.value.code == "unsupported.space"

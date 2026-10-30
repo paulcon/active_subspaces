@@ -23,7 +23,7 @@ from active_subspaces import _random
 from active_subspaces import _validation as _v
 from active_subspaces.errors import InputError, SchemaError, UnsupportedError
 
-__all__ = ("Gaussian", "InputSpace", "Uniform")
+__all__ = ("Gaussian", "InputSpace", "Product", "Uniform")
 
 _SUPPORT_RTOL = 1e-12
 _SYMMETRY_RTOL = 1e-12
@@ -32,14 +32,14 @@ _F64 = NDArray[np.float64]
 
 
 class InputSpace(Protocol):
-    r"""Protocol shared by :class:`Uniform` and :class:`Gaussian`.
+    r"""Protocol shared by :class:`Uniform`, :class:`Gaussian` and :class:`Product`.
 
     An input space describes the density of the physical inputs
     :math:`\xi \in \mathbb{R}^m` and owns the affine map
     :math:`\xi = Ax + b` to normalized inputs :math:`x`, whose reference
     density :math:`\rho` is fixed by the kind of space. Functions that take a
     ``space`` argument accept any object with these members; v1 provides
-    exactly two implementations.
+    exactly three implementations.
 
     Parameters
     ----------
@@ -292,6 +292,8 @@ def _poincare_constant(space: Any) -> float:
         return 1.0
     if kind == "uniform":
         return 4.0 / math.pi**2
+    if kind == "product":  # tensorization: the largest block constant [D-193, D-198]
+        return max(_poincare_constant(b) for b in space.blocks)
     raise UnsupportedError(
         f"no Poincaré constant for a {kind!r} space",
         code="unsupported.space",
@@ -991,6 +993,11 @@ class Uniform(_SpaceBase):
     def _draw(self, gen: np.random.Generator, M: int) -> _F64:
         return gen.uniform(-1.0, 1.0, (M, self.dim))
 
+    @property
+    def _uniform_mask(self) -> NDArray[np.bool_]:
+        """All coordinates are uniform (bounded)."""
+        return np.ones(self.dim, dtype=bool)
+
 
 @dataclass(frozen=True, slots=True, eq=False, repr=False)
 class Gaussian(_SpaceBase):
@@ -1230,15 +1237,280 @@ class Gaussian(_SpaceBase):
     def _draw(self, gen: np.random.Generator, M: int) -> _F64:
         return gen.standard_normal((M, self.dim))
 
+    @property
+    def _uniform_mask(self) -> NDArray[np.bool_]:
+        """No coordinate is uniform (bounded)."""
+        return np.zeros(self.dim, dtype=bool)
 
-_SPACE_TYPES: dict[str, type[Uniform] | type[Gaussian]] = {
+
+@dataclass(frozen=True, slots=True, eq=False, repr=False)
+class Product(_SpaceBase):
+    r"""Independent blocks of uniform and Gaussian inputs [D-198].
+
+    Parameters
+    ----------
+    blocks : sequence of Uniform or Gaussian
+        The blocks, in coordinate order; their coordinates are concatenated.
+        At least one block; a ``Product`` cannot be a block.
+
+    Attributes
+    ----------
+    blocks : tuple of Uniform or Gaussian
+        The blocks.
+    names : tuple of str
+        The blocks' names, concatenated; a block with default names
+        contributes ``"x{j}"`` with ``j`` the global position.
+    units : tuple of str or None
+        The blocks' units, concatenated.
+    kind : str
+        ``"product"``.
+
+    Raises
+    ------
+    InputError
+        ``input.parameter`` for an empty sequence, a block that is not a
+        ``Uniform`` or ``Gaussian``, or duplicate names.
+
+    See Also
+    --------
+    Uniform, Gaussian : The blocks.
+
+    Notes
+    -----
+    The density is :math:`\rho = \prod_\beta \rho_\beta`. Each block keeps its
+    own affine map, so :math:`A` is block-diagonal (and lower triangular), and
+    each normalized coordinate is :math:`U[-1, 1]` (uniform block) or
+    :math:`N(0, 1)` (Gaussian block). The reference covariance :math:`\Sigma`
+    is diagonal, :math:`\tfrac13` on uniform and 1 on Gaussian coordinates,
+    so it is not a multiple of :math:`I` when both kinds are present.
+    ``contains`` checks the bounds of the uniform coordinates only.
+    ``sample`` draws block :math:`\beta` from child stream :math:`\beta` of
+    ``rng``. Subspaces, gradients, surrogates and plots accept a product
+    space; geometry, integration, optimization and designs raise
+    ``UnsupportedError`` (``unsupported.space``) [D-13].
+
+    Examples
+    --------
+    >>> import active_subspaces as ac
+    >>> space = ac.Product([ac.Uniform([0.0, 10.0], [2.0, 20.0]), ac.Gaussian([1.0], [4.0])])
+    >>> space.dim, space.kind, space.names
+    (3, 'product', ('x1', 'x2', 'x3'))
+    >>> space.to_normalized([[2.0, 10.0, 3.0]])
+    array([[ 1., -1.,  1.]])
+    >>> space.reference_covariance.diagonal().round(4)
+    array([0.3333, 0.3333, 1.    ])
+    """
+
+    blocks: tuple[Uniform | Gaussian, ...]
+    names: tuple[str, ...] = field(init=False)
+    units: tuple[str | None, ...] = field(init=False)
+    _slices: tuple[slice, ...] = field(init=False, repr=False)
+
+    kind: ClassVar[Literal["product"]] = "product"
+    _ARRAYS: ClassVar[tuple[str, ...]] = ()
+
+    if typing.TYPE_CHECKING:
+
+        def __init__(self, blocks: Sequence[Uniform | Gaussian]) -> None: ...
+
+    def __post_init__(self) -> None:
+        """Validate the blocks and derive names, units and coordinate slices."""
+        blocks = self.blocks
+        if isinstance(blocks, (str, bytes)) or not isinstance(blocks, (Sequence, np.ndarray)):
+            raise _param_error(
+                "blocks: expected a sequence of Uniform or Gaussian spaces", param="blocks"
+            )
+        blocks = tuple(blocks)
+        if not blocks:
+            raise _param_error("blocks: expected at least one block", param="blocks")
+        for i, b in enumerate(blocks):
+            if type(b) not in (Uniform, Gaussian):
+                raise _param_error(
+                    f"blocks: entry {i} is a {type(b).__name__}; expected Uniform or Gaussian "
+                    "(a Product cannot be a block)",
+                    param="blocks",
+                    entry=i,
+                )
+        names: list[str] = []
+        units: list[str | None] = []
+        slices = []
+        j = 0
+        for b in blocks:
+            mb = b.dim
+            default = tuple(f"x{i + 1}" for i in range(mb))
+            if b.names == default:  # default names are renumbered by global position
+                names.extend(f"x{j + i + 1}" for i in range(mb))
+            else:
+                names.extend(b.names)
+            units.extend(b.units)
+            slices.append(slice(j, j + mb))
+            j += mb
+        if len(set(names)) != len(names):
+            dup = sorted({n for n in names if names.count(n) > 1})
+            raise _param_error(
+                f"blocks: duplicate input names {dup}", param="blocks", reason="duplicate_names"
+            )
+        object.__setattr__(self, "blocks", blocks)
+        object.__setattr__(self, "names", tuple(names))
+        object.__setattr__(self, "units", tuple(units))
+        object.__setattr__(self, "_slices", tuple(slices))
+
+    # --- the affine map, assembled from the blocks ---
+
+    @property
+    def scale(self) -> NDArray[np.float64]:
+        """The block-diagonal matrix ``A``, shape ``(m, m)`` (a new read-only array)."""
+        out = scipy.linalg.block_diag(*(b.scale for b in self.blocks))
+        out.flags.writeable = False
+        return out  # type: ignore[no-any-return]
+
+    @property
+    def shift(self) -> NDArray[np.float64]:
+        """The concatenated shifts ``b``, shape ``(m,)`` (a new read-only array)."""
+        out = np.concatenate([b.shift for b in self.blocks])
+        out.flags.writeable = False
+        return out
+
+    @property
+    def reference_covariance(self) -> NDArray[np.float64]:
+        r"""The diagonal :math:`\Sigma`: :math:`\tfrac13` on uniform and 1 on Gaussian coordinates.
+
+        Examples
+        --------
+        >>> import active_subspaces as ac
+        >>> s = ac.Product([ac.Gaussian.reference(1), ac.Uniform.reference(1)])
+        >>> s.reference_covariance.round(4)
+        array([[1.    , 0.    ],
+               [0.    , 0.3333]])
+        """
+        out = scipy.linalg.block_diag(*(b.reference_covariance for b in self.blocks))
+        out.flags.writeable = False
+        return out  # type: ignore[no-any-return]
+
+    @property
+    def _uniform_mask(self) -> NDArray[np.bool_]:
+        """True on the coordinates of uniform blocks."""
+        return np.concatenate([b._uniform_mask for b in self.blocks])
+
+    def _blockwise(self, fn: str, X: _F64) -> _F64:
+        out = np.empty_like(X)
+        for b, sl in zip(self.blocks, self._slices, strict=True):
+            out[:, sl] = getattr(b, fn)(np.ascontiguousarray(X[:, sl]))
+        return out
+
+    def _to_normalized(self, X: _F64) -> _F64:
+        return self._blockwise("_to_normalized", X)
+
+    def _from_normalized(self, X: _F64) -> _F64:
+        return self._blockwise("_from_normalized", X)
+
+    def _grads_to_normalized(self, G: _F64) -> _F64:
+        return self._blockwise("_grads_to_normalized", G)
+
+    def _grads_to_physical(self, G: _F64) -> _F64:
+        return self._blockwise("_grads_to_physical", G)
+
+    def _inv_transpose(self, W: _F64) -> _F64:
+        out = np.empty_like(W)
+        for b, sl in zip(self.blocks, self._slices, strict=True):
+            out[sl] = b._inv_transpose(np.ascontiguousarray(W[sl]))
+        return out
+
+    def _support_violations(self, X: _F64) -> NDArray[np.bool_]:
+        out = np.zeros(X.shape, dtype=bool)
+        for b, sl in zip(self.blocks, self._slices, strict=True):
+            out[:, sl] = b._support_violations(np.ascontiguousarray(X[:, sl]))
+        return out
+
+    def _draw(self, gen: np.random.Generator, M: int) -> _F64:
+        children = _random.spawn(gen, len(self.blocks))
+        return np.hstack([b._draw(c, M) for b, c in zip(self.blocks, children, strict=True)])
+
+    def _bounds(self) -> tuple[_F64, _F64]:
+        """Return physical ``(lower, upper)``, infinite on Gaussian coordinates.
+
+        Used to clip finite-difference points (spec 07 §5.2).
+        """
+        lo = np.full(self.dim, -np.inf)
+        hi = np.full(self.dim, np.inf)
+        for b, sl in zip(self.blocks, self._slices, strict=True):
+            if isinstance(b, Uniform):
+                lo[sl], hi[sl] = b.lower, b.upper
+        return lo, hi
+
+    # --- equality, repr, pickling, serialization ---
+
+    def __eq__(self, other: object) -> bool:
+        """Equal when the blocks are equal, in order (a Product never equals a block)."""
+        if type(self) is not type(other):
+            return NotImplemented
+        assert isinstance(other, Product)
+        return len(self.blocks) == len(other.blocks) and all(
+            type(a) is type(b) and a == b for a, b in zip(self.blocks, other.blocks, strict=True)
+        )
+
+    __hash__ = None  # spaces hold arrays and are not hashable
+
+    def __repr__(self) -> str:
+        """Summarize the blocks."""
+        return f"Product(m={self.dim}, blocks=({', '.join(repr(b) for b in self.blocks)}))"
+
+    def __reduce__(self) -> tuple[Any, ...]:
+        """Pickle by the blocks."""
+        return (type(self), (self.blocks,))
+
+    def to_dict(self, *, binary: bool = False) -> dict[str, Any]:
+        """Return ``{"type": "Product", "blocks": [<block dict>, ...]}``.
+
+        Examples
+        --------
+        >>> import active_subspaces as ac
+        >>> d = ac.Product([ac.Uniform.reference(1), ac.Gaussian.reference(1)]).to_dict()
+        >>> d["type"], [b["type"] for b in d["blocks"]]
+        ('Product', ['Uniform', 'Gaussian'])
+        """
+        return {"type": "Product", "blocks": [b.to_dict(binary=binary) for b in self.blocks]}
+
+    @classmethod
+    def from_dict(cls, d: Mapping[str, Any]) -> Self:
+        """Rebuild a product space from the output of :meth:`to_dict`.
+
+        Examples
+        --------
+        >>> import active_subspaces as ac
+        >>> s = ac.Product([ac.Uniform.reference(1), ac.Gaussian.reference(1)])
+        >>> ac.Product.from_dict(s.to_dict()) == s
+        True
+        """
+        if not isinstance(d, Mapping) or set(d) != {"type", "blocks"}:
+            got = sorted(d) if isinstance(d, Mapping) else type(d).__name__
+            raise _v.schema_invalid(f"Product dict must have keys ['blocks', 'type'], got {got}")
+        if d["type"] != "Product":
+            raise _v.schema_invalid(f"expected type 'Product', got {d['type']!r}")
+        raw = d["blocks"]
+        if not isinstance(raw, (list, tuple)) or not raw:
+            raise _v.schema_invalid("Product blocks must be a non-empty list")
+        blocks = []
+        for bd in raw:
+            tag = bd.get("type") if isinstance(bd, Mapping) else None
+            if tag not in ("Uniform", "Gaussian"):
+                raise _v.schema_invalid(f"Product block of type {tag!r}")
+            blocks.append(Uniform.from_dict(bd) if tag == "Uniform" else Gaussian.from_dict(bd))
+        try:
+            return cls(blocks)
+        except InputError as exc:
+            raise _v.schema_invalid(f"invalid Product: {exc.message}") from exc
+
+
+_SPACE_TYPES: dict[str, type[Uniform] | type[Gaussian] | type[Product]] = {
     "Uniform": Uniform,
     "Gaussian": Gaussian,
+    "Product": Product,
 }
 
 
-def _space_from_dict(d: Mapping[str, Any]) -> Uniform | Gaussian:
-    """Rebuild a ``Uniform`` or ``Gaussian`` from its dict, dispatching on ``"type"``."""
+def _space_from_dict(d: Mapping[str, Any]) -> Uniform | Gaussian | Product:
+    """Rebuild a space from its dict, dispatching on ``"type"``."""
     if not isinstance(d, Mapping) or d.get("type") not in _SPACE_TYPES:
         tag = d.get("type") if isinstance(d, Mapping) else None
         raise SchemaError(

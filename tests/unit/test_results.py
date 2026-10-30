@@ -759,3 +759,17 @@ def test_migration_rbf_v1():
     assert again["schema_version"] == 2
     assert "f_variance" not in again["fields"]
     assert asub.from_dict(again) == r
+
+
+def test_product_space_roundtrip():
+    """A SubspaceResult on a Product round-trips through to_dict, JSON and .npz [D-198]."""
+    sp = asub.Product([asub.Uniform([0.0, 1.0], [2.0, 5.0]), asub.Gaussian([0.5], [0.25])])
+    G = np.random.default_rng(0).standard_normal((30, 3))
+    r = asub.active_subspace(grads=G, space=sp, n=1, nboot=3, rng=0, bootstrap_vectors=1)
+    assert asub.from_dict(json.loads(json.dumps(r.to_dict(), allow_nan=False))) == r
+    buf = io.BytesIO()
+    r.save(buf)
+    buf.seek(0)
+    back = asub.load(buf)
+    assert back == r
+    assert back.space.blocks == r.space.blocks

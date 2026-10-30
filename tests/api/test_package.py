@@ -116,7 +116,7 @@ def test_foundation_names_at_top_level():
         "spaces",
     ):
         assert name in asub.__all__
-    assert asub.spaces.__all__ == ("Gaussian", "InputSpace", "Uniform")
+    assert asub.spaces.__all__ == ("Gaussian", "InputSpace", "Product", "Uniform")
 
 
 def test_import_side_effects():

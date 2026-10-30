@@ -8,6 +8,7 @@ import pickle
 
 import numpy as np
 import pytest
+import scipy.linalg
 
 import active_subspaces as asub
 from active_subspaces import _validation as v
@@ -436,3 +437,74 @@ def test_space_from_dict_errors():
         asub.Gaussian.from_dict(d)
     with pytest.raises(asub.SchemaError):
         space_from_dict({"type": "Mixed"})
+
+
+# ---------------------------------------------------------------------------
+# Product space [D-198] (03 §8, V03.8)
+# ---------------------------------------------------------------------------
+
+
+def _hydrology_like():
+    lo = np.arange(1.0, 19.0)
+    hi = lo + np.linspace(0.5, 50.0, 18)
+    return asub.Product(
+        [
+            asub.Uniform(lo[:16], hi[:16]),
+            asub.Gaussian([-5.11], [0.52**2]),
+            asub.Uniform(lo[16:], hi[16:]),
+        ]
+    )
+
+
+def test_product_maps_support_and_sampling():
+    s = _hydrology_like()
+    assert (s.dim, s.kind) == (19, "product")
+    assert s.names == tuple(f"x{j}" for j in range(1, 20))
+    d = s.reference_covariance.diagonal()
+    np.testing.assert_allclose(d[16], 1.0)
+    np.testing.assert_allclose(np.delete(d, 16), 1.0 / 3.0)
+    assert np.count_nonzero(s.reference_covariance - np.diag(d)) == 0
+    A = scipy.linalg.block_diag(*(b.scale for b in s.blocks))
+    np.testing.assert_array_equal(s.scale, A)
+    X = s.sample(50, rng=4)
+    x = s.to_normalized(X)
+    np.testing.assert_allclose(x, np.linalg.solve(A, (X - s.shift).T).T, rtol=1e-13, atol=1e-13)
+    np.testing.assert_allclose(s.from_normalized(x), X, rtol=1e-14)
+    G = np.random.default_rng(1).standard_normal((50, 19))
+    np.testing.assert_allclose(s.grads_to_normalized(G), G @ A, rtol=1e-14)
+    np.testing.assert_allclose(s.grads_to_physical(G @ A), G, rtol=1e-13)
+    # contains: any value in the Gaussian column; bounds on the others
+    Y = X.copy()
+    Y[:, 16] = 1e6
+    assert s.contains(Y).all()
+    Y[0, 3] = s.blocks[0].upper[3] + 1e-9 * (s.blocks[0].upper[3] - s.blocks[0].lower[3])
+    assert not s.contains(Y)[0]
+    # sampling: block b from child stream b, in block order
+    ch = np.random.default_rng(9).spawn(3)
+    expected = np.hstack(
+        [
+            ch[0].uniform(-1, 1, (7, 16)),
+            ch[1].standard_normal((7, 1)),
+            ch[2].uniform(-1, 1, (7, 2)),
+        ]
+    )
+    np.testing.assert_array_equal(s.sample(7, rng=9, normalized=True), expected)
+
+
+def test_product_construction_and_serialization():
+    u = asub.Uniform([0.0, 0.0], [1.0, 2.0], names=["a", "b"])
+    g = asub.Gaussian([0.0], [1.0])
+    s = asub.Product([u, g])
+    assert s.names == ("a", "b", "x3")
+    assert asub.spaces._space_from_dict(s.to_dict()) == s
+    assert asub.spaces._space_from_dict(json.loads(json.dumps(s.to_dict(binary=True)))) == s
+    assert pickle.loads(pickle.dumps(s)) == s
+    assert s != asub.Product([g, u])
+    assert asub.Product([u]) != u
+    for bad in ([], [s], ["x"], [u, asub.Uniform([0.0], [1.0], names=["a"])]):
+        with pytest.raises(asub.InputError):
+            asub.Product(bad)
+    with pytest.raises(asub.SchemaError):
+        asub.Product.from_dict({"type": "Product", "blocks": [s.to_dict()]})
+    assert asub.spaces._poincare_constant(s) == 1.0
+    assert asub.spaces._poincare_constant(asub.Product([u])) == 4.0 / np.pi**2

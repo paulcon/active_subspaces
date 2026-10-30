@@ -419,3 +419,43 @@ def test_as_qr_route(factor):
     np.testing.assert_allclose(sub.eigenvalues, s**2, rtol=1e-13)
     V = Vt.T[:, :2]
     assert np.linalg.norm(sub.W1 @ sub.W1.T - V @ V.T, 2) < 1e-12
+
+
+def test_product_estimators():
+    """On a Product: OLS equals the hand-normalized Gaussian-reference result; QPHD uses
+    blockdiag Sigma; SIR, pHd and SAVE span Sigma^{-1/2} span(eta) for every k; homogeneous
+    spaces skip the back-transform [D-198], [D-205] (07 §8 KA-17, V07.38).
+    """
+    sp = asub.Product([asub.Uniform([0.0, 1.0], [2.0, 5.0]), asub.Gaussian([0.5], [0.25])])
+    X = sp.sample(3000, rng=2)
+    x = sp.to_normalized(X)
+    f = np.sin(x @ np.array([1.0, 0.4, -0.7])) + 0.3 * x[:, 2] ** 2
+    with pytest.warns(ValidityWarning, match="product"):
+        ols = asub.active_subspace(X=X, f=f, space=sp, estimator="ols", n=1)
+    ref = asub.active_subspace(X=x, f=f, space=asub.Gaussian.reference(3), estimator="ols", n=1)
+    np.testing.assert_allclose(ols.eigenvalues, ref.eigenvalues, rtol=1e-12, atol=1e-15)
+    assert abs(ols.W[:, 0] @ ref.W[:, 0]) == pytest.approx(1.0, abs=1e-12)
+    Sigma = np.diag([1 / 3, 1 / 3, 1.0])
+    d = S._Arrays(x, f, None, np.full(3000, 1 / 3000), Sigma)
+    with pytest.warns(ValidityWarning):
+        q = asub.active_subspace(X=X, f=f, space=sp, estimator="qphd")
+    lam = np.linalg.eigvalsh(S.QPHD()._matrix(d, {}))
+    np.testing.assert_allclose(np.sort(np.abs(q.eigenvalues)), np.sort(np.abs(lam)), rtol=1e-10)
+    isq = np.diag(1 / np.sqrt(np.diag(Sigma)))
+    for name in ("sir", "phd", "save"):
+        with pytest.warns(ValidityWarning):
+            res = asub.active_subspace(X=X, f=f, space=sp, estimator=name, n=1)
+        est = S.ESTIMATORS[name]()
+        _, H = S._from_matrix(est._matrix(d, {}), name, {})
+        B = isq @ H
+        for k in (1, 2):
+            Qk = np.linalg.qr(B[:, :k])[0]
+            P1 = res.W[:, :k] @ res.W[:, :k].T
+            assert np.linalg.norm(P1 - Qk @ Qk.T, 2) < 1e-12, (name, k)
+        np.testing.assert_allclose(res.W.T @ res.W, np.eye(3), atol=1e-12)
+    # A homogeneous space returns the eigenvectors of the whitened matrix as before.
+    gs = asub.Gaussian.reference(3)
+    sir = asub.active_subspace(X=x, f=f, space=gs, estimator="sir", n=1)
+    dg = S._Arrays(x, f, None, np.full(3000, 1 / 3000), np.eye(3))
+    _, Hg = S._from_matrix(S.SIR()._matrix(dg, {}), "sir", {})
+    np.testing.assert_array_equal(sir.W, Hg)

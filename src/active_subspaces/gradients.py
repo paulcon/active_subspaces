@@ -511,15 +511,15 @@ class _Stencil:
         Xphys = _v.points(X, sp, normalize=False)
 
         H = hv[None, :] * np.maximum(1.0, np.abs(Xn))
-        bounded = sp.kind == "uniform"
-        if bounded:
-            S = np.where(Xn + H > 1.0, -H, H)
-            central = (
-                (np.abs(Xn) + H <= 1.0) if scheme == "central" else np.zeros((M, m), dtype=bool)
-            )
+        # Uniform coordinates (a Uniform space, or the uniform blocks of a Product) have a
+        # boundary; Gaussian ones do not [D-198]. For a Uniform or Gaussian space the masks are
+        # all True or all False, so the steps are those of the homogeneous rule, bitwise.
+        u: NDArray[np.bool_] = np.array(cast(Any, sp)._uniform_mask, dtype=np.bool_)
+        S = np.where((Xn + H > 1.0) & u, -H, H)
+        if scheme == "central":
+            central = (np.abs(Xn) + H <= 1.0) | np.logical_not(u)
         else:
-            S = H.copy()
-            central = np.full((M, m), scheme == "central")
+            central = np.zeros((M, m), dtype=bool)
         S = np.where(central, H, S)
 
         # Stacked batch: base points; x_i + s_ij e_j for j = 1..m; x_i - h_ij e_j where central,
@@ -536,9 +536,9 @@ class _Stencil:
                 minus_parts.append(pts)
         pert = np.concatenate([plus.reshape(m * M, m), *minus_parts], axis=0)
         pert_phys = sp.from_normalized(pert)
-        if bounded:
-            box = cast(Uniform, sp)  # kind == "uniform"
-            np.clip(pert_phys, box.lower, box.upper, out=pert_phys)
+        if u.any():  # remove rounding outside the bounds of the uniform coordinates
+            lo, hi = (sp.lower, sp.upper) if isinstance(sp, Uniform) else cast(Any, sp)._bounds()
+            np.clip(pert_phys, lo, hi, out=pert_phys)
         batch = np.concatenate([Xphys, pert_phys], axis=0)
         h_param = float(hv[0]) if np.ndim(h) == 0 else hv.tolist()
         return cls(mdl, scheme, h_param, d.digests, Xn, S, H, central, batch)

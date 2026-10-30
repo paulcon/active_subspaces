@@ -29,7 +29,7 @@ from numpy.typing import ArrayLike, NDArray
 from active_subspaces import _validation as _v
 from active_subspaces.errors import InputError, ModelError, UnsupportedError
 from active_subspaces.results import QoIResult, _invariant, _register_result
-from active_subspaces.spaces import Gaussian, InputSpace, Uniform
+from active_subspaces.spaces import Gaussian, InputSpace, Product, Uniform
 
 __all__ = (
     "GradFn",
@@ -270,9 +270,9 @@ class Model:
 
     def __post_init__(self) -> None:
         """Validate the fields."""
-        if not isinstance(self.space, (Uniform, Gaussian)):
+        if not isinstance(self.space, (Uniform, Gaussian, Product)):
             raise _param_error(
-                "space: expected a Uniform or Gaussian input space, got "
+                "space: expected a Uniform, Gaussian or Product input space, got "
                 f"{type(self.space).__name__}",
                 "space",
                 got=type(self.space).__name__,
@@ -477,9 +477,9 @@ def as_model(model: Model | ValueFn, *, space: InputSpace | None = None) -> Mode
     if callable(model):
         if space is None:
             raise _param_error("space: required when model is a bare callable", "space")
-        if not isinstance(space, (Uniform, Gaussian)):
+        if not isinstance(space, (Uniform, Gaussian, Product)):
             raise _param_error(
-                f"space: expected a Uniform or Gaussian input space, got {type(space).__name__}",
+                f"space: expected a Uniform, Gaussian or Product input space, got {type(space).__name__}",
                 "space",
             )
         return Model(space=space, value=model)
