@@ -21,6 +21,7 @@ from active_subspaces.models import (
     as_model,
     evaluate,
     evaluate_grads,
+    evaluate_multi,
     evaluate_with_grads,
     pointwise,
 )
@@ -625,3 +626,88 @@ def test_thread_safety_of_concurrent_calls():
         f = evaluate(fn, X=X, space=space, executor=tp, batch_size=9)
     assert sorted(calls) == sorted([9] * 11 + [1])
     assert np.array_equal(f, X.sum(1))
+
+
+def test_evaluate_multi():
+    """D-199: (k, P) values return as (M, P); other shapes raise model.shape; grads ignored."""
+    space = _row_space(23)
+    X = space.sample(23, rng=1)
+    P = 3
+    calls: list[int] = []
+
+    def value(Z):
+        calls.append(Z.shape[0])
+        return np.stack([Z[:, 0] * (p + 1) for p in range(P)], axis=1)
+
+    def boom(Z):
+        raise AssertionError("gradient callable must not be called")
+
+    ref = np.stack([X[:, 0] * (p + 1) for p in range(P)], axis=1)
+    out = evaluate_multi(value, X=X, outputs=P, space=space)
+    assert out.shape == (23, P)
+    assert out.dtype == np.float64
+    assert out.flags.writeable
+    assert out.tobytes() == ref.tobytes()
+    assert calls == [23]
+    calls.clear()
+    assert (
+        evaluate_multi(value, X=X, outputs=P, space=space, batch_size=10).tobytes()
+        == ref.tobytes()
+    )
+    assert calls == [10, 10, 3]
+    for b in (1, 5, 23):
+        calls.clear()
+        with cf.ThreadPoolExecutor(3) as ex:
+            got = evaluate_multi(value, X=X, outputs=P, space=space, executor=ex, batch_size=b)
+        assert got.tobytes() == ref.tobytes()
+        assert sorted(calls) == sorted([b] * (23 // b) + ([23 % b] if 23 % b else []))
+    both = Model(space=space, value=value, grad=boom)
+    assert evaluate_multi(both, X=X, outputs=P).tobytes() == ref.tobytes()
+    vg = Model(space=space, value_and_grad=lambda Z: (value(Z), np.full(Z.shape, np.nan)))
+    assert evaluate_multi(vg, X=X, outputs=P).tobytes() == ref.tobytes()
+    for fn in (
+        lambda Z: Z[:, 0],
+        lambda Z: np.ones((Z.shape[0], 1)),
+        lambda Z: np.ones((Z.shape[0], P + 1)),
+        lambda Z: np.ones((Z.shape[0], P, 1)),
+        lambda Z: np.ones((Z.shape[0] + 1, P)),
+    ):
+        with pytest.raises(ModelError) as e:
+            evaluate_multi(fn, X=X, outputs=P, space=space)
+        assert e.value.code == "model.shape"
+    with pytest.raises(ModelError) as e:
+        evaluate_multi(lambda Z: np.full((Z.shape[0], P), np.nan), X=X, outputs=P, space=space)
+    assert e.value.code == "model.nonfinite"
+    with pytest.raises(ModelError) as e:
+        evaluate_multi(lambda Z: np.array([["a"] * P] * Z.shape[0]), X=X, outputs=P, space=space)
+    assert e.value.code == "model.dtype"
+    with pytest.raises(ModelError) as e:  # a multi-output model is not accepted by evaluate
+        evaluate(lambda Z: np.ones((Z.shape[0], P)), X=X, space=space)
+    assert e.value.code == "model.shape"
+    # outputs=1: (k, 1) is accepted, (k,) is not flattened (spec 12 section 4.3)
+    one = evaluate_multi(lambda Z: Z[:, :1], X=X, outputs=1, space=space)
+    assert one.shape == (23, 1)
+    with pytest.raises(ModelError) as e:
+        evaluate_multi(lambda Z: Z[:, 0], X=X, outputs=1, space=space)
+    assert e.value.code == "model.shape"
+    for bad in (0, -2, 1.5, True, "3", None):
+        with pytest.raises(InputError) as e:
+            evaluate_multi(value, X=X, outputs=bad, space=space)
+        assert e.value.code == "input.parameter"
+
+
+def test_evaluate_multi_failure_first_batch_in_batch_order():
+    """D-199: with two failing batches the first in batch order is reported, as for evaluate."""
+    M, b = 60, 10
+    space = _row_space(M)
+    X = _row_points(M)
+    inner = h.RowModel(fail_rows=[25, 55], slow_rows=[25], delay=0.3)
+
+    def two(Z):
+        return np.stack([inner(Z), inner(Z)], axis=1)
+
+    with cf.ThreadPoolExecutor(7) as tp7, cf.ThreadPoolExecutor(2) as tp2:
+        for ex in (None, tp7, tp2):
+            with pytest.raises(ModelError) as e:
+                evaluate_multi(two, X=X, outputs=2, space=space, executor=ex, batch_size=b)
+            assert e.value.details["batch"] == [20, 30]

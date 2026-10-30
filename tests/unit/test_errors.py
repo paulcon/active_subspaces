@@ -72,12 +72,12 @@ def test_details_default_empty():
 
 
 def test_code_table_is_static_and_complete():
-    """Spec 06 §4.3: one static table of 46 codes, code -> (class name, meaning), checked
+    """Spec 06 §4.3: one static table of 47 codes, code -> (class name, meaning), checked
     against the classes.
     """
-    assert (
-        len(CODES) == 46  # -noise_not_detected [D-174]; +empty_bounds, +flat_objective [D-192]
-    )
+    # -noise_not_detected [D-174]; +unaligned_replicates [D-196]; +empty_bounds, +flat_objective
+    # [D-192]
+    assert len(CODES) == 47
     by_name = {name: getattr(errors, name) for name in errors.__all__}
     for code, (class_name, meaning) in CODES.items():
         family, _, _rest = code.partition(".")

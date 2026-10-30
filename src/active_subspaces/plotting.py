@@ -512,9 +512,12 @@ def plot_eigenvectors(
     *,
     indices: Sequence[int] | None = None,
     labels: Sequence[str] | None = None,
+    interval: Interval | None = None,
+    level: float = 0.95,
     ax: Axes | Sequence[Axes] | None = None,
     figsize: tuple[float, float] | None = None,
     line_kw: Mapping[str, Any] | None = None,
+    band_kw: Mapping[str, Any] | None = None,
 ) -> tuple[Figure, tuple[Axes, ...]]:
     r"""Plot eigenvector components in normalized coordinates, one panel per eigenvector.
 
@@ -522,7 +525,10 @@ def plot_eigenvectors(
     :math:`i = 1, \dots, m`, with a zero line and the vertical range
     :math:`[-1.05, 1.05]` (since :math:`\lVert w_j \rVert_2 = 1`). The
     normalized components are the scale-free measure of input importance;
-    physical directions carry units and are not plotted.
+    physical directions carry units and are not plotted. The eigenvectors
+    are drawn with the signs the result carries; nothing is re-signed. With
+    ``interval``, each panel also shows a band of the sign-aligned bootstrap
+    replicates of its eigenvector (``bootstrap_eigenvectors``) [D-196].
 
     Parameters
     ----------
@@ -534,6 +540,13 @@ def plot_eigenvectors(
     labels : sequence of str, optional
         ``m`` tick labels for the inputs; default ``space.names`` when
         ``m <= 40``, else integer ticks.
+    interval : {"percentile", "minmax", "none"}, optional
+        A band per component from ``subspace.bootstrap_eigenvectors[:, :, j]``
+        through :func:`~active_subspaces.bootstrap_interval`; default (or
+        ``"none"``) no band. Every index must have stored replicates
+        (``active_subspace(..., bootstrap_vectors=k)``, index ``< k``).
+    level : float, default 0.95
+        Level of the ``"percentile"`` band, in :math:`(0, 1)`.
     ax : matplotlib.axes.Axes or sequence of Axes, optional
         One Axes per index; default: a new figure with one panel per index,
         stacked vertically.
@@ -542,6 +555,9 @@ def plot_eigenvectors(
     line_kw : mapping, optional
         Keyword arguments for the matplotlib call that draws the line, merged
         over the defaults ``{"color": "C0", "marker": "o", "linestyle": "-"}``.
+    band_kw : mapping, optional
+        Keyword arguments for the matplotlib call that draws the band (``fill_between``), merged
+        over the defaults ``{"color": "C0", "alpha": 0.25, "linewidth": 0}``.
 
     Returns
     -------
@@ -556,7 +572,8 @@ def plot_eigenvectors(
         ``input.parameter`` for an invalid argument (including a bad `ax`,
         `figsize` or ``*_kw``, or both `ax` and `figsize`),
         including repeated or out-of-range `indices`, or `labels` of the
-        wrong length.
+        wrong length; and for a band on an index without eigenvector
+        replicates (``details["reason"] == "no_eigenvector_replicates"``).
 
     Examples
     --------
@@ -569,6 +586,13 @@ def plot_eigenvectors(
     >>> fig, axes = ac.plotting.plot_eigenvectors(sub, indices=[0, 1])
     >>> print(len(axes), axes[0].get_ylabel())
     2 $w_{1}$
+
+    With sign-aligned bootstrap replicates of the first eigenvector:
+
+    >>> sub1 = ac.active_subspace(grads=G, space=space, nboot=50, bootstrap_vectors=1, rng=0)
+    >>> fig, axes = ac.plotting.plot_eigenvectors(sub1, indices=[0], interval="percentile")
+    >>> len(axes[0].collections)
+    1
     """
     sub = _check_subspace(subspace)
     m = sub.m
@@ -591,6 +615,26 @@ def plot_eigenvectors(
     else:
         tick_labels = list(sub.space.names) if m <= _MAX_NAMED_TICKS else None
     lkw = _kw(line_kw, _LINE, "line_kw")
+    bkw = _kw(band_kw, _BAND, "band_kw")
+    if interval is not None:
+        interval = cast(Interval, _v.choice(interval, "interval", _INTERVALS))
+    level = _v.real(level, "level", lo=0.0, hi=1.0, lo_open=True, hi_open=True)
+    bands: dict[int, np.ndarray] = {}
+    if interval not in (None, "none"):
+        V = sub.bootstrap_eigenvectors
+        stored = 0 if V is None else V.shape[2]
+        missing = [j for j in idx if j >= stored]
+        if missing:
+            raise _param(
+                f"interval: no bootstrap eigenvector replicates for indices {missing}; pass "
+                f"bootstrap_vectors > {max(missing)} to active_subspace",
+                "interval",
+                reason="no_eigenvector_replicates",
+                indices=missing,
+            )
+        assert V is not None  # stored > 0
+        kind = cast(Literal["percentile", "minmax"], interval)
+        bands = {j: bootstrap_interval(V[:, :, j], kind=kind, level=level) for j in idx}
     k = len(idx)
     if ax is None:
         size = _figsize(figsize)
@@ -615,6 +659,8 @@ def plot_eigenvectors(
     ii = np.arange(1, m + 1)
     for a, j in zip(axes, idx, strict=False):
         a.axhline(0.0, color="0.5", linewidth=0.8)
+        if j in bands:
+            a.fill_between(ii, bands[j][0], bands[j][1], **bkw)
         a.plot(ii, W[:, j], **lkw)
         a.set_ylim(-1.05, 1.05)
         a.set_xlim(0.5, m + 0.5)

@@ -56,7 +56,7 @@ print(sub.W1.shape, sub.W2.shape)
 ```
 
 Each eigenvector is defined up to sign. The library makes each one's largest-magnitude component
-positive.
+positive; see [Signs and orientation](#signs-and-orientation) to choose another convention.
 
 ### Without an analytic gradient
 
@@ -200,6 +200,23 @@ fig, ax = ac.plotting.plot_subspace_errors(sub_b)
 fig
 ```
 
+### Bands for eigenvector components
+
+Eigenvector replicates are stored only on request, because they take $B\,m\,k$ numbers.
+`bootstrap_vectors=k` keeps the leading $k$ eigenvectors in `bootstrap_eigenvectors` `(B, m, k)`.
+Each replicate column is multiplied by $\operatorname{sign}(w_j^\top w_j^{(b)})$, so the replicates
+point the same way as the estimate. If some replicate has $|w_j^\top w_j^{(b)}|<0.5$, the sign
+alignment is unreliable and the result carries an `accuracy.unaligned_replicates` warning. The
+replacement of the 2016 `W_br` is `plot_eigenvectors` with `interval="percentile"` (the default
+for bands is a 95% interval, `level=0.95`) or `interval="minmax"`:
+
+```{code-cell} python
+sub_v = ac.active_subspace(grads=G, space=space, nboot=200, bootstrap_vectors=2, rng=2)
+print(sub_v.bootstrap_eigenvectors.shape)
+fig, axes = ac.plotting.plot_eigenvectors(sub_v, indices=[0, 1], interval="percentile")
+fig
+```
+
 Two limits apply. The eigenvalue bootstrap is inconsistent at repeated or zero eigenvalues
 [Beran and Srivastava 1985; Eaton and Tyler 1991], so a band there is descriptive only. And the
 bootstrap assumes the rows are independent draws, which is why non-uniform `quad_weights` with
@@ -207,6 +224,63 @@ bootstrap assumes the rows are independent draws, which is why non-uniform `quad
 
 Replicates can run on an executor (`executor=`); the result is the same with or without one
 (see {doc}`models`).
+
+## Signs and orientation
+
+An eigenvector is defined up to sign. The library gives each column of `W` the sign that makes its
+largest-magnitude component positive. For `estimator="ols"` the first column is the signed slope
+$\hat u/\lVert\hat u\rVert$ instead, so $f$ increases along $w_1$ [Constantine 2015, Algorithm 1.3].
+`plot_eigenvectors`, `y = W1ᵀx` and `physical_directions()` all use the signs the result carries;
+nothing is re-signed.
+
+`ac.orient` returns a new result with other signs. `by="reference"` makes each leading column agree
+with a reference direction, which aligns a sequence of results, for example estimates from
+separate batches of samples:
+
+```{code-cell} python
+batches = [G[:200], G[200:]]
+subs = [ac.active_subspace(grads=g, space=space) for g in batches]
+aligned = [ac.orient(s, by="reference", reference=subs[0]) for s in subs]
+print([round(float(aligned[0].W1[:, 0] @ a.W1[:, 0]), 4) for a in aligned])
+```
+
+The other criteria are `by="covariance"` (with `X=` and `f=`: the sign makes the sufficient summary
+$y_j=w_j^\top x$ positively correlated with $f$) and `by="mean_gradient"` (with `grads=`: the sign
+makes $\bar g^\top w_j$ positive, $\bar g$ the mean normalized gradient). `columns=c` re-signs the leading $c$ columns; the default is
+`n`. The replicates in `bootstrap_eigenvectors` are re-signed with the same signs.
+
+## Activity scores
+
+`ac.activity_scores(sub, n=None)` returns $\alpha_i(n)=\sum_{j=1}^{n}|\lambda_j|\,w_{ij}^2$, a
+global sensitivity measure for input $i$ in normalized coordinates [Constantine and Diaz 2017].
+With $n=m$ the scores sum to $\operatorname{tr}C$. The default $n$ is `sub.n`.
+
+```{code-cell} python
+scores = ac.activity_scores(sub)
+order = np.argsort(scores)[::-1]
+print(order[:3], np.round(scores[order[:3]], 1))
+print(np.isclose(ac.activity_scores(sub, n=10).sum(), sub.eigenvalues.sum()))
+```
+
+## From a matrix you accumulated
+
+A tensor quadrature rule can have too many nodes to hold its gradients in one array. Accumulate
+$C=\sum_i\omega_i g_ig_i^\top$ yourself, in normalized coordinates, and pass it to
+`ac.subspace_from_matrix`. The result has `estimator="matrix"`, no samples and no bootstrap, but it
+takes `n=` or the eigenvalue-gap rule; the rules `"rs"` and `"li"` need bootstrap replicates, which it does not have.
+
+```{code-cell} python
+nodes, wts = np.polynomial.legendre.leggauss(7)
+C = np.zeros((2, 2))
+for xi, wi in zip(nodes, wts):                         # one slab of the tensor rule at a time
+    Gs = np.column_stack([np.cos(xi + 0.5 * nodes), 0.5 * np.cos(xi + 0.5 * nodes)])
+    ws = wi * wts / 4.0
+    C += (Gs * ws[:, None]).T @ Gs
+r_mat = ac.subspace_from_matrix(C, space=ac.Uniform.reference(2), n=1)
+print(r_mat.estimator, np.round(r_mat.W1[:, 0], 4))
+```
+
+For a matrix $C_\xi$ of physical gradients, pass $A^\top C_\xi A$ with `A = space.scale`.
 
 API reference: {mod}`active_subspaces.subspaces`, {mod}`active_subspaces.gradients`.
 
@@ -216,6 +290,8 @@ API reference: {mod}`active_subspaces.subspaces`, {mod}`active_subspaces.gradien
   matrix. *Ann. Statist.* 13(1):95–115, 1985 (details to verify).
 - P. G. Constantine. *Active Subspaces: Emerging Ideas for Dimension Reduction in Parameter
   Studies.* SIAM, 2015.
+- P. G. Constantine, P. Diaz. Global sensitivity metrics from active subspaces. *Reliab. Eng.
+  Syst. Saf.* 162:1–13, 2017.
 - R. D. Cook, S. Weisberg. Discussion of "Sliced inverse regression for dimension reduction".
   *J. Amer. Statist. Assoc.* 86(414):328–332, 1991.
 - M. L. Eaton, D. E. Tyler. On Wielandt's inequality and its application to the asymptotic

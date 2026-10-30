@@ -135,6 +135,22 @@ for rule in ["evg", "rs", "li"]:
 The tolerance does not change the criteria; it only makes the choice well defined in floating
 point. `dimension_criterion` returns the same $\hat k$ as the rule.
 
+## Eigenvalue scaling
+
+Eigenvalues are in **normalized** coordinates, where a uniform input lies in $[-1,1]$ and a Gaussian
+input has unit variance. Three consequences:
+
+- For the eigenvalues of a scaled output $cf$, pass `grads=c*G`; they are multiplied by $c^2$.
+- For the eigenvalues of the physical gradients, $G^\top G/M$, pass the physical gradients with
+  `space=ac.Uniform.reference(m)`. That space has the identity as its scale, so nothing is rescaled.
+- If your inputs are normalized to $[0,1]$ instead of $[-1,1]$, the derivatives are twice as large,
+  and every eigenvalue is multiplied by 4.
+
+```{code-cell} python
+sub_c = ac.active_subspace(grads=10.0 * ac.evaluate_grads(ridge, X=Xr), space=ridge.space)
+print(np.round(sub_c.eigenvalues[0] / sr.eigenvalues[0], 6))
+```
+
 API reference: {func}`~active_subspaces.subspaces.with_dimension`, {func}`~active_subspaces.subspaces.dimension_criterion`, {func}`~active_subspaces.subspaces.bootstrap_interval`.
 
 ## References

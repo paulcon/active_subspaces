@@ -741,3 +741,26 @@ def test_migration_rbf_v1():
     assert again["schema_version"] == 2
     assert "f_variance" not in again["fields"]
     assert asub.from_dict(again) == r
+
+
+def test_migration_subspace_v1():
+    """A version-1 SubspaceResult, written by the development build, loads as version 2 with
+    bootstrap_eigenvectors None and every other field unchanged [D-196] (04 §8, V04.8).
+    """
+    path = SCHEMA_DIR / "SubspaceResult" / "v1.json"
+    d = json.loads(path.read_text())
+    assert d["schema_version"] == 1
+    assert "bootstrap_eigenvectors" not in d["fields"]
+    r = asub.from_dict(d)
+    assert r.bootstrap_eigenvectors is None
+    assert r.nboot == 5
+    assert r.estimator == "ols"
+    np.testing.assert_array_equal(
+        r.eigenvectors, _validation.decode_array(d["fields"]["eigenvectors"])
+    )
+    np.testing.assert_array_equal(
+        r.bootstrap_distances, _validation.decode_array(d["fields"]["bootstrap_distances"])
+    )
+    again = r.to_dict()
+    assert again["schema_version"] == 2
+    assert asub.from_dict(again) == r

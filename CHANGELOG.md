@@ -20,6 +20,10 @@ D-02, D-02a, D-03).
 
 ### Added
 
+- **Models with several outputs.** `ac.evaluate_multi` evaluates a model whose value has shape
+  `(k, outputs)`, and `ac.finite_difference_gradients_multi` returns one `GradientResult` per
+  output from one set of stencil evaluations, each equal bitwise to the single-output call on that
+  column (D-199).
 - **Python 3 packaging.** `pyproject.toml` built with hatchling, a `src` layout, the version
   single-sourced in `_version.py`, PEP 561 type hints (`py.typed`), and dependency floors
   `numpy>=2.2`, `scipy>=1.15`, `matplotlib>=3.10` (P-10, D-05, D-147, D-151).
@@ -50,6 +54,20 @@ D-02, D-02a, D-03).
   default, or `"minmax"`), `ac.mean_distance`, `ac.dimension_criterion` and `ac.with_dimension`
   (D-30, D-79, D-80).
 - The log-gap option of the eigenvalue-gap rule, `ac.subspaces.EVG(gap="log")` (N-06, D-38).
+- **Eigenvector bootstrap bands.** `ac.active_subspace(..., nboot=B, bootstrap_vectors=k)` stores
+  `SubspaceResult.bootstrap_eigenvectors` `(B, m, k)`, each replicate column multiplied by
+  $\operatorname{sign}(w_j^\top w_j^{(b)})$; the warning `accuracy.unaligned_replicates` flags
+  replicates with $|w_j^\top w_j^{(b)}|<0.5$. `ac.plotting.plot_eigenvectors(sub,
+  interval="percentile" | "minmax", level=0.95)` draws the component bands. They replace the 2016
+  `W_br`. `SubspaceResult` is now schema version 2; version-1 files load with
+  `bootstrap_eigenvectors=None` through a migration (D-196).
+- `ac.orient(subspace, by="reference" | "covariance" | "mean_gradient", ...)` returns a result with
+  user-chosen eigenvector signs (D-197).
+- `ac.activity_scores(subspace, n=None)`, $\sum_{j\le n}\lvert\lambda_j\rvert w_{ij}^2$ in
+  normalized coordinates (Constantine and Diaz 2017) (D-201).
+- `ac.subspace_from_matrix(C, space=, n=, dimension_rule=, qoi=)` makes a result with eigenvalues
+  (`estimator="matrix"`) from a symmetric matrix accumulated by hand, in normalized coordinates
+  (D-202).
 - `ac.subspace_from_basis` to use an externally computed basis with geometry and surrogates
   (D-92).
 - `ac.local_linear_gradients` and `ac.finite_difference_gradients` return a `GradientResult`
@@ -139,6 +157,13 @@ D-02, D-02a, D-03).
   the first component). Components within $\sqrt{\varepsilon}$ of the largest count as tied, and
   the first of them sets the sign, so the sign does not depend on the platform when two components
   are equal in exact arithmetic (D-81, D-188).
+- **OLS eigenvector sign**: for `estimator="ols"`, $w_1=\hat u/\lVert\hat u\rVert$ keeps the sign
+  of the least-squares slope, so $f$ increases along $w_1$, as in Constantine (2015), Algorithm 1.3,
+  eqs. (1.5)–(1.6), and Constantine et al., *J. Comput. Phys.* 302 (2015), Algorithms 1–2, eq. (22).
+  The other columns keep the largest-magnitude rule (D-195).
+- **Physical directions keep the signs of `W1`**: `physical_directions()` and
+  `space.directions_to_physical` give $q_j^\top A^{-\top}w_j>0$ instead of re-applying the
+  largest-magnitude rule, so they agree with an oriented `W1` (D-197).
 - **Default bootstrap interval**: a 95% percentile interval replaces the min/max band in plots and
   in `ac.bootstrap_interval`; `kind="minmax"` gives the 2016 statistic (N-08, D-30).
 - **Fit quality**: the in-sample polynomial `Rsqr` and the RBF "R²" are replaced by a
@@ -161,6 +186,15 @@ Computed values differ from the 2016 code for the same inputs. Each item is eith
 2016 value contradicted the method) or a departure from the 2016 method ruled on by the maintainer
 (D-03b). The migration guide gives the size of each change.
 
+- **AS, NAS and OPG factorization.** With $M>m$ the estimators take the SVD of the triangular factor
+  of a blocked QR factorization of the weighted gradient rows, with the AS rows scaled in place
+  when there is no bootstrap, so peak memory is about $1+2/m$ times the gradient array (1.25 on the Ebola $7^8$ rule)
+  instead of about three times; with a bootstrap it is about 2.57 times at $m=8$ (D-213).
+  Eigenvalues agree with the direct SVD to $10^{-13}$ relative (D-202).
+- **OLS and QPHD least squares** use a QR solve when the design is well conditioned and `gelsd`
+  otherwise; QPHD is about three times faster at large sizes, and results change only by rounding
+  (V1-11, D-203). The `gelsd` rank cutoff is now $\max(M,p)\,\epsilon\,\sigma_1$ (was
+  $\epsilon\,\sigma_1$), so a duplicated column warns `accuracy.rank_deficient` on every platform.
 - **Random streams.** Every stochastic output (bootstrap replicates, designs, inactive samples,
   optimization starts, weight samples) differs from 2016 at any seed (R-03, D-14).
 - **Default inactive sample count** $N_{MC}=50$ (2016: 10) in `integration_design`, `integrate`,

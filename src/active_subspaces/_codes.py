@@ -139,6 +139,11 @@ CODES: Mapping[str, tuple[str, str]] = MappingProxyType(
             "AccuracyWarning",
             "the ladle chose k = 0; n is set to 1",
         ),
+        "accuracy.unaligned_replicates": (
+            "AccuracyWarning",
+            "a stored bootstrap eigenvector column has a replicate nearly orthogonal to the "
+            "full-sample vector, so its components are ill-defined",
+        ),
         "accuracy.loo_undefined": (
             "AccuracyWarning",
             "leave-one-out residuals are undefined because a point fully determines its own fit",

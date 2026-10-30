@@ -842,7 +842,7 @@ class Result:
     >>> space = ac.Uniform.reference(2)
     >>> res = ac.active_subspace(grads=np.array([[1.0, 0.0], [2.0, 0.1]]), space=space)
     >>> isinstance(res, ac.Result), res.TYPE, res.SCHEMA_VERSION
-    (True, 'SubspaceResult', 1)
+    (True, 'SubspaceResult', 2)
     >>> res.eigenvalues.flags.writeable
     False
     """
