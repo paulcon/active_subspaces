@@ -170,7 +170,7 @@ Computed values differ from the 2016 code for the same inputs. Each item is eith
   when there is no bootstrap, so peak memory is about $1+2/m$ times the gradient array (1.25 on the Ebola $7^8$ rule)
   instead of about three times. Eigenvalues agree with the direct SVD to $10^{-13}$ relative
   (D-202).
-- **OLS and QPHD least squares** use a QR solve when the design has full column rank and `gelsd`
+- **OLS and QPHD least squares** use a QR solve when the design is well conditioned and `gelsd`
   otherwise; QPHD is about three times faster at large sizes, and results change only by rounding
   (V1-11, D-203).
 - **Random streams.** Every stochastic output (bootstrap replicates, designs, inactive samples,

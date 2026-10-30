@@ -239,8 +239,10 @@ def _lstsq(A: _F64, b: _F64, what: str) -> tuple[_F64, bool]:
     """Least squares; returns (coefficients, rank deficient?).
 
     With at least as many rows as columns, a Householder QR and a triangular solve, used when
-    every ``|R_jj| > max(M, p) eps max_l |R_ll|``; otherwise, and when ``M < p``, the
-    minimum-norm solution by ``gelsd``, whose rank decides the warning (V1-11, D-203).
+    every ``|R_jj| > sqrt(eps) max_l |R_ll|``; otherwise, and when ``M < p``, the minimum-norm
+    solution by ``gelsd``, whose rank decides the warning (V1-11, D-203). The threshold is
+    loose on purpose: an unpivoted QR need not shrink a dependent column's ``R_jj`` to rounding
+    on every LAPACK. Every design with ``cond(A) < eps**-0.5`` still takes the QR route.
     """
     M, p = A.shape
     if M >= p and p > 0:
@@ -250,7 +252,7 @@ def _lstsq(A: _F64, b: _F64, what: str) -> tuple[_F64, bool]:
             pass
         else:
             d = np.abs(np.diagonal(R))
-            if np.all(np.isfinite(d)) and d.min() > max(M, p) * _EPS * d.max():
+            if np.all(np.isfinite(d)) and d.min() > _SQRT_EPS * d.max():
                 coef = scipy.linalg.solve_triangular(R, Q.T @ b, check_finite=False)
                 return coef, False
     try:

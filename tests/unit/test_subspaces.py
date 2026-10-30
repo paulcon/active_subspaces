@@ -10,6 +10,7 @@ import warnings
 
 import numpy as np
 import pytest
+import scipy.linalg
 
 import active_subspaces as asub
 from active_subspaces import subspaces as S
@@ -722,7 +723,8 @@ def test_orient():
 
 
 def test_lstsq_qr():
-    """The QR solve equals gelsd on full-rank data; rank deficiency still warns (V1-11)
+    """The QR solve equals gelsd on full-rank data; an ill-conditioned or rank-deficient design
+    takes the gelsd route, and rank deficiency still warns (V1-11)
     (07 §8 KA-14, V07.40).
     """
     gen = np.random.default_rng(1)
@@ -732,6 +734,10 @@ def test_lstsq_qr():
     assert not bad
     ref = np.linalg.lstsq(A, b, rcond=None)[0]
     np.testing.assert_allclose(coef, ref, rtol=1e-10, atol=1e-12)
+    A[:, 3] = A[:, 2] + 1e-12 * gen.standard_normal(200)  # cond ~ 1e12: gelsd route
+    coef, _ = S._lstsq(A, b, "test")
+    ref = scipy.linalg.lstsq(A, b, lapack_driver="gelsd", check_finite=False)[0]
+    np.testing.assert_array_equal(coef, ref)
     A[:, 3] = A[:, 2]  # duplicated column: rank 9, gelsd route
     coef, bad = S._lstsq(A, b, "test")
     assert bad
