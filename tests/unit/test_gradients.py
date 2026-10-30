@@ -10,6 +10,7 @@ import pytest
 import active_subspaces as asub
 from active_subspaces import gradients as gr
 from active_subspaces import models
+from active_subspaces.errors import InputError, ModelError
 from active_subspaces.results import _InvariantError
 
 
@@ -101,6 +102,7 @@ def test_exports():
     assert gr.__all__ == (
         "GradientResult",
         "finite_difference_gradients",
+        "finite_difference_gradients_multi",
         "local_linear_gradients",
     )
     assert gr._toplevel == gr.__all__
@@ -611,3 +613,161 @@ def test_neighbor_sets_match_stable_argsort(monkeypatch, blocks):
             for a, b in zip(new, ref, strict=True):
                 assert a.dtype == b.dtype
                 np.testing.assert_array_equal(a, b)
+
+
+_MULTI_FIELDS = ("points", "grads", "values", "steps", "central_mask")
+
+
+def _multi_model(P: int):
+    """A (k, P) toy model and a per-column scalar view of it; the first counts its calls."""
+    w = np.arange(1.0, P + 1.0)
+    calls: list[int] = []
+
+    def multi(Z):
+        calls.append(Z.shape[0])
+        return np.sin(Z @ np.ones(Z.shape[1]))[:, None] * w + Z[:, :1] ** 2 * w[::-1]
+
+    def column(p):
+        return lambda Z: multi(Z)[:, p]
+
+    return multi, column, calls
+
+
+@pytest.mark.parametrize("scheme", ["forward", "central"])
+def test_finite_difference_multi(scheme):
+    """D-199: one evaluation call; each output equals the scalar call bitwise; labels; shape."""
+    s = asub.Uniform([0.0, 1.0, -3.0], [2.0, 4.0, 3.0])
+    X = np.vstack([s.sample(8, rng=3), s.lower, s.upper])  # bounds force one-sided entries
+    M, m = X.shape
+    P = 21
+    multi, column, calls = _multi_model(P)
+    res = gr.finite_difference_gradients_multi(
+        multi, X=X, space=s, outputs=P, h=1e-4, scheme=scheme
+    )
+    assert isinstance(res, tuple)
+    assert len(res) == P
+    if scheme == "forward":
+        assert calls == [M * (m + 1)]
+    else:
+        assert len(calls) == 1
+        assert calls[0] == res[0].n_evaluations > M * (m + 1)
+    assert [r.qoi for r in res] == [f"f{p}" for p in range(P)]
+    for workers in (None, 3):
+        if workers is None:
+            got = res
+        else:
+            with concurrent.futures.ThreadPoolExecutor(workers) as ex:
+                got = gr.finite_difference_gradients_multi(
+                    multi,
+                    X=X,
+                    space=s,
+                    outputs=P,
+                    h=1e-4,
+                    scheme=scheme,
+                    executor=ex,
+                    batch_size=7,
+                )
+        for p in range(P):
+            ref = gr.finite_difference_gradients(column(p), X=X, space=s, h=1e-4, scheme=scheme)
+            r = got[p]
+            for name in _MULTI_FIELDS:
+                a, b = getattr(r, name), getattr(ref, name)
+                assert a.dtype == b.dtype, (p, name)
+                assert a.tobytes() == b.tobytes(), (p, name)
+            assert r.n_evaluations == ref.n_evaluations
+            assert r.method == ref.method
+            assert r.scheme == ref.scheme
+            assert r.space == ref.space
+            assert r.qoi == f"f{p}"
+            assert got[p].steps.tobytes() == got[0].steps.tobytes()
+            assert got[p].central_mask.tobytes() == got[0].central_mask.tobytes()
+            prm = r.provenance.parameters
+            assert prm["outputs"] == P
+            assert prm["output"] == p
+            assert prm["qoi_names"] == [f"f{q}" for q in range(P)]
+            assert r.provenance.function == "active_subspaces.finite_difference_gradients_multi"
+
+
+def test_finite_difference_multi_names_and_errors():
+    """D-199: qoi_names are used; (k,) models raise model.shape; bad arguments input.parameter."""
+    s = asub.Uniform.reference(2)
+    X = s.sample(4, rng=0)
+
+    def two(Z):
+        return np.stack([Z[:, 0], Z[:, 1] ** 2], axis=1)
+
+    model = models.Model(space=s, value=two, qoi="ignored")
+    res = gr.finite_difference_gradients_multi(model, X=X, outputs=2, qoi_names=("a", "b"))
+    assert [r.qoi for r in res] == ["a", "b"]
+    with pytest.raises(ModelError) as e:
+        gr.finite_difference_gradients_multi(lambda Z: Z[:, 0], X=X, space=s, outputs=2)
+    assert e.value.code == "model.shape"
+    with pytest.raises(ModelError) as e:
+        gr.finite_difference_gradients_multi(two, X=X, space=s, outputs=3)
+    assert e.value.code == "model.shape"
+    for bad in (["a"], ["a", "a"], ["a", ""], ["a", 1], "ab", 5):
+        with pytest.raises(InputError) as e:
+            gr.finite_difference_gradients_multi(two, X=X, space=s, outputs=2, qoi_names=bad)
+        assert e.value.code == "input.parameter"
+    for bad in (0, -1, 1.5, True, "2", None):
+        with pytest.raises(InputError) as e:
+            gr.finite_difference_gradients_multi(two, X=X, space=s, outputs=bad)
+        assert e.value.code == "input.parameter"
+
+
+def test_finite_difference_multi_single_output_shapes():
+    """D-199: with outputs=1, (k, 1) is accepted and (k,) raises model.shape (no flattening)."""
+    s = asub.Uniform.reference(2)
+    X = s.sample(4, rng=0)
+    (r,) = gr.finite_difference_gradients_multi(lambda Z: Z[:, :1] ** 2, X=X, space=s, outputs=1)
+    ref = gr.finite_difference_gradients(lambda Z: Z[:, 0] ** 2, X=X, space=s)
+    assert r.grads.tobytes() == ref.grads.tobytes()
+    with pytest.raises(ModelError) as e:
+        gr.finite_difference_gradients_multi(lambda Z: Z[:, 0], X=X, space=s, outputs=1)
+    assert e.value.code == "model.shape"
+    with pytest.raises(ModelError) as e:
+        models.evaluate_multi(lambda Z: Z[:, 0], X=X, space=s, outputs=1)
+    assert e.value.code == "model.shape"
+
+
+@pytest.mark.parametrize("scheme", ["forward", "central"])
+def test_finite_difference_multi_gaussian_value_and_grad(gaussian_space, scheme):
+    """D-199: correlated Gaussian space and a value_and_grad-only model match the scalar calls."""
+    s = gaussian_space(3, seed=4)
+    X = s.sample(9, rng=2)
+    P = 4
+    w = np.arange(1.0, P + 1.0)
+
+    def multi(Z):
+        return np.sin(Z.sum(axis=1))[:, None] * w + Z[:, :1] ** 2
+
+    def vg_multi(Z):
+        return multi(Z), np.zeros_like(Z)
+
+    def vg_col(p):
+        return lambda Z: (multi(Z)[:, p], np.zeros_like(Z))
+
+    model = models.Model(space=s, value_and_grad=vg_multi)
+    res = gr.finite_difference_gradients_multi(model, X=X, outputs=P, h=1e-4, scheme=scheme)
+    for p in range(P):
+        ref = gr.finite_difference_gradients(
+            models.Model(space=s, value_and_grad=vg_col(p)), X=X, h=1e-4, scheme=scheme
+        )
+        for name in _MULTI_FIELDS:
+            assert getattr(res[p], name).tobytes() == getattr(ref, name).tobytes(), (p, name)
+        assert res[p].n_evaluations == ref.n_evaluations
+
+
+def test_finite_difference_multi_overflow_names_the_output():
+    """D-199: a non-finite quotient reports the output index in details."""
+    from active_subspaces.errors import NumericalError
+
+    s = asub.Uniform.reference(1)
+    X = np.array([[0.0]])
+
+    def fn(Z):
+        return np.stack([Z[:, 0], np.where(Z[:, 0] > 0, 1e308, -1e308)], axis=1)
+
+    with pytest.raises(NumericalError) as e:
+        gr.finite_difference_gradients_multi(fn, X=X, space=s, outputs=2, h=1e-6)
+    assert e.value.details["output"] == 1
