@@ -261,15 +261,20 @@ def test_physical_view_recovers_ridge_direction():
 
 
 def test_directions_to_physical_orthonormal_and_oriented(gaussian_space):
+    """Physical directions keep the signs of W: q_j^T A^{-T} w_j > 0 [D-197]."""
     s = gaussian_space(5, 4)
     W = np.linalg.qr(np.random.default_rng(2).standard_normal((5, 3)))[0]
     P = s.directions_to_physical(W)
     assert P.shape == (5, 3)
     np.testing.assert_allclose(P.T @ P, np.eye(3), atol=1e-13)
-    idx = np.argmax(np.abs(P), axis=0)
-    assert np.all(P[idx, np.arange(3)] > 0)
     expected = np.linalg.solve(s.scale.T, W)
+    assert np.all(np.einsum("ij,ij->j", P, expected) > 0)
     assert _proj_dist(P, expected) < 1e-12
+    flipped = W.copy()
+    flipped[:, 1] *= -1.0
+    P2 = s.directions_to_physical(flipped)
+    np.testing.assert_array_equal(P2[:, 1], -P[:, 1])
+    np.testing.assert_array_equal(P2[:, [0, 2]], P[:, [0, 2]])
     for bad in (np.ones((4, 2)), np.ones(5), np.ones((5, 6)), np.ones((5, 0))):
         with pytest.raises(asub.InputError):
             s.directions_to_physical(bad)

@@ -180,7 +180,7 @@ class InputSpace(Protocol):
         Returns
         -------
         numpy.ndarray, shape (m, k), float64
-            Orthonormal basis of ``span(A^{-T} W)``, sign-oriented.
+            Orthonormal basis of ``span(A^{-T} W)``; column ``j`` has the sign of ``W[:, j]``.
 
         See Also
         --------
@@ -519,8 +519,8 @@ class _SpaceBase:
         -------
         numpy.ndarray, shape (m, k), float64
             Orthonormal basis of :math:`\operatorname{span}(A^{-\top} W)` in
-            physical coordinates, each column signed so that its
-            largest-magnitude entry is positive.
+            physical coordinates. Column :math:`j` keeps the sign of
+            :math:`w_j`: :math:`q_j^\top A^{-\top} w_j > 0` [D-197].
 
         Raises
         ------
@@ -533,7 +533,12 @@ class _SpaceBase:
         If :math:`f(\xi) \approx h(a^\top \xi)`, then in normalized coordinates
         :math:`f \approx h((A^\top a)^\top x + a^\top b)`, so the normalized
         direction is :math:`w \propto A^\top a` and :math:`a \propto A^{-\top} w`.
-        The basis is the thin QR factor of :math:`A^{-\top} W`. The eigenvalues
+        The basis is the thin QR factor :math:`A^{-\top} W = QR`, with the signs
+        chosen so that :math:`R_{jj} > 0`. Since :math:`A^{-\top} w_j =
+        \sum_{i \le j} R_{ij} q_i`, each physical direction has the sign of its
+        normalized column, whatever orientation ``W`` carries (the default
+        rule, the signed OLS direction, or :func:`~active_subspaces.orient`).
+        The largest-magnitude rule is not applied again. The eigenvalues
         have no physical counterpart. Physical coordinates carry units, so the
         entries of physical directions are not comparable across inputs; the
         normalized ``W`` is the scale-free measure of importance.
@@ -557,8 +562,11 @@ class _SpaceBase:
                 details={"param": "W", "expected": [m, "k"], "got": list(arr.shape)},
             )
         _v.check_finite(arr, "W")
-        Q, _ = np.linalg.qr(self._inv_transpose(arr), mode="reduced")
-        return _orient_columns(Q)
+        Q, R = np.linalg.qr(self._inv_transpose(arr), mode="reduced")
+        signs = np.sign(np.diagonal(R))
+        signs[signs == 0] = 1.0
+        out: _F64 = Q * signs
+        return out
 
     def contains(self, X: ArrayLike, *, normalized: bool = False) -> NDArray[np.bool_]:
         r"""Return whether each point lies in the support of the input density.

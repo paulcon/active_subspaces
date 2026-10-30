@@ -15,14 +15,14 @@ import pytest
 from numpy.typing import NDArray
 
 import active_subspaces as asub
-from active_subspaces import _random, results
+from active_subspaces import _random, _validation, results
 from active_subspaces.results import QoIResult, Result
 from active_subspaces.results import _invariant as invariant
 from active_subspaces.results import _make_provenance as make_provenance
 from active_subspaces.results import _register_result as register_result
 from active_subspaces.spaces import InputSpace
 
-SCHEMA_DIR = Path(__file__).resolve().parent / "data" / "schemas"
+SCHEMA_DIR = Path(__file__).resolve().parents[1] / "data" / "schemas"  # tests/data/schemas (04 §8)
 
 
 @register_result
@@ -722,3 +722,26 @@ def test_results_exports():
         "InvariantError",
     ):
         assert not hasattr(results, name), name
+
+
+def test_migration_subspace_v1():
+    """A version-1 SubspaceResult, written by the development build, loads as version 2 with
+    bootstrap_eigenvectors None and every other field unchanged [D-196] (04 §8, V04.8).
+    """
+    path = SCHEMA_DIR / "SubspaceResult" / "v1.json"
+    d = json.loads(path.read_text())
+    assert d["schema_version"] == 1
+    assert "bootstrap_eigenvectors" not in d["fields"]
+    r = asub.from_dict(d)
+    assert r.bootstrap_eigenvectors is None
+    assert r.nboot == 5
+    assert r.estimator == "ols"
+    np.testing.assert_array_equal(
+        r.eigenvectors, _validation.decode_array(d["fields"]["eigenvectors"])
+    )
+    np.testing.assert_array_equal(
+        r.bootstrap_distances, _validation.decode_array(d["fields"]["bootstrap_distances"])
+    )
+    again = r.to_dict()
+    assert again["schema_version"] == 2
+    assert asub.from_dict(again) == r
