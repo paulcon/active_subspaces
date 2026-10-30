@@ -202,7 +202,7 @@ def test_rbf_length_scales_and_nugget():
     sv = asub.fit_surrogate(X=X, f=f, subspace=sub, kind="rbf", log10_eta=-1.0, noise_variance=v)
     sf2 = np.mean((f - f.mean()) ** 2)
     np.testing.assert_allclose(sv.nugget, np.maximum(v / sf2, 1e-6), rtol=1e-14)
-    assert sv.f_variance == pytest.approx(sf2, rel=1e-14)
+    assert sv.training_variance == pytest.approx(sf2, rel=1e-14)
 
 
 def test_rbf_search_is_grid_then_refine():
@@ -432,3 +432,161 @@ def test_ridge_fit_quality():
     poly = asub.fit_surrogate(X=X, f=f, subspace=sub, kind="poly", degree=5)
     assert rbf.loo_r_squared >= 0.99
     assert poly.loo_r_squared >= 0.99
+
+
+# ---------------------------------------------------------------------------
+# As-data-sets port (Phase 5b): D-192, D-193/D-204, D-200
+# ---------------------------------------------------------------------------
+
+
+def _ridge_data(space, M=40, seed=0):
+    gen = np.random.default_rng(seed)
+    X = space.sample(M, rng=gen)
+    x = space.to_normalized(X)
+    a = np.array([1.0, 0.5, 0.2])[: space.dim]
+    f = np.sin(x @ a) + 0.05 * gen.standard_normal(M)
+    G = space.grads_to_physical(np.cos(x @ a)[:, None] * a)
+    return X, f, G
+
+
+@pytest.mark.parametrize("kind", ["uniform", "gaussian"])
+def test_rbf_published_bounds(kind):
+    """With f_variance the search interval is CDW (4.13) with eta = 2 alpha and C1 per space;
+    explicit bounds override; an empty interval warns [D-192], [D-204] (09 §8, V09.18).
+    """
+    space = asub.Uniform.reference(3) if kind == "uniform" else asub.Gaussian.reference(3)
+    X, f, G = _ridge_data(space)
+    sub = asub.active_subspace(grads=G, space=space, n=1)
+    total = float(np.sum(np.abs(sub.eigenvalues)))
+    c1 = 4.0 / math.pi**2 if kind == "uniform" else 1.0
+    sig2 = 0.5 * c1 * total  # inside the interval
+    rs = asub.fit_surrogate(X=X, f=f, subspace=sub, kind="rbf", f_variance=sig2)
+    p = rs.provenance.parameters
+    assert p["log10_eta_bounds_source"] == "f_variance"
+    assert p["f_variance"] == sig2
+    np.testing.assert_allclose(
+        p["log10_eta_bounds"], [math.log10(2 * sig2 / total), math.log10(2 * c1)], rtol=1e-14
+    )
+    lo, hi = p["log10_eta_bounds"]
+    assert lo - 1e-12 <= rs.log10_eta <= hi + 1e-12
+    # Explicit bounds or log10_eta take precedence; f_variance is only recorded.
+    given = asub.fit_surrogate(
+        X=X, f=f, subspace=sub, f_variance=sig2, log10_eta_bounds=(-3.0, 0.0)
+    )
+    assert given.provenance.parameters["log10_eta_bounds"] == [-3.0, 0.0]
+    assert given.provenance.parameters["log10_eta_bounds_source"] == "given"
+    fixed = asub.fit_surrogate(X=X, f=f, subspace=sub, f_variance=sig2, log10_eta=-0.5)
+    assert fixed.log10_eta == -0.5
+    # Empty interval: collapses to its upper end, with accuracy.empty_bounds.
+    with pytest.warns(asub.AccuracyWarning, match=r"\[accuracy\.empty_bounds\]$") as rec:
+        empty = asub.fit_surrogate(X=X, f=f, subspace=sub, f_variance=10 * c1 * total)
+    assert empty.log10_eta == pytest.approx(math.log10(2 * c1), rel=1e-15)
+    w = next(r.message for r in rec if r.message.code == "accuracy.empty_bounds")
+    assert w.details["C1"] == c1
+    # Without eigenvalues (all inputs) the default interval applies.
+    none = asub.fit_surrogate(X=X, f=f, space=space, subspace=None, f_variance=sig2)
+    assert none.provenance.parameters["log10_eta_bounds"] == [-10.0, 1.0]
+
+
+def test_flat_objective_warning():
+    """J flat over >= 4 decades around the selection warns; a unimodal J, a shorter run, and a
+    run reaching the lower end of the grid do not [D-192], [D-212].
+    """
+    grid = np.linspace(-10.0, 1.0, 45)
+    flat5 = np.where(np.abs(grid + 4.0) <= 2.5, -13.41, 0.0)  # interior, 5 decades
+    with pytest.warns(asub.AccuracyWarning, match="flat_objective") as rec:
+        su._warn_flat(grid, flat5, int(np.argmin(flat5)))
+    assert rec[0].message.details["interval"] == [-6.5, -1.5]
+    import warnings
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        su._warn_flat(grid, np.full(45, -13.41), 0)  # reaches the lower end: the tail limit
+        su._warn_flat(grid, (grid + 3.0) ** 2, int(np.argmin((grid + 3.0) ** 2)))
+        flat3 = np.where(np.abs(grid + 5.0) <= 1.5, 0.0, 1.0)  # flat over 3 decades only
+        su._warn_flat(grid, flat3, int(np.argmin(flat3)))
+
+
+def test_poincare_constant():
+    """C1 = 4/pi^2 on [-1,1]^m for every m, 1 for N(0, I) [D-204]; sin(pi x1 / 2) attains it."""
+    from active_subspaces.spaces import _poincare_constant
+
+    for m in (1, 3, 10, 100):
+        assert _poincare_constant(asub.Uniform.reference(m)) == 4.0 / math.pi**2
+        assert _poincare_constant(asub.Gaussian.reference(m)) == 1.0
+    t, w = np.polynomial.legendre.leggauss(40)
+    w = w / 2
+    f, df = np.sin(math.pi * t / 2), (math.pi / 2) * np.cos(math.pi * t / 2)
+    var = w @ f**2 - (w @ f) ** 2
+    assert var == pytest.approx(4.0 / math.pi**2 * (w @ df**2), rel=1e-12)
+
+
+def _weighted_quadratic(seed, M=30):
+    gen = np.random.default_rng(seed)
+    space = asub.Uniform.reference(2)
+    X = space.sample(M, rng=gen)
+    f = 1.0 + X[:, 0] - 0.5 * X[:, 1] ** 2 + 0.1 * gen.standard_normal(M)
+    s = gen.uniform(0.5, 2.0, M)
+    s[3] = 0.0
+    return space, X, f, s
+
+
+@pytest.mark.parametrize("kind", ["prediction", "confidence"])
+@pytest.mark.parametrize("side", ["two", "lower", "upper"])
+def test_polynomial_intervals(kind, side):
+    """Closed-form least-squares limits with weights; one-sided quantiles [D-200] (V09.19)."""
+    space, X, f, s = _weighted_quadratic(1)
+    sur = asub.fit_surrogate(
+        X=X, f=f, space=space, subspace=None, kind="poly", degree=2, sample_weights=s
+    )
+    Xn = space.sample(7, rng=5)
+    res = asub.predict_interval(sur, Xn, level=0.9, kind=kind, side=side)
+    B = su._basis(np.asarray(sur.Y), sur.indices)
+    nu = int(np.sum(s > 0)) - B.shape[1]
+    r = f - B @ sur.coefficients
+    s2 = np.sum(s * r * r) / nu
+    b = su._basis(Xn, sur.indices)
+    q = np.einsum("ij,jk,ik->i", b, np.linalg.inv(B.T @ (s[:, None] * B)), b)
+    c = 1.0 if kind == "prediction" else 0.0
+    est = b @ sur.coefficients
+    if side == "two":
+        t = scipy.stats.t.ppf(0.95, nu)
+        lo, hi = est - t * np.sqrt(s2 * (c + q)), est + t * np.sqrt(s2 * (c + q))
+    elif side == "lower":
+        t = scipy.stats.t.ppf(0.9, nu)
+        lo, hi = est - t * np.sqrt(s2 * (c + q)), np.full(7, np.inf)
+    else:
+        t = scipy.stats.t.ppf(0.9, nu)
+        lo, hi = np.full(7, -np.inf), est + t * np.sqrt(s2 * (c + q))
+    np.testing.assert_allclose(res.lower, lo, rtol=1e-10)
+    np.testing.assert_allclose(res.upper, hi, rtol=1e-10)
+    np.testing.assert_allclose(res.estimate, est, rtol=1e-12)
+    assert res.dof == nu
+    assert res.residual_scale == pytest.approx(math.sqrt(s2), rel=1e-12)
+    assert (res.level, res.kind, res.side) == (0.9, kind, side)
+    lo2, hi2 = sur.interval(space.to_normalized(Xn), level=0.9, kind=kind, side=side)
+    np.testing.assert_array_equal(lo2, res.lower)
+    np.testing.assert_array_equal(hi2, res.upper)
+    assert not res.lower.flags.writeable
+
+
+def test_interval_errors():
+    """RBF -> not_polynomial; no degrees of freedom -> no_dof; bad options [D-200]."""
+    space, X, f, _ = _weighted_quadratic(2)
+    rbf = asub.fit_surrogate(
+        X=X, f=f, space=space, subspace=None, kind="rbf", degree=1, log10_eta=0.0
+    )
+    with pytest.raises(asub.InputError) as e:
+        asub.predict_interval(rbf, X)
+    assert e.value.details["reason"] == "not_polynomial"
+    with pytest.warns(asub.AccuracyWarning, match="loo_undefined"):  # M = p
+        exact = asub.fit_surrogate(
+            X=X[:6], f=f[:6], space=space, subspace=None, kind="poly", degree=2
+        )
+    with pytest.raises(asub.InputError) as e:
+        asub.predict_interval(exact, X[:2])
+    assert e.value.details["reason"] == "no_dof"
+    poly = asub.fit_surrogate(X=X, f=f, space=space, subspace=None, kind="poly", degree=1)
+    for bad in ({"level": 1.0}, {"kind": "mean"}, {"side": "both"}):
+        with pytest.raises(asub.InputError):
+            asub.predict_interval(poly, X, **bad)

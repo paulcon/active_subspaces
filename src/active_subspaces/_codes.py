@@ -148,6 +148,15 @@ CODES: Mapping[str, tuple[str, str]] = MappingProxyType(
             "AccuracyWarning",
             "leave-one-out residuals are undefined because a point fully determines its own fit",
         ),
+        "accuracy.empty_bounds": (
+            "AccuracyWarning",
+            "the published bounds on the RBF hyperparameter are empty; the upper bound is used",
+        ),
+        "accuracy.flat_objective": (
+            "AccuracyWarning",
+            "the RBF likelihood is flat over at least four decades of the hyperparameter; the "
+            "selected value is arbitrary (pass f_variance or bounds)",
+        ),
         "accuracy.extrapolation": (
             "AccuracyWarning",
             "a Gaussian-case minimizer lies beyond the 99.9 % ball of the reference density",

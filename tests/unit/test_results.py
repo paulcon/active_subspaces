@@ -724,6 +724,25 @@ def test_results_exports():
         assert not hasattr(results, name), name
 
 
+def test_migration_rbf_v1():
+    """A version-1 RBFSurrogate loads with training_variance = the stored f_variance [D-206]."""
+    d = json.loads((SCHEMA_DIR / "RBFSurrogate" / "v1.json").read_text())
+    assert d["schema_version"] == 1
+    old = d["fields"]["f_variance"]
+    r = asub.from_dict(d)
+    assert r.training_variance == old
+    assert not hasattr(r, "f_variance")
+    for name in ("radial_coefficients", "tail_coefficients", "length_scales", "nugget", "Y", "f"):
+        np.testing.assert_array_equal(
+            getattr(r, name), _validation.decode_array(d["fields"][name])
+        )
+    assert r.log10_eta == d["fields"]["log10_eta"]
+    again = r.to_dict()
+    assert again["schema_version"] == 2
+    assert "f_variance" not in again["fields"]
+    assert asub.from_dict(again) == r
+
+
 def test_migration_subspace_v1():
     """A version-1 SubspaceResult, written by the development build, loads as version 2 with
     bootstrap_eigenvectors None and every other field unchanged [D-196] (04 §8, V04.8).

@@ -131,7 +131,7 @@ v1 normalized coordinates are the 2016 ones, so normalized results compare direc
 | `.predict(X, compgrad)` | `ac.predict(s, X)`, `ac.predict_gradient(s, X)` | `(M,)` and `(M, m)`, physical |
 | `.predict_av(Y)`, `.gradient_av(Y)` | `s.evaluate(Y)`, `s.gradient(Y)` | normalized active coordinates |
 | `PolynomialApproximation(N).train(X, f, weights)` | `ac.fit_surrogate(X=, f=, space=, subspace=None, kind="poly", degree=N, sample_weights=weights)` → `ac.PolynomialSurrogate` | weighted fit corrected |
-| `RadialBasisApproximation(N).train(X, f, v)` | `ac.fit_surrogate(..., kind="rbf", degree=N, noise_variance=v)` → `ac.RBFSurrogate` | new likelihood |
+| `RadialBasisApproximation(N).train(X, f, v)` | `ac.fit_surrogate(..., kind="rbf", degree=N, noise_variance=v)` → `ac.RBFSurrogate` | new likelihood; published length-scale rule with two departures (D-194); `f_variance=` for the published bounds |
 | `ResponseSurface` (base class) | `ac.Surrogate` (protocol) | |
 | `.Rsqr` | `s.loo_r_squared` | leave-one-out, so lower |
 | `.poly_weights`, `.g`, `.H` | `s.coefficients`, `ac.quadratic_terms(s)` | |
@@ -283,7 +283,10 @@ Tuple returns become results with named fields. Only `ac.forward_map` (`Y, Z`) a
     $m=1000$, $k=1$: 0.8 MB).
   - `quad_weights` must sum to 1.
   - Shapes are `(m,)` and `(M,)`, not `(m, 1)` and `(M, 1)`.
-  - Fit quality is a leave-one-out or holdout $R^2$, lower than the 2016 in-sample value.
+  - Fit quality (V1-13) is a leave-one-out or holdout $R^2$, lower than the 2016 in-sample value.
+    The 2016 RBF "$R^2$" was $1-r^\top K^{-1}r/f^\top K^{-1}f$, which v1 does not reproduce. For an
+    unweighted polynomial fit the in-sample value is
+    `1 - sum(s.residuals**2) / sum((s.f - s.f.mean())**2)`.
 - **Same quantity, different estimate.** Every stochastic output (bootstrap replicates, designs,
   inverse-map draws, optimizer starts, quadrature weights) differs from 2016 at any seed. Local
   linear gradients use the right neighbors [C-02]. Interval quadrature is a Gauss rule with exact
@@ -302,6 +305,19 @@ Tuple returns become results with named fields. Only `ac.forward_map` (`Y, Z`) a
   hyperparameters maximize the concentrated likelihood
   $-\tfrac12\log\lvert K\rvert-\tfrac M2\log\hat\sigma^2$ (2016 weighted the two terms
   differently by a factor of 2).
+- **RBF length scales and bounds.** The length-scale rule is published (Constantine, Dow and Wang,
+  2014, §4.2–4.3, eq. (4.16), with $\eta=2\alpha$) [D-194]. v1 departs from it in two stated ways:
+  the amplitude is profiled, $\hat\sigma^2_\eta=r_\eta^\top K_\eta^{-1}r_\eta/M$ (paper:
+  $\sigma^2=\alpha\sum_q\lambda_q$), and the nugget is
+  $\eta\sum_{q>n}\lvert\lambda_q\rvert/\sum_q\lvert\lambda_q\rvert$ (paper:
+  $\sum_{q>n}\lambda_q/\sum_q\lambda_q$). The search interval for $\log_{10}\eta$ stays $[-10,1]$.
+  New: `f_variance=` searches the published interval
+  $[\log_{10}(2\hat\sigma_f^2/\sum_q\lvert\lambda_q\rvert),\ \log_{10}(2C_1)]$ with $C_1=1$
+  (Gaussian) or $4/\pi^2$ (uniform) [D-192, D-193, D-204]. `log10_eta_bounds` now defaults to
+  `None`.
+- **`RBFSurrogate.f_variance` is now `training_variance`** (the variance of the training values;
+  schema 2, version-1 files migrate on load) [D-206]. `f_variance` is now the argument of
+  `fit_surrogate` described above.
 
 ## Reproducing 2016 numbers
 
