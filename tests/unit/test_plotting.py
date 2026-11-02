@@ -43,11 +43,12 @@ NAMES = ("alpha", "beta", "gamma", "delta", "eps")
 def _no_side_effects(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     rc = matplotlib.rcParams.copy()
-    backend = dict.__getitem__(matplotlib.rcParams, "backend")
+    # _get reads the backend without resolving it (matplotlib 3.12 no longer keeps it in the dict)
+    backend = matplotlib.rcParams._get("backend")
     had_pyplot = "matplotlib.pyplot" in sys.modules
     yield
     assert dict.__eq__(rc, matplotlib.rcParams), "rcParams changed"
-    assert dict.__getitem__(matplotlib.rcParams, "backend") == backend
+    assert matplotlib.rcParams._get("backend") == backend
     assert had_pyplot or "matplotlib.pyplot" not in sys.modules, "matplotlib.pyplot was imported"
     assert os.listdir(tmp_path) == [], "a file was written"
 
