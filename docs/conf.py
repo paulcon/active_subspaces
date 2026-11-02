@@ -83,6 +83,14 @@ if FAST:
     suppress_warnings = ["toc.excluded"]  # index.md still lists api/index
 as_docs_fast = FAST
 
+# linkcheck (weekly in nightly.yml)
+linkcheck_ignore = [
+    # SIAM answers automated requests with 403 Forbidden; the DOIs resolve in a browser.
+    r"https://doi\.org/10\.1137/",
+    # RTD "stable" points at tag 0.1 until v1.0.0 is tagged; drop this entry at the release.
+    r"https://active-subspaces\.readthedocs\.io/en/stable/",
+]
+
 # MyST / myst-nb
 myst_enable_extensions = ["dollarmath", "amsmath", "colon_fence", "deflist"]
 myst_heading_anchors = 3
